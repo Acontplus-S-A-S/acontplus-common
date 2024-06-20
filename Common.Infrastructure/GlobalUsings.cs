@@ -1,0 +1,10 @@
+﻿global using Common.Infrastructure.Data;
+global using Microsoft.Data.SqlClient;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Configuration;
+global using System.Data;
+global using System.Data.Common;
+global using System.Globalization;
+global using System.Text;
+global using Common.Infrastructure.Utils;
+global using FastMember;

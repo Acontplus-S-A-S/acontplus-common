@@ -16,7 +16,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 foreach (var parameter in parameters.Where(parameter =>
                              !string.IsNullOrEmpty(parameter.Key) && parameter.Value != null))
                 {
-                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
                 }
             }
 
@@ -46,90 +46,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         return response;
     }
 
-    public async Task<T> DinamycObjectAsync<T>(string spName, Dictionary<string, object> parameters)
-        where T : class, new()
-    {
-        var context = contexts.GetContext(configuration["ContextName"]);
-        var mappedObject = new T();
-        await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
-        try
-        {
-            cmd.CommandText = spName;
-            if (parameters.Count > 0)
-            {
-                foreach (var parameter in parameters.Where(parameter =>
-                             !string.IsNullOrEmpty(parameter.Key) && parameter.Value != null))
-                {
-                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value);
-                }
-            }
-
-            cmd.CommandType = CommandType.StoredProcedure;
-            if (!wasOpen)
-            {
-                await context.Database.OpenConnectionAsync();
-            }
-
-            var rd = await cmd.ExecuteReaderAsync();
-            if (!rd.HasRows)
-            {
-                return mappedObject;
-            }
-
-            var accessor = TypeAccessor.Create(typeof(T));
-            var members = accessor.GetMembers();
-            if (!await rd.ReadAsync())
-            {
-                return mappedObject;
-            }
-
-            for (var i = 0; i < rd.FieldCount; i++)
-            {
-                var columnNameFromDataTable = rd.GetName(i);
-                var columnValueFromDataTable = rd.GetValue(i);
-
-                var splits = columnNameFromDataTable.Split('_');
-                var columnName = new StringBuilder("");
-                foreach (var split in splits)
-                {
-                    columnName.Append(
-                        CultureInfo.InvariantCulture.TextInfo
-                            .ToLower(split.ToLower())); //invariant should be to TitleCase
-                }
-
-                var mappedColumnName = members.FirstOrDefault(x =>
-                    string.Equals(x.Name, columnName.ToString(), StringComparison.OrdinalIgnoreCase));
-
-                if (mappedColumnName == null)
-                {
-                    continue;
-                }
-
-                var columnType = mappedColumnName.Type;
-
-                if (columnValueFromDataTable != DBNull.Value)
-                {
-                    accessor[mappedObject, columnName.ToString()] =
-                        Convert.ChangeType(columnValueFromDataTable, columnType);
-                }
-            }
-        }
-        finally
-        {
-            if (!wasOpen)
-            {
-                if (cmd.Connection != null)
-                {
-                    await cmd.Connection.CloseAsync();
-                }
-            }
-        }
-
-        return mappedObject;
-    }
-
-    public async Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters, bool oldSp)
+    public async Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters, bool withTableNames)
     {
         DataSet ds = null;
         await using var context = contexts.GetContext(configuration["ContextName"]);
@@ -143,14 +60,14 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 foreach (var parameter in parameters.Where(parameter =>
                              !string.IsNullOrEmpty(parameter.Key) && parameter.Value != null))
                 {
-                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
                 }
             }
 
             const string outParam = "@tableNames";
-            if (!oldSp)
+            if (withTableNames)
             {
-                ParametersUtils.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
+                ParametersUtilsEf.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
             }
 
             cmd.CommandType = CommandType.StoredProcedure;
@@ -166,9 +83,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 await Task.Run(() => adapter.Fill(ds));
             }
 
-            if (!oldSp)
+            if (withTableNames)
             {
-                var tableNames = ParametersUtils.GetParameter(cmd, outParam).ToString()?.Split(',');
+                var tableNames = ParametersUtilsEf.GetParameter(cmd, outParam).ToString()?.Split(',');
                 await Task.Run(() =>
                 {
                     if (tableNames != null)
@@ -212,7 +129,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 foreach (var parameter in parameters.Where(parameter =>
                              !string.IsNullOrEmpty(parameter.Key) && parameter.Value != null))
                 {
-                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
                 }
             }
 
@@ -256,7 +173,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 {
                     if (!string.IsNullOrEmpty(parameter.Key) && parameter.Value != null)
                     {
-                        ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                        ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
                     }
                 }
             }
@@ -303,7 +220,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 {
                     if (!string.IsNullOrEmpty(parameter.Key) && parameter.Value != null)
                     {
-                        ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                        ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
                     }
                 }
             }
@@ -327,7 +244,8 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 foreach (var property in properties)
                 {
                     // Check if property name matches a column name (case-insensitive)
-                    var columnName = reader.GetSchemaTable().Rows.Cast<DataRow>()
+                    var columnName = (await reader.GetSchemaTableAsync())
+                        ?.Rows.Cast<DataRow>()
                                           .Where(row => row["ColumnName"].ToString().Equals(property.Name, StringComparison.OrdinalIgnoreCase))
                                           .Select(row => row["ColumnName"].ToString())
                                           .FirstOrDefault();

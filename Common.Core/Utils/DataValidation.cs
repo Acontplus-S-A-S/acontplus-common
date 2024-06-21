@@ -13,7 +13,7 @@ public static class DataValidation
 
     public static bool DataTableIsNull(DataTable dt)
     {
-        bool isNull = dt is not { Rows.Count: > 0 };
+        var isNull = dt is not { Rows.Count: > 0 };
         return isNull;
     }
 
@@ -22,16 +22,16 @@ public static class DataValidation
         switch (removeEmptyDt)
         {
             case true:
+            {
+                var tablesToRemove = ds.Tables.Cast<DataTable>().Where(dt => dt.Rows.Count == 0).ToList();
+
+                foreach (var dt in tablesToRemove)
                 {
-                    var tablesToRemove = ds.Tables.Cast<DataTable>().Where(dt => dt.Rows.Count == 0).ToList();
-
-                    foreach (var dt in tablesToRemove)
-                    {
-                        ds.Tables.Remove(dt);
-                    }
-
-                    break;
+                    ds.Tables.Remove(dt);
                 }
+
+                break;
+            }
         }
 
         return ds == null || ds.Tables.Count == 0;

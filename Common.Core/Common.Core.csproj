@@ -6,7 +6,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.Core</PackageId>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use common models, converters and validators</Description>
@@ -17,24 +17,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Models\GestionFinanciera\**" />
-    <EmbeddedResource Remove="Models\GestionFinanciera\**" />
-    <None Remove="Models\GestionFinanciera\**" />
+    <Compile Remove="Models\GestionFinanciera\**"/>
+    <EmbeddedResource Remove="Models\GestionFinanciera\**"/>
+    <None Remove="Models\GestionFinanciera\**"/>
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="README.md" />
+    <None Remove="README.md"/>
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="BarcodeLib" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
-    <PackageReference Include="Newtonsoft.Json" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App"/>
+    <PackageReference Include="BarcodeLib"/>
+    <PackageReference Include="Newtonsoft.Json"/>
   </ItemGroup>
 </Project>

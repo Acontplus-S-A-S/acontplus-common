@@ -1,17 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 
 namespace Common.Core.Models;
 
-public sealed class S3ObjectCustom : IDisposable
+public sealed class S3ObjectCustom(IConfiguration configuration) : IDisposable
 {
-    private readonly IConfiguration _configuration;
-
-    public S3ObjectCustom(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
-
     public string Region { get; set; }
     public string BucketName { get; set; } = null!;
     public byte[] Content { get; set; }
@@ -28,8 +20,8 @@ public sealed class S3ObjectCustom : IDisposable
     public async Task Add(string filePath, IFormFile file, string s3ObjectKey = null, string s3ObjectUrl = null)
     {
         var fileExt = Path.GetExtension(file.FileName);
-        BucketName = _configuration["S3Bucket:Name"];
-        Region = _configuration["S3Bucket:Region"];
+        BucketName = configuration["S3Bucket:Name"];
+        Region = configuration["S3Bucket:Region"];
         S3ObjectKey = s3ObjectKey ?? $"{filePath}{Guid.NewGuid()}{fileExt}";
         S3ObjectUrl = s3ObjectUrl ?? $"https://{BucketName}.s3.{Region}.amazonaws.com/{S3ObjectKey}";
         using (var ms = new MemoryStream())
@@ -40,32 +32,34 @@ public sealed class S3ObjectCustom : IDisposable
 
         AwsCredentials = new AwsCredentials
         {
-            Key = _configuration["AwsConfiguration:AWSAccessKey"],
-            Secret = _configuration["AwsConfiguration:AWSSecretKey"]
+            Key = configuration["AwsConfiguration:AWSAccessKey"],
+            Secret = configuration["AwsConfiguration:AWSSecretKey"]
         };
     }
 
     public void Add(string s3ObjectKey)
     {
-        BucketName = _configuration["S3Bucket:Name"];
-        Region = _configuration["S3Bucket:Region"];
+        BucketName = configuration["S3Bucket:Name"];
+        Region = configuration["S3Bucket:Region"];
         S3ObjectKey = s3ObjectKey;
         AwsCredentials = new AwsCredentials
         {
-            Key = _configuration["AwsConfiguration:AWSAccessKey"],
-            Secret = _configuration["AwsConfiguration:AWSSecretKey"]
+            Key = configuration["AwsConfiguration:AWSAccessKey"],
+            Secret = configuration["AwsConfiguration:AWSSecretKey"]
         };
     }
 
-    public void Dispose(bool disposing)
+    private void Dispose(bool disposing)
     {
-        if (disposing)
+        switch (disposing)
         {
-            BucketName = null;
-            Region = null;
-            S3ObjectKey = null;
-            S3ObjectUrl = null;
-            AwsCredentials = null;
+            case true:
+                BucketName = null;
+                Region = null;
+                S3ObjectKey = null;
+                S3ObjectUrl = null;
+                AwsCredentials = null;
+                break;
         }
     }
 

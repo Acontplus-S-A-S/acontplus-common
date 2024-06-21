@@ -1,13 +1,12 @@
-﻿using System.Threading;
-
-namespace Common.Infrastructure.Repository;
+﻿namespace Common.Infrastructure.Repository;
 
 public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
 {
-    public async Task<List<T>> DynamicListAsync<T>(string spname, Dictionary<string, object> parameters)
+    public async Task<List<T>> DynamicListAsync<T>(string spname, Dictionary<string, object> parameters,
+        string connectionStringName)
     {
         var response = new List<T>();
-        var conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        var conn = new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
         await using var cmd = new SqlCommand(spname, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
@@ -44,92 +43,11 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         return response;
     }
 
-    public async Task<T> DinamycObjectAsync<T>(string spname, Dictionary<string, object> parameters)
-        where T : class, new()
-    {
-        var conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
-        var mappedObject = new T();
-        await using var cmd = new SqlCommand(spname, conn);
-        var wasOpen = cmd.Connection.State == ConnectionState.Open;
-        try
-        {
-            if (parameters.Count > 0)
-            {
-                foreach (var parameter in parameters)
-                {
-                    if (!string.IsNullOrEmpty(parameter.Key) && parameter.Value != null)
-                    {
-                        ParametersUtilsSqlServer.AddSqlParameter(cmd, parameter.Key, parameter.Value);
-                    }
-                }
-            }
-
-            cmd.CommandType = CommandType.StoredProcedure;
-            if (!wasOpen)
-            {
-                await conn.OpenAsync();
-            }
-
-            var rd = await cmd.ExecuteReaderAsync();
-            if (!rd.HasRows)
-            {
-                return mappedObject;
-            }
-
-            var accessor = TypeAccessor.Create(typeof(T));
-            var members = accessor.GetMembers();
-            if (!rd.Read())
-            {
-                return mappedObject;
-            }
-
-            for (var i = 0; i < rd.FieldCount; i++)
-            {
-                var columnNameFromDataTable = rd.GetName(i);
-                var columnValueFromDataTable = rd.GetValue(i);
-
-                var splits = columnNameFromDataTable.Split('_');
-                var columnName = new StringBuilder("");
-                foreach (var split in splits)
-                {
-                    columnName.Append(
-                        CultureInfo.InvariantCulture.TextInfo
-                            .ToLower(split.ToLower())); //invariant should be to TitleCase
-                }
-
-                var mappedColumnName = members.FirstOrDefault(x =>
-                    string.Equals(x.Name, columnName.ToString(), StringComparison.OrdinalIgnoreCase));
-
-                if (mappedColumnName == null)
-                {
-                    continue;
-                }
-
-                var columnType = mappedColumnName.Type;
-
-                if (columnValueFromDataTable != DBNull.Value)
-                {
-                    accessor[mappedObject, columnName.ToString()] =
-                        Convert.ChangeType(columnValueFromDataTable, columnType);
-                }
-            }
-        }
-        finally
-        {
-            if (!wasOpen)
-            {
-                await cmd.Connection.CloseAsync();
-            }
-        }
-
-        return mappedObject;
-    }
-
-    public async Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters, bool oldSp,
-        bool timeout)
+    public async Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters, bool withTableNames,
+        bool timeout, string connectionStringName)
     {
         DataSet ds = null;
-        await using var conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        var conn = new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
         await using var cmd = new SqlCommand(spname, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
@@ -144,7 +62,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             }
 
             const string outParam = "@tableNames";
-            if (!oldSp)
+            if (withTableNames)
             {
                 ParametersUtilsSqlServer.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
             }
@@ -167,7 +85,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
                 await Task.Run(() => adapter.Fill(ds));
             }
 
-            if (!oldSp)
+            if (withTableNames)
             {
                 var tableNames = ParametersUtilsSqlServer.GetParameter(cmd, outParam).ToString()?.Split(',');
                 await Task.Run(() =>
@@ -196,10 +114,10 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         return ds;
     }
 
-    public async Task<DataTable> GetDataTableAsync(string spname, Dictionary<string, object> parameters)
+    public async Task<DataTable> GetDataTableAsync(string spname, Dictionary<string, object> parameters, string connectionStringName)
     {
         DataTable dt = null;
-        var conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        var conn = new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
         await using var cmd = new SqlCommand(spname, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
@@ -236,9 +154,9 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
     }
 
     public async Task<int> OnlyExecuteAsync(string query, Dictionary<string, object> parameters,
-        bool useStoredProcedure, bool timeout)
+        bool useStoredProcedure, bool timeout, string connectionStringName)
     {
-        var conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        var conn = new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
         await using var cmd = new SqlCommand(query, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
@@ -274,10 +192,11 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         }
     }
 
-    public async Task<T> SpExecuteAsync<T>(string spname, Dictionary<string, object> parameters, bool timeout) where T : class, new()
+    public async Task<T> SpExecuteAsync<T>(string spname, Dictionary<string, object> parameters, bool timeout, string connectionStringName)
+        where T : class, new()
     {
         var response = new T();
-        var conn = new SqlConnection(configuration.GetConnectionString("DefaultConnection"));
+        var conn = new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
         await using var cmd = new SqlCommand(spname, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
@@ -290,10 +209,12 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
                     ParametersUtilsSqlServer.AddSqlParameter(cmd, parameter.Key, parameter.Value);
                 }
             }
+
             if (!timeout)
             {
                 cmd.CommandTimeout = 0;
             }
+
             cmd.CommandType = CommandType.StoredProcedure;
             if (!wasOpen)
             {
@@ -308,10 +229,12 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
                 foreach (var property in properties)
                 {
                     // Check if property name matches a column name (case-insensitive)
-                    var columnName = reader.GetSchemaTable().Rows.Cast<DataRow>()
-                                          .Where(row => row["ColumnName"].ToString().Equals(property.Name, StringComparison.OrdinalIgnoreCase))
-                                          .Select(row => row["ColumnName"].ToString())
-                                          .FirstOrDefault();
+                    var columnName = reader.GetSchemaTable()
+                        ?.Rows.Cast<DataRow>()
+                        .Where(row =>
+                            row["ColumnName"].ToString().Equals(property.Name, StringComparison.OrdinalIgnoreCase))
+                        .Select(row => row["ColumnName"].ToString())
+                        .FirstOrDefault();
 
                     if (columnName != null)
                     {

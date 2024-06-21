@@ -49,7 +49,7 @@ public class ValidacionesExternas
                                 else
                                 {
                                     _gr.Code = "0";
-                                    
+
                                     _gr.Message = "Los últimos tres dígitos de un Ruc siempre serán: 001";
                                 }
                             }
@@ -57,14 +57,14 @@ public class ValidacionesExternas
                         else
                         {
                             _gr.Code = "0";
-                            
+
                             _gr.Message = "Numero de identificacion fuera de los codigos de la Provincia";
                         }
                     }
                     else
                     {
                         _gr.Code = "0";
-                        
+
                         _gr.Message = "Cantidad de numeros no es correcta";
                     }
 
@@ -114,13 +114,13 @@ public class ValidacionesExternas
             if (verifi == int.Parse(validarCedula[9].ToString()))
             {
                 _gr.Code = "1";
-                
+
                 _gr.Message = "Cedula de Identidicación";
             }
             else
             {
                 _gr.Code = "0";
-                
+
                 _gr.Message = "Numero de Cedula ingresado incorrectamente";
             }
         }
@@ -167,13 +167,13 @@ public class ValidacionesExternas
             if (verifi == int.Parse(validarCedula[9].ToString()))
             {
                 _gr.Code = "1";
-                
+
                 _gr.Message = "Ruc Persona Natural";
             }
             else
             {
                 _gr.Code = "0";
-                
+
                 _gr.Message = "Ruc de Persona Natural ingresado incorrectamente";
             }
         }
@@ -190,12 +190,12 @@ public class ValidacionesExternas
     {
         try
         {
-            int aux = 0;
+            var aux = 0;
             var veri = int.Parse(validarCedula[10].ToString()) + int.Parse(validarCedula[11].ToString()) +
                        int.Parse(validarCedula[12].ToString());
             if (veri > 0)
             {
-                var coeficiente = new int[] { 4, 3, 2, 7, 6, 5, 4, 3, 2 };
+                var coeficiente = new[] { 4, 3, 2, 7, 6, 5, 4, 3, 2 };
                 for (var i = 0; i < 9; i++)
                 {
                     var prod = int.Parse(validarCedula[i].ToString()) * coeficiente[i];
@@ -209,7 +209,7 @@ public class ValidacionesExternas
                 else if (aux % 11 == 1)
                 {
                     _gr.Code = "0";
-                    
+
                     _gr.Message = "Numero de identificacion Persona Juridica ingresado incorrectamente";
                 }
                 else
@@ -221,20 +221,20 @@ public class ValidacionesExternas
                 if (veri == int.Parse(validarCedula[9].ToString()))
                 {
                     _gr.Code = "1";
-                    
+
                     _gr.Message = "Ruc De Persona Juridica";
                 }
                 else
                 {
                     _gr.Code = "0";
-                    
+
                     _gr.Message = "Numero de identificacion Persona Juridica ingresado ingresado incorrectamente";
                 }
             }
             else
             {
                 _gr.Code = "0";
-                
+
                 _gr.Message = "Numero de identificacion Persona Juridica ingresado ingresado incorrectamente";
             }
         }
@@ -251,12 +251,12 @@ public class ValidacionesExternas
     {
         try
         {
-            int aux = 0;
+            var aux = 0;
             var veri = int.Parse(validarCedula[9].ToString()) + int.Parse(validarCedula[10].ToString()) +
                        int.Parse(validarCedula[11].ToString()) + int.Parse(validarCedula[12].ToString());
             if (veri > 0)
             {
-                var coeficiente = new int[] { 3, 2, 7, 6, 5, 4, 3, 2 };
+                var coeficiente = new[] { 3, 2, 7, 6, 5, 4, 3, 2 };
                 for (var i = 0; i < 8; i++)
                 {
                     var prod = int.Parse(validarCedula[i].ToString()) * coeficiente[i];
@@ -270,7 +270,7 @@ public class ValidacionesExternas
                         break;
                     case 1:
                         _gr.Code = "0";
-                        
+
                         _gr.Message = "Numero de identificacion Sector Publico ingresado incorrectamente";
                         break;
                     default:
@@ -282,20 +282,20 @@ public class ValidacionesExternas
                 if (veri == int.Parse(validarCedula[8].ToString()))
                 {
                     _gr.Code = "1";
-                    
+
                     _gr.Message = "Ruc Del Sector Publico";
                 }
                 else
                 {
                     _gr.Code = "0";
-                    
+
                     _gr.Message = "Numero de identificacion Sector Publico ingresado incorrectamente";
                 }
             }
             else
             {
                 _gr.Code = "0";
-                
+
                 _gr.Message = "Numero de identificacion Sector Publico ingresado incorrectamente";
             }
         }

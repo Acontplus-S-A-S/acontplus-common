@@ -1,2 +1,3 @@
-# Version 1.0.2
-Adding common infrastructure, ADO Sql Server, ADO EF Core for mutliples contexts
+# Version 1.0.3
+-Adding common infrastructure, ADO Sql Server, ADO EF Core for mutliples contexts
+-Adding dynamic connection strings Name

@@ -2,7 +2,7 @@
 
 namespace Common.Infrastructure.Utils;
 
-public static class ParametersUtils
+public static class ParametersUtilsEf
 {
     public static void AddSqlParameter(DbCommand cmd, string name, object value)
     {

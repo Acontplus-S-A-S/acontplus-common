@@ -27,12 +27,12 @@ public static class CompressionHelper
             throw new ArgumentNullException(nameof(data));
         }
 
-        using var compressStream = new MemoryStream(data);
-        using var deflateStream = new DeflateStream(compressStream, CompressionMode.Decompress);
-        using var decompressedStream = new MemoryStream();
-
-        deflateStream.CopyTo(decompressedStream);
-
-        return decompressedStream.ToArray();
+        using (var compressStream = new MemoryStream(data))
+        using (var deflateStream = new DeflateStream(compressStream, CompressionMode.Decompress))
+        using (var decompressedStream = new MemoryStream())
+        {
+            deflateStream.CopyTo(decompressedStream);
+            return decompressedStream.ToArray();
+        }
     }
 }

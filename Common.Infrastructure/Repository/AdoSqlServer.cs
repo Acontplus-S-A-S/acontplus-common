@@ -43,7 +43,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         return response;
     }
 
-    public async Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters, bool withTableNames,
+    public async Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters,
         bool timeout, string connectionStringName)
     {
         DataSet ds = null;
@@ -62,10 +62,8 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             }
 
             const string outParam = "@tableNames";
-            if (withTableNames)
-            {
-                ParametersUtilsSqlServer.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
-            }
+
+            ParametersUtilsSqlServer.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
 
             if (!timeout)
             {
@@ -85,23 +83,20 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
                 await Task.Run(() => adapter.Fill(ds));
             }
 
-            if (withTableNames)
+            var tableNames = ParametersUtilsSqlServer.GetParameter(cmd, outParam).ToString()?.Split(',');
+            await Task.Run(() =>
             {
-                var tableNames = ParametersUtilsSqlServer.GetParameter(cmd, outParam).ToString()?.Split(',');
-                await Task.Run(() =>
+                if (tableNames != null)
                 {
-                    if (tableNames != null)
+                    Parallel.ForEach(tableNames, (tableName, state, index) =>
                     {
-                        Parallel.ForEach(tableNames, (tableName, state, index) =>
+                        if (!string.IsNullOrEmpty(tableName))
                         {
-                            if (!string.IsNullOrEmpty(tableName))
-                            {
-                                ds.Tables[(int)index].TableName = tableName;
-                            }
-                        });
-                    }
-                });
-            }
+                            ds.Tables[(int)index].TableName = tableName;
+                        }
+                    });
+                }
+            });
         }
         finally
         {

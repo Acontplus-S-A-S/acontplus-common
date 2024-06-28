@@ -10,6 +10,8 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var wasOpen = cmd.Connection is { State: ConnectionState.Open };
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
@@ -54,6 +56,8 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var wasOpen = cmd.Connection is { State: ConnectionState.Open };
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
@@ -120,6 +124,8 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var wasOpen = cmd.Connection is { State: ConnectionState.Open };
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
@@ -163,6 +169,8 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var wasOpen = cmd.Connection is { State: ConnectionState.Open };
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
@@ -210,7 +218,10 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var wasOpen = cmd.Connection is { State: ConnectionState.Open };
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             cmd.CommandText = spName;
+
             if (parameters.Count > 0)
             {
                 foreach (var parameter in parameters)

@@ -11,6 +11,8 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             if (parameters.Count > 0)
             {
                 foreach (var parameter in parameters.Where(parameter =>
@@ -52,6 +54,8 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             if (parameters.Count > 0)
             {
                 foreach (var parameter in parameters.Where(parameter =>
@@ -117,6 +121,8 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             if (parameters.Count > 0)
             {
                 foreach (var parameter in parameters.Where(parameter =>
@@ -156,6 +162,8 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             if (parameters.Count > 0)
             {
                 foreach (var parameter in parameters.Where(parameter =>
@@ -196,6 +204,8 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
         {
+            parameters ??= new Dictionary<string, object>();
+
             if (parameters.Count > 0)
             {
                 foreach (var parameter in parameters.Where(parameter =>

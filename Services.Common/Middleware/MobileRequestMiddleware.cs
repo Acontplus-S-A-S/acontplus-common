@@ -9,11 +9,11 @@ namespace Services.Common.Middleware
             var userAgent = context.Request.Headers.UserAgent.ToString();
             var isMobileUserAgent = IsMobileUserAgent(userAgent);
 
-            // Optional: Additional check for custom header
-            var isMobileHeader = context.Request.Headers["X-Is-Mobile"].ToString()
+            var fromMobile = context.Request.Headers["X-Is-Mobile"].ToString()
                 .Equals("true", StringComparison.OrdinalIgnoreCase);
 
-            context.Items["IsMobileRequest"] = isMobileUserAgent || isMobileHeader;
+            context.Items["FromMobile"] = fromMobile;
+            context.Items["IsMobileUserAgent"] = isMobileUserAgent;
 
             await next(context);
         }

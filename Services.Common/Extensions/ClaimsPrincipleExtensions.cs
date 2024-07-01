@@ -9,19 +9,9 @@ public static class ClaimsPrincipleExtensions
         return user.FindFirst(ClaimTypes.Name)?.Value;
     }
 
-    public static int GetCompanyId(this ClaimsPrincipal user)
+    public static string GetRole(this ClaimsPrincipal user)
     {
-        return Convert.ToInt32(user.FindFirst("companyId")?.Value);
-    }
-
-    public static string GetIdCardCompany(this ClaimsPrincipal user)
-    {
-        return user.FindFirst("idCardCompany")?.Value;
-    }
-
-    public static int GetUserRoleId(this ClaimsPrincipal user)
-    {
-        return Convert.ToInt32(user.FindFirst("userRoleId")?.Value);
+        return user.FindFirst(ClaimTypes.Role)?.Value;
     }
 
     public static int GetUserId(this ClaimsPrincipal user)

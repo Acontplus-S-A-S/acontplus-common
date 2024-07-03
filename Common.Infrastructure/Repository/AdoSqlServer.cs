@@ -46,7 +46,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
     }
 
     public async Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters,
-        bool timeout, string connectionStringName)
+        bool timeout, string connectionStringName, bool withTableNames)
     {
         DataSet ds = null;
         var conn = new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
@@ -66,8 +66,10 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             }
 
             const string outParam = "@tableNames";
-
-            ParametersUtilsSqlServer.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
+            if (withTableNames)
+            {
+                ParametersUtilsSqlServer.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
+            }
 
             if (!timeout)
             {
@@ -86,21 +88,23 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
                 ds = new DataSet();
                 await Task.Run(() => adapter.Fill(ds));
             }
-
-            var tableNames = ParametersUtilsSqlServer.GetParameter(cmd, outParam).ToString()?.Split(',');
-            await Task.Run(() =>
+            if (withTableNames)
             {
-                if (tableNames != null)
+                var tableNames = ParametersUtilsSqlServer.GetParameter(cmd, outParam).ToString()?.Split(',');
+                await Task.Run(() =>
                 {
-                    Parallel.ForEach(tableNames, (tableName, state, index) =>
+                    if (tableNames != null)
                     {
-                        if (!string.IsNullOrEmpty(tableName))
+                        Parallel.ForEach(tableNames, (tableName, state, index) =>
                         {
-                            ds.Tables[(int)index].TableName = tableName;
-                        }
-                    });
-                }
-            });
+                            if (!string.IsNullOrEmpty(tableName))
+                            {
+                                ds.Tables[(int)index].TableName = tableName;
+                            }
+                        });
+                    }
+                });
+            }
         }
         finally
         {

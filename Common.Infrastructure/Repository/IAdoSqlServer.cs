@@ -6,7 +6,7 @@ public interface IAdoSqlServer
         string connectionStringName = null);
 
     public Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters = null,
-        bool timeout = true, string connectionStringName = null);
+        bool timeout = true, string connectionStringName = null, bool withTableNames = true);
 
     public Task<DataTable> GetDataTableAsync(string spname, Dictionary<string, object> parameters = null,
         string connectionStringName = null);

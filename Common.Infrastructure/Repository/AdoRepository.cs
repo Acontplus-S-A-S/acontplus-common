@@ -146,10 +146,8 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 await context.Database.OpenConnectionAsync();
             }
 
-            using var adapter = new SqlDataAdapter();
-            adapter.SelectCommand = (SqlCommand)cmd;
-            dt = new DataTable();
-            adapter.Fill(dt);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            dt.Load(reader);
         }
         finally
         {

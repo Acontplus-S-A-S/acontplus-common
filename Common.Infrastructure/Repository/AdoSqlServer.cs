@@ -142,10 +142,8 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
                 await conn.OpenAsync();
             }
 
-            using var adapter = new SqlDataAdapter();
-            adapter.SelectCommand = cmd;
-            dt = new DataTable();
-            adapter.Fill(dt);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            dt.Load(reader);
         }
         finally
         {

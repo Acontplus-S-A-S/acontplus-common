@@ -8,6 +8,10 @@ public static class ClaimsPrincipleExtensions
     {
         return user.FindFirst(ClaimTypes.Name)?.Value;
     }
+    public static string GetEmail(this ClaimsPrincipal user)
+    {
+        return user.FindFirstValue(ClaimTypes.Email);
+    }
 
     public static string GetRole(this ClaimsPrincipal user)
     {

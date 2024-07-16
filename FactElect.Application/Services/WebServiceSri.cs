@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using FactElect.Application.Models;
 
 namespace FactElect.Application.Services;
 

@@ -1,18 +1,20 @@
 ﻿using System.Net;
 using System.Web;
+using Newtonsoft.Json;
 
 namespace FactElect.Application.Services;
-public interface ICookieService
+
+public interface ICaptchaService
 {
-    Task<CookieResponse> GetAsync();
+    Task<string> ValidateAsync(string html, CookieContainer cookies);
 }
-public class CookieService : ICookieService
+public class CaptchaService : ICaptchaService
 {
-    public async Task<CookieResponse> GetAsync()
+    public async Task<string> ValidateAsync(string html, CookieContainer cookies)
     {
-        var cookies = new CookieContainer();
-        var generator = new Random();
-        var numeroGenerado = generator.Next(0, 100000000).ToString("D6");
+        var captchaImage = JsonConvert.DeserializeObject<CaptchaImage>(html);
+        var captcha = captchaImage.values[0];
+
         using var client = new HttpClient(new HttpClientHandler
         {
             Credentials = CredentialCache.DefaultNetworkCredentials,
@@ -22,15 +24,14 @@ public class CookieService : ICookieService
         var request = new HttpRequestMessage
         {
             RequestUri =
-                new Uri("https://srienlinea.sri.gob.ec/sri-captcha-servicio-internet/captcha/start/1?r=" +
-                        numeroGenerado),
+                new Uri(
+                    "https://srienlinea.sri.gob.ec/sri-captcha-servicio-internet/rest/ValidacionCaptcha/validarCaptcha/" +
+                    captcha + "?emitirToken=true"),
             Method = HttpMethod.Get
         };
         client.DefaultRequestHeaders.Add("User-Agent",
             "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0");
-
         var response = await client.SendAsync(request);
-
         if (!response.IsSuccessStatusCode)
         {
             return null;
@@ -38,6 +39,6 @@ public class CookieService : ICookieService
 
         var stream = await response.Content.ReadAsStreamAsync();
         using var sr = new StreamReader(stream);
-        return new CookieResponse { Cookie = cookies, Html = HttpUtility.HtmlDecode(await sr.ReadToEndAsync()) };
+        return HttpUtility.HtmlDecode(await sr.ReadToEndAsync());
     }
 }

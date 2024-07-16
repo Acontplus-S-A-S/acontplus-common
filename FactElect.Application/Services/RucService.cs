@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Web;
-using FactElect.Application.Models;
 using Newtonsoft.Json;
 
 namespace FactElect.Application.Services;
@@ -38,38 +37,6 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
         var html = HttpUtility.HtmlDecode(await sr.ReadToEndAsync());
         return html == "true";
     }
-
-    private async Task<string> ValidateCaptchaAsync(string html, CookieContainer cookies)
-    {
-        var captchaImage = JsonConvert.DeserializeObject<CaptchaImage>(html);
-        var captcha = captchaImage.values[0];
-        using var client = new HttpClient(new HttpClientHandler
-        {
-            Credentials = CredentialCache.DefaultNetworkCredentials,
-            UseCookies = true,
-            CookieContainer = cookies
-        });
-        var request = new HttpRequestMessage
-        {
-            RequestUri =
-                new Uri(
-                    "https://srienlinea.sri.gob.ec/sri-captcha-servicio-internet/rest/ValidacionCaptcha/validarCaptcha/" +
-                    captcha + "?emitirToken=true"),
-            Method = HttpMethod.Get
-        };
-        client.DefaultRequestHeaders.Add("User-Agent",
-            "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0");
-        var response = await client.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new Exception();
-        }
-
-        var stream = await response.Content.ReadAsStreamAsync();
-        using var sr = new StreamReader(stream);
-        return HttpUtility.HtmlDecode(await sr.ReadToEndAsync());
-    }
-
     private async Task<RucModel> GetRucSriAsync(string numeroRuc, CookieContainer cookies, string html)
     {
         var personaDatosError = new RucModel();
@@ -178,7 +145,9 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
             return new RucModel { Error = "No se pudo consultar la pagina" };
         }
 
-        var htmlResponse = await ValidateCaptchaAsync(cookieContainer.Html, cookieContainer.Cookie);
+        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
+
+        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
 
         if (htmlResponse == null)
         {

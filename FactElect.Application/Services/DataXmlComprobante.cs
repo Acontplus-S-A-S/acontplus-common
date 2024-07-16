@@ -1,6 +1,4 @@
-﻿using FactElect.Application.Models;
-
-namespace FactElect.Application.Services;
+﻿namespace FactElect.Application.Services;
 
 public class DataXmlComprobante
 {

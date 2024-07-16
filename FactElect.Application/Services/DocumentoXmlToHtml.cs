@@ -1,5 +1,4 @@
 ﻿using Common.Core.Enums;
-using FactElect.Application.Models;
 
 namespace FactElect.Application.Services;
 

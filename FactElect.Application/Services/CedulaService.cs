@@ -1,7 +1,6 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Web;
-using FactElect.Application.Models;
 using Newtonsoft.Json;
 
 namespace FactElect.Application.Services;
@@ -39,39 +38,6 @@ public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
         var html = HttpUtility.HtmlDecode(await sr.ReadToEndAsync());
         return html == "true";
     }
-
-    private async Task<string> ValidateCaptchaAsync(string html, CookieContainer cookies)
-    {
-        var captchaImage = JsonConvert.DeserializeObject<CaptchaImage>(html);
-        var captcha = captchaImage.values[0];
-
-        using var client = new HttpClient(new HttpClientHandler
-        {
-            Credentials = CredentialCache.DefaultNetworkCredentials,
-            UseCookies = true,
-            CookieContainer = cookies
-        });
-        var request = new HttpRequestMessage
-        {
-            RequestUri =
-                new Uri(
-                    "https://srienlinea.sri.gob.ec/sri-captcha-servicio-internet/rest/ValidacionCaptcha/validarCaptcha/" +
-                    captcha + "?emitirToken=true"),
-            Method = HttpMethod.Get
-        };
-        client.DefaultRequestHeaders.Add("User-Agent",
-            "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0");
-        var response = await client.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
-
-        var stream = await response.Content.ReadAsStreamAsync();
-        using var sr = new StreamReader(stream);
-        return HttpUtility.HtmlDecode(await sr.ReadToEndAsync());
-    }
-
 
     private async Task<CedulaModel> GetCedulaSriAsync(string numeroCedula, CookieContainer cookies, string html)
     {
@@ -141,8 +107,9 @@ public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
         {
             return new CedulaModel { Error = "No se pudo consultar la pagina" };
         }
+        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
 
-        var htmlResponse = await ValidateCaptchaAsync(cookieContainer.Html, cookieContainer.Cookie);
+        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
 
         return htmlResponse == null
             ? new CedulaModel { Error = "No se pudo validar el captcha" }

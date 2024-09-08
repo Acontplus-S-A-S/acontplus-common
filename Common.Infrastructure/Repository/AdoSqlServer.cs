@@ -50,8 +50,9 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         bool timeout, string connectionStringName, bool withTableNames)
     {
         DataSet ds = new DataSet();
+        connectionStringName = string.IsNullOrEmpty(connectionStringName) ? "DefaultConnection": connectionStringName ;
         await using var conn =
-            new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
+            new SqlConnection(configuration.GetConnectionString(connectionStringName));
         await using var cmd = new SqlCommand(spname, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
@@ -124,8 +125,9 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         string connectionStringName)
     {
         DataTable dt = new DataTable();
+        connectionStringName = string.IsNullOrEmpty(connectionStringName) ? "DefaultConnection" : connectionStringName;
         await using var conn =
-            new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
+            new SqlConnection(configuration.GetConnectionString(connectionStringName));
         await using var cmd = new SqlCommand(spname, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try
@@ -164,8 +166,9 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
     public async Task<int> OnlyExecuteAsync(string query, Dictionary<string, object> parameters,
         bool useStoredProcedure, bool timeout, string connectionStringName)
     {
+        connectionStringName = string.IsNullOrEmpty(connectionStringName) ? "DefaultConnection" : connectionStringName;
         await using var conn =
-            new SqlConnection(configuration.GetConnectionString(connectionStringName ?? "DefaultConnection"));
+            new SqlConnection(configuration.GetConnectionString(connectionStringName));
         await using var cmd = new SqlCommand(query, conn);
         var wasOpen = cmd.Connection.State == ConnectionState.Open;
         try

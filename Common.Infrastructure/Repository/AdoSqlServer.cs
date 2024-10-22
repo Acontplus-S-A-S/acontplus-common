@@ -50,7 +50,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         bool timeout, string connectionStringName, bool withTableNames)
     {
         DataSet ds = new DataSet();
-        connectionStringName = string.IsNullOrEmpty(connectionStringName) ? "DefaultConnection": connectionStringName ;
+        connectionStringName = string.IsNullOrEmpty(connectionStringName) ? "DefaultConnection" : connectionStringName;
         await using var conn =
             new SqlConnection(configuration.GetConnectionString(connectionStringName));
         await using var cmd = new SqlCommand(spname, conn);

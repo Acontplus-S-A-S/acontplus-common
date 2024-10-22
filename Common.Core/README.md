@@ -1,3 +1,12 @@
-# Version 1.0.11
+# Version 1.0.12
 
-Adding common converters, models, logs and validations
+# Entities:
+    -Bases
+# Enums
+# Models:
+    -API responses
+# Utils:
+    -Data Compression
+    -Data Converters
+    -Data Validators
+    -Logs

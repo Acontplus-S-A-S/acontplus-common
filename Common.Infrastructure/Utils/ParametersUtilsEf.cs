@@ -8,7 +8,9 @@ public static class ParametersUtilsEf
     {
         var sqlParam = new SqlParameter
         {
-            ParameterName = name, SqlDbType = SqlTypes.GetDbType(value), Value = value ?? DBNull.Value
+            ParameterName = name,
+            SqlDbType = SqlTypes.GetDbType(value),
+            Value = value ?? DBNull.Value
         };
         cmd.Parameters.Add(sqlParam);
     }
@@ -17,7 +19,10 @@ public static class ParametersUtilsEf
     {
         var sqlParam = new SqlParameter
         {
-            ParameterName = parameterName, SqlDbType = sqlDbType, Size = size, Direction = ParameterDirection.Output
+            ParameterName = parameterName,
+            SqlDbType = sqlDbType,
+            Size = size,
+            Direction = ParameterDirection.Output
         };
         cmd.Parameters.Add(sqlParam);
     }

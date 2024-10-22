@@ -6,21 +6,15 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.Core</PackageId>
-    <Version>1.0.11</Version>
+    <Version>1.0.12</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
-    <Description>Lib to use common models, converters and validators</Description>
-    <PackageTags>converters;models;validators</PackageTags>
+    <Description>Lib to use common entities, enums, models and utils</Description>
+    <PackageTags>entities;enums;models;utils</PackageTags>
     <RepositoryUrl>https://github.com/Acontplus-S-A-S/acontplus-common</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Models\GestionFinanciera\**"/>
-    <EmbeddedResource Remove="Models\GestionFinanciera\**"/>
-    <None Remove="Models\GestionFinanciera\**"/>
-  </ItemGroup>
 
   <ItemGroup>
     <None Remove="README.md"/>

@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Net;
+using System.Text.RegularExpressions;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 
@@ -22,16 +23,16 @@ public static class DataValidation
         switch (removeEmptyDt)
         {
             case true:
+            {
+                var tablesToRemove = ds.Tables.Cast<DataTable>().Where(dt => dt.Rows.Count == 0).ToList();
+
+                foreach (var dt in tablesToRemove)
                 {
-                    var tablesToRemove = ds.Tables.Cast<DataTable>().Where(dt => dt.Rows.Count == 0).ToList();
-
-                    foreach (var dt in tablesToRemove)
-                    {
-                        ds.Tables.Remove(dt);
-                    }
-
-                    break;
+                    ds.Tables.Remove(dt);
                 }
+
+                break;
+            }
         }
 
         return ds == null || ds.Tables.Count == 0;
@@ -69,6 +70,28 @@ public static class DataValidation
         catch (JsonReaderException)
         {
             return false;
+        }
+    }
+
+    public static string ValidateIpAddress(string ipAddress)
+    {
+        if (string.IsNullOrEmpty(ipAddress))
+        {
+            return "0.0.0.0";
+        }
+
+        switch (ipAddress.Length)
+        {
+            case > 13:
+            {
+                var extractedIpAddress = ipAddress.Substring(13);
+                return IPAddress.TryParse(extractedIpAddress, out _) ? extractedIpAddress : "0.0.0.0";
+            }
+            default:
+                return ipAddress ?? "0.0.0.0";
+                // Extract the relevant part of the IP address if necessary
+
+                // Check if the extracted part is a valid IP address
         }
     }
 }

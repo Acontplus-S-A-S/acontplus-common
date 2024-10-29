@@ -124,7 +124,7 @@ namespace Reports.Application.Services
                     if (Convert.ToBoolean(item["isPicture"]))
                     {
                         paramValue = item.Field<bool>("isCompressed")
-                            ? FileExtensions.GetBase64FromByte(CompressionHelper.Decompress((byte[])item["paramValue"]))
+                            ? FileExtensions.GetBase64FromByte(CompressionUtils.DecompressDeflate((byte[])item["paramValue"]))
                             : FileExtensions.GetBase64FromByte((byte[])item["paramValue"]);
                         lr.SetParameters(new ReportParameter(item["paramName"].ToString(), paramValue));
                     }

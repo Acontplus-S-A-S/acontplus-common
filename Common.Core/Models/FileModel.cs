@@ -2,12 +2,19 @@
 using Microsoft.AspNetCore.Http;
 
 namespace Common.Core.Models;
+
 public class FileModel : IDisposable
 {
     public string FileName { get; set; }
     public string ContentType { get; set; }
     public byte[] Content { get; private set; }
     public string Base64 { get; private set; }
+
+    public void Dispose()
+    {
+        DisposeContent(); // Clear the content byte array
+        Base64 = null; // Set Base64 to null to release memory
+    }
 
     public void CreateBase64(byte[] content, string contentType, string fileName = null)
     {
@@ -42,7 +49,7 @@ public class FileModel : IDisposable
     public void CreateBytesCompressedGzip(IFormFile file)
     {
         DisposeContent(); // Clear any existing content
-        using (var memoryStream = new System.IO.MemoryStream())
+        using (var memoryStream = new MemoryStream())
         {
             file.CopyTo(memoryStream);
             Content = CompressionUtils.CompressGZip(memoryStream.ToArray());
@@ -60,11 +67,5 @@ public class FileModel : IDisposable
             Array.Clear(Content, 0, Content.Length);
             Content = null;
         }
-    }
-
-    public void Dispose()
-    {
-        DisposeContent();  // Clear the content byte array
-        Base64 = null;      // Set Base64 to null to release memory
     }
 }

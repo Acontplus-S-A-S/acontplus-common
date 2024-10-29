@@ -1,4 +1,5 @@
 ﻿namespace Common.Core.Models;
+
 public class Email
 {
     public string Host { get; set; }

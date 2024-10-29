@@ -1,6 +1,7 @@
 ﻿using System.IO.Compression;
 
 namespace Common.Core.Utils;
+
 public static class CompressionUtils
 {
     // Deflate Compression

@@ -19,7 +19,7 @@ public class RdlcPrinterService : IRdlcPrinterService
         var streams = new List<Stream>();
         using LocalReport lr = new LocalReport();
         lr.LoadReportDefinition(LoadReportDefinition(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,
-            "Reports", rdlcPrinter.FileName)));
+            rdlcPrinter.ReportsDirectory, rdlcPrinter.FileName)));
         if (printRequest.DataSources != null)
         {
             foreach (var item in printRequest.DataSources)
@@ -63,7 +63,7 @@ public class RdlcPrinterService : IRdlcPrinterService
             }
         }
 
-        lr.Render("Image", rdlcPrinter.DeviceInfo, (name, fileNameExtension, encoding, mimeType, willSeek) =>
+        lr.Render(rdlcPrinter.Format, rdlcPrinter.DeviceInfo, (_, _, _, _, _) =>
         {
             var stream = new MemoryStream();
             streams.Add(stream);
@@ -84,17 +84,17 @@ public class RdlcPrinterService : IRdlcPrinterService
         pageSettings.PrinterName = rdlcPrinter.PrinterName;
         printDoc.DefaultPageSettings = pageSettings.DefaultPageSettings;
 
-        int currentIndex = 0;
+        int currentPage = 0;
         switch (printDoc.PrinterSettings.IsValid)
         {
             case true:
                 printDoc.PrintPage += (sender, e) =>
                 {
-                    Metafile pageImage = new Metafile(streams[currentIndex]);
+                    Metafile pageImage = new Metafile(streams[currentPage]);
                     e.Graphics.DrawImage(
                         pageImage, e.PageBounds);
-                    currentIndex++;
-                    e.HasMorePages = currentIndex < streams.Count;
+                    currentPage++;
+                    e.HasMorePages = currentPage < streams.Count;
                 };
                 printDoc.EndPrint += (sender, e) =>
                 {

@@ -6,18 +6,18 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Reports.Application</PackageId>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
-    <Description>Get Reports RDL</Description>
-    <PackageTags>reports;rdl;rdlc</PackageTags>
+    <Description>Acontplus.Reports.Application is a .NET library designed to simplify the generation of RDLC (Report Definition Language Client-side) reports. It includes features for creating, exporting, and managing reports using RDLC in your .NET applications.</Description>
+    <PackageTags>reports, rdl, rdlc, reporting, .NET, RDLC-Reports, ReportViewer, Acontplus</PackageTags>
     <RepositoryUrl>https://github.com/Acontplus-S-A-S/acontplus-common</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="README.md" />
+    <None Remove="README.md"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -29,8 +29,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Acontplus.Common.Core" />
-    <PackageReference Include="Microsoft.Data.SqlClient" />
-    <PackageReference Include="ReportViewerCore.NETCore" />
+    <PackageReference Include="Acontplus.Common.Core"/>
+    <PackageReference Include="Microsoft.Data.SqlClient"/>
+    <PackageReference Include="ReportViewerCore.NETCore"/>
   </ItemGroup>
 </Project>

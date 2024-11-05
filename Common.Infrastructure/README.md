@@ -63,12 +63,17 @@ Acontplus S.A.S.
 
 ## Tags
 
-infrastructure, dbaccess, ado
+database;ado-net;data-access;sql;orm;micro-orm;query;crud
 
 ## Contributing
+We welcome contributions! Please submit any issues or feature requests via our GitHub repository, or feel free to fork the project and submit pull requests.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+## License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Support
+## Contact
+If you have any questions or need support, please feel free to contact us.
 
-For support, please open an issue in the GitHub repository.
+- **Author:** Ivan Paz
+- **Company:** Acontplus S.A.S.
+- **Email:** ifer343@gmail.com

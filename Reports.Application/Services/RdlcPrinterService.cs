@@ -107,16 +107,12 @@ public class RdlcPrinterService : IRdlcPrinterService
 
                         streams.Clear();
                     }
-                };
-                printDoc.PrinterSettings.Copies = rdlcPrinter.Copies;
-                printDoc.Print();
-
-                printDoc.EndPrint += (o, e) =>
-                {
                     if (printDoc.PrintController.IsPreview)
                     {
                     }
                 };
+                printDoc.PrinterSettings.Copies = rdlcPrinter.Copies;
+                printDoc.Print();
                 return true;
             default:
                 return false;

@@ -12,25 +12,18 @@ using static System.Enum;
 
 namespace Reports.Application.Services
 {
-    public class RdlcReportService : IRdlcReportService, IDisposable
+    public class RdlcReportService(IConfiguration configuration) : IRdlcReportService, IDisposable
     {
-        private readonly IConfiguration _configuration;
-        private readonly ConcurrentDictionary<string, Lazy<MemoryStream>> _reportCache;
+        private readonly ConcurrentDictionary<string, Lazy<MemoryStream>> _reportCache = new();
         private bool _disposed;
-
-        public RdlcReportService(IConfiguration configuration)
+        private readonly string _mainDirectory = configuration["Reports:MainDirectory"]!;
+        
+        public ReportResponse GetReport(DataSet parameters, DataSet data, bool externalDirectory)
         {
-            _configuration = configuration;
-            _reportCache = new ConcurrentDictionary<string, Lazy<MemoryStream>>();
-        }
-
-        public ReportResponse GetReport(DataSet parameters, DataSet data, bool offline = false)
-        {
-            var response = new ReportResponse();
             var reportProps = DataTableMapper.BindData<ReportProps>(parameters.Tables["ReportProps"]);
 
             using var lr = new LocalReport();
-            string reportPath = GetReportPath(parameters, reportProps, offline);
+            string reportPath = GetReportPath(parameters, reportProps, externalDirectory);
 
             var reportDefinitionStream = _reportCache.GetOrAdd(reportPath, path =>
             {
@@ -48,7 +41,7 @@ namespace Reports.Application.Services
             AddReportParameters(lr, parameters, data);
 
             var fileReport = lr.Render(reportProps.ReportFormat, null, out _, out _, out _, out _, out _);
-            response = BuildReportResponse(reportProps, fileReport);
+            var response = BuildReportResponse(reportProps, fileReport);
 
             return response;
         }
@@ -57,15 +50,15 @@ namespace Reports.Application.Services
         {
             if (offline)
             {
-                var value = _configuration.GetSection("dirReports").Value;
+                var value = configuration["Reports:ExternalDirectory"];
                 if (value != null)
                 {
-                    return Path.Combine(value, parameters.Tables[0].Rows[0]["reportPath"].ToString());
+                    return Path.Combine(value, parameters.Tables["ReportProps"]!.Rows[0]["ReportPath"].ToString()!);
                 }
             }
             else
             {
-                var mainPath = Path.Combine(Directory.GetCurrentDirectory(), "Reports");
+                var mainPath = Path.Combine(Directory.GetCurrentDirectory(), _mainDirectory);
                 var paths = reportProps.ReportPath.Split("/");
                 paths = paths.Where(s => !string.IsNullOrEmpty(s)).ToArray();
 
@@ -76,6 +69,7 @@ namespace Reports.Application.Services
                     _ => Path.Combine(mainPath, reportProps.ReportPath),
                 };
             }
+
             return string.Empty;
         }
 
@@ -124,7 +118,8 @@ namespace Reports.Application.Services
                     if (Convert.ToBoolean(item["isPicture"]))
                     {
                         paramValue = item.Field<bool>("isCompressed")
-                            ? FileExtensions.GetBase64FromByte(CompressionUtils.DecompressDeflate((byte[])item["paramValue"]))
+                            ? FileExtensions.GetBase64FromByte(
+                                CompressionUtils.DecompressDeflate((byte[])item["paramValue"]))
                             : FileExtensions.GetBase64FromByte((byte[])item["paramValue"]);
                         lr.SetParameters(new ReportParameter(item["paramName"].ToString(), paramValue));
                     }
@@ -132,6 +127,7 @@ namespace Reports.Application.Services
                     {
                         paramValue = Encoding.UTF8.GetString(item.Field<byte[]>("paramValue"));
                     }
+
                     lr.SetParameters(new ReportParameter(item["paramName"].ToString(), paramValue));
                 }
             }
@@ -153,13 +149,11 @@ namespace Reports.Application.Services
 
         public async Task<ReportResponse> GetErrorAsync()
         {
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Reports", "NotFound.pdf");
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Resources", "NotFound.pdf");
             var fileContents = await File.ReadAllBytesAsync(filePath);
             return new ReportResponse
             {
-                FileContents = fileContents,
-                ContentType = "application/pdf",
-                FileDownloadName = "Not Found.pdf"
+                FileContents = fileContents, ContentType = "application/pdf", FileDownloadName = "Not Found.pdf"
             };
         }
 
@@ -172,6 +166,7 @@ namespace Reports.Application.Services
                     lazyMemoryStream.Value.Dispose();
                 }
             }
+
             _reportCache.Clear();
         }
 

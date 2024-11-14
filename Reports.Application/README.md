@@ -16,17 +16,17 @@ You can install the package via [NuGet](https://www.nuget.org/packages/Acontplus
 ### .NET CLI
 
 ```
-dotnet add package Acontplus.Reports.Application --version 1.0.7
+dotnet add package Acontplus.Reports.Application
 ```
 
 ### Package Manager Console
 ```
-Install-Package Acontplus.Reports.Application -Version 1.0.7
+Install-Package Acontplus.Reports.Application
 ```
 Or update your .csproj file manually:
 
 ```
-<PackageReference Include="Acontplus.Reports.Application" Version="1.0.5" />
+<PackageReference Include="Acontplus.Reports.Application" Version="1.0.9" />
 ```
 
 ## Usage

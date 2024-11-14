@@ -26,7 +26,7 @@ Install-Package Acontplus.Reports.Application
 Or update your .csproj file manually:
 
 ```
-<PackageReference Include="Acontplus.Reports.Application" Version="1.0.9" />
+<PackageReference Include="Acontplus.Reports.Application" Version="1.1.0" />
 ```
 
 ## Usage

@@ -22,10 +22,10 @@ Install-Package Acontplus.Common.Infrastructure
 
 ## Dependencies
 
-- FastMember (1.5.0)
-- Microsoft.Data.SqlClient (5.2.2)
-- Microsoft.EntityFrameworkCore (8.0.10)
-- Microsoft.EntityFrameworkCore.SqlServer (8.0.10)
+- FastMember
+- Microsoft.Data.SqlClient
+- Microsoft.EntityFrameworkCore
+- Microsoft.EntityFrameworkCore.SqlServer
 
 ## Features
 

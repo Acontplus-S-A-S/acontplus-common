@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.FactElect.Application</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use facturación electronica SRI Ecuador</Description>
@@ -16,6 +16,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Acontplus.Common.Core" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
   <ItemGroup>
     <None Update="README.md">

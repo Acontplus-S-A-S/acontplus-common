@@ -13,13 +13,13 @@ public class CustomLogger(IConfiguration configuration) : ICustomLogger
     {
         try
         {
-            var writeLogs = configuration.GetValue("Logs:WriteLogs", true);
-            if (!writeLogs)
+            var writeLogs = configuration["Logs:WriteLogs"];
+            if (string.IsNullOrEmpty(writeLogs))
             {
                 return; // Logs are disabled, no need to proceed
             }
 
-            var logFolderPath = configuration.GetValue<string>("Logs:CustomLogs");
+            var logFolderPath = configuration["Logs:CustomLogs"];
             if (string.IsNullOrEmpty(logFolderPath))
             {
                 logFolderPath = Path.Combine(Environment.CurrentDirectory, "Logs");

@@ -23,12 +23,6 @@ dotnet add package Acontplus.Reports.Application
 ```
 Install-Package Acontplus.Reports.Application
 ```
-Or update your .csproj file manually:
-
-```
-<PackageReference Include="Acontplus.Reports.Application" Version="1.1.0" />
-```
-
 ## Usage
 ### 1. Configure Report Service
 Inject the RdlcReportService into your .NET Core application to generate reports.

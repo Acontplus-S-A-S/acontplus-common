@@ -102,7 +102,11 @@ namespace Reports.Application.Services
             var firstDataSource = data.Tables[0];
             if (firstDataSource.Columns.Contains("codigoAutorizacion"))
             {
-                var byteBarcode = BarcodeGen.Create(firstDataSource.Rows[0].Field<string>("codigoAutorizacion"));
+                var barcodeConfig = new BarcodeConfig
+                {
+                    Text = firstDataSource.Rows[0].Field<string>("codigoAutorizacion")
+                };
+                var byteBarcode = BarcodeGen.Create(barcodeConfig);
                 lr.SetParameters(new ReportParameter("barcode", Convert.ToBase64String(
                     byteBarcode,
                     0,

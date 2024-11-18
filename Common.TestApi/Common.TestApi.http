@@ -1,0 +1,10 @@
+@Common.TestApi_HostAddress = https://localhost:7111
+
+GET {{Common.TestApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+
+GET {{Common.TestApi_HostAddress}}/api/barcode
+
+###

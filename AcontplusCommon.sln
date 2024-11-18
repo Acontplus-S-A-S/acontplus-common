@@ -22,6 +22,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FactElect.Application", "Fa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.S3Application", "Common.S3Application\Common.S3Application.csproj", "{5708BA73-2B9E-4650-BDF2-A83062D6A89D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.TestApi", "Common.TestApi\Common.TestApi.csproj", "{AEEC9986-8F14-46CF-970E-90ECAF84043C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{5708BA73-2B9E-4650-BDF2-A83062D6A89D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5708BA73-2B9E-4650-BDF2-A83062D6A89D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5708BA73-2B9E-4650-BDF2-A83062D6A89D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEEC9986-8F14-46CF-970E-90ECAF84043C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEEC9986-8F14-46CF-970E-90ECAF84043C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEEC9986-8F14-46CF-970E-90ECAF84043C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEEC9986-8F14-46CF-970E-90ECAF84043C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -8,6 +8,7 @@ public interface ICaptchaService
 {
     Task<string> ValidateAsync(string html, CookieContainer cookies);
 }
+
 public class CaptchaService : ICaptchaService
 {
     public async Task<string> ValidateAsync(string html, CookieContainer cookies)
@@ -17,9 +18,7 @@ public class CaptchaService : ICaptchaService
 
         using var client = new HttpClient(new HttpClientHandler
         {
-            Credentials = CredentialCache.DefaultNetworkCredentials,
-            UseCookies = true,
-            CookieContainer = cookies
+            Credentials = CredentialCache.DefaultNetworkCredentials, UseCookies = true, CookieContainer = cookies
         });
         var request = new HttpRequestMessage
         {

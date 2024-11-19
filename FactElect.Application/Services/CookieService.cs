@@ -2,10 +2,12 @@
 using System.Web;
 
 namespace FactElect.Application.Services;
+
 public interface ICookieService
 {
     Task<CookieResponse> GetAsync();
 }
+
 public class CookieService : ICookieService
 {
     public async Task<CookieResponse> GetAsync()
@@ -15,9 +17,7 @@ public class CookieService : ICookieService
         var numeroGenerado = generator.Next(0, 100000000).ToString("D6");
         using var client = new HttpClient(new HttpClientHandler
         {
-            Credentials = CredentialCache.DefaultNetworkCredentials,
-            UseCookies = true,
-            CookieContainer = cookies
+            Credentials = CredentialCache.DefaultNetworkCredentials, UseCookies = true, CookieContainer = cookies
         });
         var request = new HttpRequestMessage
         {

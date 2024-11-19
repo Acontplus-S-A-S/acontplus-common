@@ -2,12 +2,12 @@
 
 public class ResponseSri
 {
-    public string estado { get; set; }
-    public string identificador { get; set; }
-    public string message { get; set; }
-    public string xmlSri { get; set; }
-    public string codigoAutorizacion { get; set; }
-    public string fechaAutorizacion { get; set; }
-    public string informacionAdicional { get; set; }
-    public string tipo { get; set; }
+    public string Estado { get; set; }
+    public string Identificador { get; set; }
+    public string Message { get; set; }
+    public string XmlSri { get; set; }
+    public string CodigoAutorizacion { get; set; }
+    public string FechaAutorizacion { get; set; }
+    public string InformacionAdicional { get; set; }
+    public string Tipo { get; set; }
 }

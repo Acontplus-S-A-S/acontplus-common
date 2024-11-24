@@ -1,4 +1,6 @@
-﻿namespace Common.Infrastructure.Repository;
+﻿using Common.Infrastructure.Utils;
+
+namespace Common.Infrastructure.Repository;
 
 public class AdoRepository(DbContextFactory contexts, IConfiguration configuration) : IAdoRepository
 {
@@ -15,10 +17,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
-                foreach (var parameter in parameters.Where(parameter =>
-                             !string.IsNullOrEmpty(parameter.Key) && parameter.Value != null))
+                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -58,10 +59,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
-                foreach (var parameter in parameters.Where(parameter =>
-                             !string.IsNullOrEmpty(parameter.Key) && parameter.Value != null))
+                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -130,10 +130,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
-                foreach (var parameter in parameters.Where(parameter =>
-                             !string.IsNullOrEmpty(parameter.Key) && parameter.Value != null))
+                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -173,12 +172,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
             cmd.CommandText = spName;
             if (parameters.Count > 0)
             {
-                foreach (var parameter in parameters)
+                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    if (!string.IsNullOrEmpty(parameter.Key) && parameter.Value != null)
-                    {
-                        ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
-                    }
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -223,12 +219,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
 
             if (parameters.Count > 0)
             {
-                foreach (var parameter in parameters)
+                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    if (!string.IsNullOrEmpty(parameter.Key) && parameter.Value != null)
-                    {
-                        ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value);
-                    }
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -267,30 +260,6 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                         }
                     }
                 }
-                //var schemaTable = await reader.GetSchemaTableAsync();
-                //response.Code = reader.IsDBNull(0) ? null : reader.GetString(0);
-                //// Check if the schema table contains the "message" column
-                //var columnExists = schemaTable != null && schemaTable.Rows.Cast<DataRow>().Any(row =>
-                //    row["ColumnName"].ToString().Equals("message", StringComparison.OrdinalIgnoreCase));
-                //if (columnExists)
-                //{
-                //    var indexMessage = reader.GetOrdinal("message");
-                //    if (indexMessage != -1 && !reader.IsDBNull(indexMessage))
-                //    {
-                //        response.Message = reader.GetString(indexMessage);
-                //    }
-                //}
-
-                //var payloadExists = schemaTable != null && schemaTable.Rows.Cast<DataRow>().Any(row =>
-                //    row["ColumnName"].ToString().Equals("payload", StringComparison.OrdinalIgnoreCase));
-                //if (payloadExists)
-                //{
-                //    var indexPayload = reader.GetOrdinal("payload");
-                //    if (indexPayload != -1 && !reader.IsDBNull(indexPayload))
-                //    {
-                //        response.Payload = reader.GetString(indexPayload);
-                //    }
-                //}
             }
         }
         finally

@@ -7,8 +7,8 @@ public class FileModel : IDisposable
 {
     public string FileName { get; set; }
     public string ContentType { get; set; }
-    public byte[] Content { get; private set; }
-    public string Base64 { get; private set; }
+    public byte[] Content { get; set; }
+    public string Base64 { get; set; }
 
     public void Dispose()
     {

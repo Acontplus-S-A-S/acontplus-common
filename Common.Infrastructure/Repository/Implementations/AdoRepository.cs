@@ -282,4 +282,53 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
 
         return response;
     }
+
+    public async Task<string> SpExecuteDeprecatedAsync(string spName, Dictionary<string, object> parameters,
+       bool timeout)
+    {
+        var response = string.Empty;
+        await using var context = contexts.GetContext(configuration["ContextName"]);
+        await using var cmd = context.Database.GetDbConnection().CreateCommand();
+        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
+        try
+        {
+            cmd.CommandText = spName;
+            if (parameters.Count > 0)
+            {
+                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
+                {
+                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+                }
+            }
+
+            cmd.CommandType = CommandType.StoredProcedure;
+            if (!timeout)
+            {
+                cmd.CommandTimeout = 0;
+            }
+
+            if (!wasOpen)
+            {
+                await context.Database.OpenConnectionAsync();
+            }
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (await reader.ReadAsync())
+            {
+                response = reader.GetString(0);
+            }
+        }
+        finally
+        {
+            if (!wasOpen)
+            {
+                if (cmd.Connection != null)
+                {
+                    await cmd.Connection.CloseAsync();
+                }
+            }
+        }
+
+        return response;
+    }
 }

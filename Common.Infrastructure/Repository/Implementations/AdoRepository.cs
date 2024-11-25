@@ -1,6 +1,7 @@
-﻿using Common.Infrastructure.Utils;
+﻿using Common.Infrastructure.Repository.Interfaces;
+using Common.Infrastructure.Utils.Database;
 
-namespace Common.Infrastructure.Repository;
+namespace Common.Infrastructure.Repository.Implementations;
 
 public class AdoRepository(DbContextFactory contexts, IConfiguration configuration) : IAdoRepository
 {
@@ -46,7 +47,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         return response;
     }
 
-    public async Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters, bool withTableNames)
+    public async Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters, bool withTableNames, bool timeout)
     {
         DataSet ds = null;
         await using var context = contexts.GetContext(configuration["ContextName"]);
@@ -73,6 +74,12 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
             }
 
             cmd.CommandType = CommandType.StoredProcedure;
+
+            if (!timeout)
+            {
+                cmd.CommandTimeout = 0;
+            }
+
             if (!wasOpen)
             {
                 await context.Database.OpenConnectionAsync();
@@ -119,7 +126,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
 
     public async Task<DataTable> GetDataTableAsync(string spName, Dictionary<string, object> parameters)
     {
-        DataTable dt = new DataTable();
+        var dt = new DataTable();
         var context = contexts.GetContext(configuration["ContextName"]);
         await using var cmd = context.Database.GetDbConnection().CreateCommand();
         var wasOpen = cmd.Connection is { State: ConnectionState.Open };

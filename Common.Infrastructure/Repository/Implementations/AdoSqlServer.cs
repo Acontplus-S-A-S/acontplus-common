@@ -1,4 +1,7 @@
-﻿namespace Common.Infrastructure.Repository;
+﻿using Common.Infrastructure.Repository.Interfaces;
+using Common.Infrastructure.Utils.Database;
+
+namespace Common.Infrastructure.Repository.Implementations;
 
 public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
 {
@@ -42,10 +45,10 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         return response;
     }
 
-    public async Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters,
-        bool timeout, string connectionStringName, bool withTableNames)
+    public async Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters, bool withTableNames,
+        bool timeout, string connectionStringName)
     {
-        DataSet ds = new DataSet();
+        var ds = new DataSet();
         connectionStringName = string.IsNullOrEmpty(connectionStringName) ? "DefaultConnection" : connectionStringName;
         await using var conn =
             new SqlConnection(configuration.GetConnectionString(connectionStringName));
@@ -119,7 +122,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
     public async Task<DataTable> GetDataTableAsync(string spname, Dictionary<string, object> parameters,
         string connectionStringName)
     {
-        DataTable dt = new DataTable();
+        var dt = new DataTable();
         connectionStringName = string.IsNullOrEmpty(connectionStringName) ? "DefaultConnection" : connectionStringName;
         await using var conn =
             new SqlConnection(configuration.GetConnectionString(connectionStringName));

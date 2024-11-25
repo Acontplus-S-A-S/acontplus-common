@@ -95,11 +95,11 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
         }
 
         using (var client = new HttpClient(new HttpClientHandler
-               {
-                   Credentials = CredentialCache.DefaultNetworkCredentials,
-                   UseCookies = true,
-                   CookieContainer = cookies
-               }))
+        {
+            Credentials = CredentialCache.DefaultNetworkCredentials,
+            UseCookies = true,
+            CookieContainer = cookies
+        }))
         {
             var request = new HttpRequestMessage
             {
@@ -134,11 +134,11 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
         }
 
         using (var client = new HttpClient(new HttpClientHandler
-               {
-                   Credentials = CredentialCache.DefaultNetworkCredentials,
-                   UseCookies = true,
-                   CookieContainer = cookies
-               }))
+        {
+            Credentials = CredentialCache.DefaultNetworkCredentials,
+            UseCookies = true,
+            CookieContainer = cookies
+        }))
         {
             var request = new HttpRequestMessage
             {

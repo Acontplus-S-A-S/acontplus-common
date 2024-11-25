@@ -98,7 +98,8 @@ public class S3StorageService : IS3StorageService
             using var client = new AmazonS3Client(credentials);
             var request = new DeleteObjectRequest
             {
-                BucketName = s3ObjectCustom.BucketName, Key = s3ObjectCustom.S3ObjectKey
+                BucketName = s3ObjectCustom.BucketName,
+                Key = s3ObjectCustom.S3ObjectKey
             };
             var response = await client.DeleteObjectAsync(request);
             s3Response.StatusCode = 201;

@@ -1,7 +1,6 @@
 ﻿global using System.Data;
 global using System.Data.Common;
 global using Common.Infrastructure.Data;
-global using Common.Infrastructure.Utils;
 global using Microsoft.Data.SqlClient;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;

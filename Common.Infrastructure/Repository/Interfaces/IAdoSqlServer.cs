@@ -1,12 +1,12 @@
-﻿namespace Common.Infrastructure.Repository;
+﻿namespace Common.Infrastructure.Repository.Interfaces;
 
 public interface IAdoSqlServer
 {
     public Task<List<T>> DynamicListAsync<T>(string spname, Dictionary<string, object> parameters = null,
         string connectionStringName = null);
 
-    public Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters = null,
-        bool timeout = true, string connectionStringName = null, bool withTableNames = true);
+    public Task<DataSet> GetDataSetAsync(string spname, Dictionary<string, object> parameters = null, bool withTableNames = true,
+        bool timeout = true, string connectionStringName = null);
 
     public Task<DataTable> GetDataTableAsync(string spname, Dictionary<string, object> parameters = null,
         string connectionStringName = null);

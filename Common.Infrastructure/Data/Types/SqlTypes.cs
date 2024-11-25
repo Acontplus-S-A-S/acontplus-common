@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Repository;
+﻿namespace Common.Infrastructure.Data.Types;
 
 public static class SqlTypes
 {

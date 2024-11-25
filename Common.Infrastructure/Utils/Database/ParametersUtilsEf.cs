@@ -1,10 +1,10 @@
-﻿using Common.Infrastructure.Repository;
+﻿using Common.Infrastructure.Data.Types;
 
-namespace Common.Infrastructure.Utils;
+namespace Common.Infrastructure.Utils.Database;
 
-public static class ParametersUtilsSqlServer
+public static class ParametersUtilsEf
 {
-    public static void AddSqlParameter(SqlCommand cmd, string name, object value)
+    public static void AddSqlParameter(DbCommand cmd, string name, object value)
     {
         var sqlParam = new SqlParameter
         {
@@ -15,7 +15,7 @@ public static class ParametersUtilsSqlServer
         cmd.Parameters.Add(sqlParam);
     }
 
-    public static void AddSqlParameterOut(SqlCommand cmd, string parameterName, SqlDbType sqlDbType, int size)
+    public static void AddSqlParameterOut(DbCommand cmd, string parameterName, SqlDbType sqlDbType, int size)
     {
         var sqlParam = new SqlParameter
         {
@@ -27,7 +27,7 @@ public static class ParametersUtilsSqlServer
         cmd.Parameters.Add(sqlParam);
     }
 
-    public static object GetParameter(SqlCommand command, string parameterName)
+    public static object GetParameter(DbCommand command, string parameterName)
     {
         return command.Parameters[parameterName].Value;
     }

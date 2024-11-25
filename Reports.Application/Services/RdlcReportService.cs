@@ -17,7 +17,7 @@ namespace Reports.Application.Services
         private readonly ConcurrentDictionary<string, Lazy<MemoryStream>> _reportCache = new();
         private bool _disposed;
         private readonly string _mainDirectory = configuration["Reports:MainDirectory"]!;
-        
+
         public ReportResponse GetReport(DataSet parameters, DataSet data, bool externalDirectory)
         {
             var reportProps = DataTableMapper.BindData<ReportProps>(parameters.Tables["ReportProps"]);
@@ -157,7 +157,9 @@ namespace Reports.Application.Services
             var fileContents = await File.ReadAllBytesAsync(filePath);
             return new ReportResponse
             {
-                FileContents = fileContents, ContentType = "application/pdf", FileDownloadName = "Not Found.pdf"
+                FileContents = fileContents,
+                ContentType = "application/pdf",
+                FileDownloadName = "Not Found.pdf"
             };
         }
 

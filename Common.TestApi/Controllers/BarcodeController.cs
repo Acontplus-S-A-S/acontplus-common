@@ -1,6 +1,4 @@
-﻿using System.Text;
-using Common.Core.Utils;
-using Microsoft.AspNetCore.Http;
+﻿using Common.Core.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Common.TestApi.Controllers

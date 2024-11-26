@@ -9,7 +9,7 @@
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
     <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageVersion Include="AWSSDK.Core" Version="3.7.400.57" />
-    <PackageVersion Include="AWSSDK.S3" Version="3.7.407.1" />
+    <PackageVersion Include="AWSSDK.S3" Version="3.7.408" />
     <PackageVersion Include="FastMember" Version="1.5.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />

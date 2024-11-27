@@ -24,6 +24,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.S3Application", "Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.TestApi", "Common.TestApi\Common.TestApi.csproj", "{AEEC9986-8F14-46CF-970E-90ECAF84043C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.ApiDocumentation", "Common.ApiDocumentation\Common.ApiDocumentation.csproj", "{CAFA6D14-5418-40D8-AF94-4FA98FA9B02A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{AEEC9986-8F14-46CF-970E-90ECAF84043C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEEC9986-8F14-46CF-970E-90ECAF84043C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEEC9986-8F14-46CF-970E-90ECAF84043C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAFA6D14-5418-40D8-AF94-4FA98FA9B02A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAFA6D14-5418-40D8-AF94-4FA98FA9B02A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAFA6D14-5418-40D8-AF94-4FA98FA9B02A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAFA6D14-5418-40D8-AF94-4FA98FA9B02A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

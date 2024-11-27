@@ -9,3 +9,4 @@ bin-release/
 /.vs
 *.user
 /.idea/.idea.AcontplusCommon/.idea
+/Common.TestApi/appsettings.Development.json

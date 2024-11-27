@@ -23,7 +23,7 @@ namespace Reports.Application.Services
             var reportProps = DataTableMapper.BindData<ReportProps>(parameters.Tables["ReportProps"]);
 
             using var lr = new LocalReport();
-            string reportPath = GetReportPath(parameters, reportProps, externalDirectory);
+            string reportPath = GetReportPath(reportProps, externalDirectory);
 
             var reportDefinitionStream = _reportCache.GetOrAdd(reportPath, path =>
             {
@@ -46,14 +46,15 @@ namespace Reports.Application.Services
             return response;
         }
 
-        private string GetReportPath(DataSet parameters, ReportProps reportProps, bool offline)
+        private string GetReportPath(ReportProps reportProps, bool offline)
         {
             if (offline)
             {
                 var value = configuration["Reports:ExternalDirectory"];
                 if (value != null)
                 {
-                    return Path.Combine(value, parameters.Tables["ReportProps"]!.Rows[0]["ReportPath"].ToString()!);
+                    var reportPath = reportProps.ReportPath.TrimStart('/', '\\');
+                    return Path.Combine(value, reportPath);
                 }
             }
             else

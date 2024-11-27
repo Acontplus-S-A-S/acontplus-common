@@ -16,7 +16,7 @@ public class FileModel : IDisposable
         Base64 = null; // Set Base64 to null to release memory
     }
 
-    public void CreateBase64(byte[] content, string contentType, string fileName = null)
+    public void Create(byte[] content, string contentType, string fileName = null)
     {
         if (Content != null)
         {
@@ -26,6 +26,19 @@ public class FileModel : IDisposable
         }
 
         Content = content;
+        ContentType = contentType;
+        FileName = fileName;
+    }
+
+    public void CreateBase64(byte[] content, string contentType, string fileName = null)
+    {
+        if (Content != null)
+        {
+            // Release previous content
+            Array.Clear(Content, 0, Content.Length);
+            Content = null;
+        }
+
         ContentType = contentType;
         FileName = fileName;
 

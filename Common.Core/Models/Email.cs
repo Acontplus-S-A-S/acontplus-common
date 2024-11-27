@@ -15,4 +15,5 @@ public class Email
     public string Template { get; set; }
     public string Logo { get; set; }
     public string Body { get; set; }
+    public List<FileModel> Files { get; set; }
 }

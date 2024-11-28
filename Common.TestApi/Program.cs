@@ -1,5 +1,6 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using Common.ApiDocumentation;
 using Common.Infrastructure.Repository.Implementations;
 using Common.Infrastructure.Repository.Interfaces;
 using Common.TestApi.Data;
@@ -19,13 +20,17 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+builder.Services.AddSwaggerDocumentation();
+
+builder.Services.AddVersioningAndSwagger();
+
 builder.Services.AddDbContextPool<TestContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
-    .ConfigureContainer<ContainerBuilder>((hostContext, builder) =>
+    .ConfigureContainer<ContainerBuilder>((hostContext, container) =>
     {
-        builder.RegisterType<AdoSqlServer>().As<IAdoSqlServer>();
+        container.RegisterType<AdoSqlServer>().As<IAdoSqlServer>();
     });
 
 string[] nameSpaces =
@@ -51,6 +56,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    app.UseSwaggerAndVersioning();
 }
 
 app.UseMiddleware<ExceptionMiddleware>();

@@ -17,8 +17,8 @@ public static class SwaggerAndVersioningExtensions
             opt.ReportApiVersions = true;
             opt.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(),
                 new QueryStringApiVersionReader("api-version"),
-                new HeaderApiVersionReader("x-api-version"),
-                new MediaTypeApiVersionReader("x-api-version"));
+                new HeaderApiVersionReader("X-Api-Version"),
+                new MediaTypeApiVersionReader("X-Api-Version"));
         }).AddApiExplorer(setup =>
         {
             setup.GroupNameFormat = "'v'VVV";
@@ -29,6 +29,7 @@ public static class SwaggerAndVersioningExtensions
 
         return services;
     }
+
     public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
     {
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -47,12 +48,13 @@ public static class SwaggerAndVersioningExtensions
 
             c.AddSecurityDefinition("Bearer", securitySchema);
 
-            var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, new[] { "Bearer" } } };
+            var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, ["Bearer"] } };
 
             c.AddSecurityRequirement(securityRequirement);
         });
         return services;
     }
+
     public static IApplicationBuilder UseSwaggerAndVersioning(this IApplicationBuilder app)
     {
         var apiVersionDescriptionProvider =
@@ -63,8 +65,8 @@ public static class SwaggerAndVersioningExtensions
         {
             foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
             {
-                options.SwaggerEndpoint($"/openapi/{description.GroupName}.json",
-                    description.GroupName.ToUpperInvariant());
+                options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                    $"My API {description.GroupName.ToUpperInvariant()}");
             }
         });
 

@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using Asp.Versioning;
 using Common.Core.Models;
 using Common.Core.Utils;
 using Common.TestApi.Models;
@@ -7,8 +8,16 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Reports.Application.Interfaces;
 
-namespace Common.TestApi.Controllers;
-public class ReportController(IReportService reportService, IRdlcReportService rdlcReportService, IEmailService emailService, IConfiguration configuration) : BaseApiController
+namespace Common.TestApi.Controllers.v1;
+
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[ApiController]
+public class ReportController(
+    IReportService reportService,
+    IRdlcReportService rdlcReportService,
+    IEmailService emailService,
+    IConfiguration configuration) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> Get()
@@ -25,12 +34,14 @@ public class ReportController(IReportService reportService, IRdlcReportService r
         {
             var reportFile = new FileModel();
             await HandleReportGeneration(mainParams, reportFile);
-            var files = new List<FileModel>
-                {
-                    reportFile
-                };
+            var files = new List<FileModel> { reportFile };
             emailData.Files = files;
         }
+        else
+        {
+            return Ok("Success");
+        }
+
         return File(emailData.Files[0].Content, "application/pdf", emailData.Files[0].FileName);
     }
 
@@ -45,7 +56,9 @@ public class ReportController(IReportService reportService, IRdlcReportService r
 
         var storedProcedure = dsParams.Tables["ReportProps"].Rows[0].Field<string>("storedProcedure");
         var dataParams = new Dictionary<string, object>
-        { ["json"] = DataConverters.SerializeDictionary(mainParams.spParams) };
+        {
+            ["json"] = DataConverters.SerializeDictionary(mainParams.spParams)
+        };
         var ds = await reportService.GetDataAsync(storedProcedure, dataParams, mainParams.withTableNames);
 
         if (ds.Tables[0].Rows.Count == 0) throw new Exception("No report data found");

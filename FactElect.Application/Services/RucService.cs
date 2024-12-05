@@ -12,50 +12,6 @@ public interface IRucService
 
 public class RucService(IServiceProvider serviceProvider) : IRucService
 {
-    public async Task<RucModel> GetRucSriAsync(string ruc)
-    {
-        if (!await CheckExistenceAsync(ruc))
-        {
-            return new RucModel { Error = "Ruc no exist" };
-        }
-
-        using var scope = serviceProvider.CreateScope();
-        var cookieService = scope.ServiceProvider.GetRequiredService<ICookieService>();
-
-        var cookieContainer = await cookieService.GetAsync();
-
-        if (cookieContainer == null)
-        {
-            return new RucModel { Error = "No se pudo consultar la pagina" };
-        }
-
-        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
-
-        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
-
-        if (htmlResponse == null)
-        {
-            return new RucModel { Error = "No se pudo validar el captcha" };
-        }
-
-        var response = await GetRucSriAsync(ruc, cookieContainer.Cookie, htmlResponse);
-
-        if (response.Establecimientos.Count <= 0)
-        {
-            return response;
-        }
-
-        response.direccion = response.Establecimientos[0].direccionCompleta;
-        if (response.Establecimientos[0].nombreFantasiaComercial != null)
-        {
-            response.nombreComercial = response.Establecimientos[0].nombreFantasiaComercial.ToString();
-        }
-        //_response.email = "";
-        //_response.telefono = "";
-
-        return response;
-    }
-
     private async Task<bool> CheckExistenceAsync(string ruc)
     {
         using var client =
@@ -81,7 +37,6 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
         var html = HttpUtility.HtmlDecode(await sr.ReadToEndAsync());
         return html == "true";
     }
-
     private async Task<RucModel> GetRucSriAsync(string numeroRuc, CookieContainer cookies, string html)
     {
         var personaDatosError = new RucModel();
@@ -90,7 +45,7 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
         var strtoken = objToken.mensaje;
         if (string.IsNullOrEmpty(html))
         {
-            personaDatosError.Error = " No existe contribuyente con ese Ruc";
+            personaDatosError.error = " No existe contribuyente con ese Ruc";
             return personaDatosError;
         }
 
@@ -128,7 +83,7 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
             personaDatosError = respSri[0];
             if (personaDatosError == null)
             {
-                personaDatosError = new RucModel { Error = " No existe contribuyente con ese Ruc" };
+                personaDatosError = new RucModel { error = " No existe contribuyente con ese Ruc" };
                 return personaDatosError;
             }
         }
@@ -167,10 +122,53 @@ public class RucService(IServiceProvider serviceProvider) : IRucService
 
             if (personaEstablecimientos.Count > 0)
             {
-                personaDatosError.Establecimientos = personaEstablecimientos;
+                personaDatosError.establecimientos = personaEstablecimientos;
             }
         }
 
         return personaDatosError;
+    }
+
+    public async Task<RucModel> GetRucSriAsync(string ruc)
+    {
+        if (!await CheckExistenceAsync(ruc))
+        {
+            return new RucModel { error = "Ruc no exist" };
+        }
+        using var scope = serviceProvider.CreateScope();
+        var cookieService = scope.ServiceProvider.GetRequiredService<ICookieService>();
+
+        var cookieContainer = await cookieService.GetAsync();
+
+        if (cookieContainer == null)
+        {
+            return new RucModel { error = "No se pudo consultar la pagina" };
+        }
+
+        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
+
+        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
+
+        if (htmlResponse == null)
+        {
+            return new RucModel { error = "No se pudo validar el captcha" };
+        }
+
+        var response = await GetRucSriAsync(ruc, cookieContainer.Cookie, htmlResponse);
+
+        if (response.establecimientos.Count <= 0)
+        {
+            return response;
+        }
+
+        response.direccion = response.establecimientos[0].direccionCompleta;
+        if (response.establecimientos[0].nombreFantasiaComercial != null)
+        {
+            response.nombreComercial = response.establecimientos[0].nombreFantasiaComercial.ToString();
+        }
+        //_response.email = "";
+        //_response.telefono = "";
+
+        return response;
     }
 }

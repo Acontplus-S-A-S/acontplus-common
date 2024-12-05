@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>2d7325a4-d203-4bf4-9140-ace2ef76b78b</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -27,6 +27,7 @@
     <ProjectReference Include="..\Common.ApiDocumentation\Common.ApiDocumentation.csproj" />
     <ProjectReference Include="..\Common.Core\Common.Core.csproj" />
     <ProjectReference Include="..\Common.Infrastructure\Common.Infrastructure.csproj" />
+    <ProjectReference Include="..\FactElect.Application\FactElect.Application.csproj" />
     <ProjectReference Include="..\Reports.Application\Reports.Application.csproj" />
     <ProjectReference Include="..\Services.Common\Services.Common.csproj" />
   </ItemGroup>

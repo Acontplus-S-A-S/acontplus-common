@@ -1,0 +1,51 @@
+﻿using Common.Core.Utils;
+using Common.TestApi.Services;
+using FactElect.Application.Models;
+using FactElect.Application.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Common.TestApi.Controllers;
+
+public class CustomerController(
+    IRucService rucService,
+    ICedulaService cedulaService,
+    ICustomerService customerService)
+    : BaseApiController
+{
+    [HttpGet("GetRucSri")]
+    public async Task<RucModel> GetRucSri(string ruc, bool sriOnly = false)
+    {
+        if (sriOnly)
+        {
+            return await rucService.GetRucSriAsync(ruc);
+        }
+
+        var parameters = new Dictionary<string, object> { { "id", ruc } };
+        var dt = await customerService.GetByIdCardAsync(parameters);
+
+        if (!DataValidation.DataTableIsNull(dt))
+        {
+            return DataTableMapper.BindData<RucModel>(dt);
+        }
+
+        return await rucService.GetRucSriAsync(ruc);
+    }
+    [HttpGet("GetCedulaSri")]
+    public async Task<CedulaModel> GetCedulaSri(string ruc, bool sriOnly = false)
+    {
+        if (sriOnly)
+        {
+            return await cedulaService.GetCedulaSriAsync(ruc);
+        }
+
+        var parameters = new Dictionary<string, object> { { "id", ruc }, { "IDType", "05" } };
+        var dt = await customerService.GetByIdCardAsync(parameters);
+
+        if (!DataValidation.DataTableIsNull(dt))
+        {
+            return DataTableMapper.BindData<CedulaModel>(dt);
+        }
+
+        return await cedulaService.GetCedulaSriAsync(ruc);
+    }
+}

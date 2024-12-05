@@ -37,6 +37,7 @@ string[] nameSpaces =
 [
     "Common.Infrastructure.Repository.Implementations",
     "Reports.Application.Services",
+    "FactElect.Application.Services",
             "Common.TestApi.Services"
 ];
 

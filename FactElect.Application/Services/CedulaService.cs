@@ -12,32 +12,6 @@ public interface ICedulaService
 
 public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
 {
-    public async Task<CedulaModel> GetCedulaSriAsync(string numeroCedula)
-    {
-        if (!await CheckExistenceAsync(numeroCedula))
-        {
-            return new CedulaModel { Error = "Cedula No existe" };
-        }
-
-        using var scope = serviceProvider.CreateScope();
-        var cookieService = scope.ServiceProvider.GetRequiredService<ICookieService>();
-
-        var cookieContainer = await cookieService.GetAsync();
-
-        if (cookieContainer == null)
-        {
-            return new CedulaModel { Error = "No se pudo consultar la pagina" };
-        }
-
-        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
-
-        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
-
-        return htmlResponse == null
-            ? new CedulaModel { Error = "No se pudo validar el captcha" }
-            : await GetCedulaSriAsync(numeroCedula, cookieContainer.Cookie, htmlResponse);
-    }
-
     private async Task<bool> CheckExistenceAsync(string cedula)
     {
         using var client =
@@ -73,7 +47,7 @@ public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
         var strtoken = objToken.mensaje;
         if (string.IsNullOrEmpty(html))
         {
-            personaDatosError.Error = " No existe contribuyente con ese Ruc";
+            personaDatosError.error = " No existe contribuyente con ese Ruc";
             return personaDatosError;
         }
 
@@ -113,7 +87,32 @@ public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
             return personaDatosError;
         }
 
-        personaDatosError = new CedulaModel { Error = " No existe contribuyente con ese Ruc" };
+        personaDatosError = new CedulaModel { error = " No existe contribuyente con ese Ruc" };
         return personaDatosError;
+    }
+
+    public async Task<CedulaModel> GetCedulaSriAsync(string numeroCedula)
+    {
+        if (!await CheckExistenceAsync(numeroCedula))
+        {
+            return new CedulaModel { error = "Cedula No existe" };
+        }
+
+        using var scope = serviceProvider.CreateScope();
+        var cookieService = scope.ServiceProvider.GetRequiredService<ICookieService>();
+
+        var cookieContainer = await cookieService.GetAsync();
+
+        if (cookieContainer == null)
+        {
+            return new CedulaModel { error = "No se pudo consultar la pagina" };
+        }
+        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
+
+        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
+
+        return htmlResponse == null
+            ? new CedulaModel { error = "No se pudo validar el captcha" }
+            : await GetCedulaSriAsync(numeroCedula, cookieContainer.Cookie, htmlResponse);
     }
 }

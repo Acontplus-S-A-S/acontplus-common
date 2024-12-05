@@ -48,11 +48,11 @@ public class RucModel
     public string transaccionesInexistente { get; set; }
     public ClasificacionMiPyme clasificacionMiPyme { get; set; }
 
-    public List<Establecimiento> Establecimientos { get; set; }
+    public List<Establecimiento> establecimientos { get; set; }
 
     //custom
-    public string Error { get; set; }
-    public bool NetworkError { get; set; }
+    public string error { get; set; }
+    public bool networkError { get; set; }
     public string nombreComercial { get; set; }
     public string direccion { get; set; }
     public string email { get; set; }

@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.FactElect.Application</PackageId>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use facturación electronica SRI Ecuador</Description>
@@ -15,8 +15,44 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Acontplus.Common.Core"/>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
+    <None Remove="Schemas\comprobanteRetencion_V1.0.0.xsd" />
+    <None Remove="Schemas\comprobanteRetencion_V2.0.0.xsd" />
+    <None Remove="Schemas\factura_V1.0.0.xsd" />
+    <None Remove="Schemas\factura_V1.1.0.xsd" />
+    <None Remove="Schemas\factura_V2.0.0.xsd" />
+    <None Remove="Schemas\factura_V2.1.0.xsd" />
+    <None Remove="Schemas\NotaCredito_V1.0.0.xsd" />
+    <None Remove="Schemas\NotaCredito_V1.1.0.xsd" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Schemas\comprobanteRetencion_V1.0.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Schemas\comprobanteRetencion_V2.0.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Schemas\factura_V1.0.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Schemas\factura_V1.1.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Schemas\factura_V2.0.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Schemas\factura_V2.1.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Schemas\NotaCredito_V1.0.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Schemas\NotaCredito_V1.1.0.xsd">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Acontplus.Common.Core" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
   <ItemGroup>
     <None Update="README.md">

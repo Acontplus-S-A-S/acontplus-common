@@ -8,8 +8,8 @@
     <PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.0" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
     <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
-    <PackageVersion Include="AWSSDK.Core" Version="3.7.400.59" />
-    <PackageVersion Include="AWSSDK.S3" Version="3.7.410.1" />
+    <PackageVersion Include="AWSSDK.Core" Version="3.7.400.61" />
+    <PackageVersion Include="AWSSDK.S3" Version="3.7.410.3" />
     <PackageVersion Include="FastMember" Version="1.5.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Features" Version="5.0.17" />
@@ -31,10 +31,10 @@
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="ReportViewerCore.NETCore" Version="15.1.25" />
     <PackageVersion Include="Scrutor" Version="5.0.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.1.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.2.0" />
     <PackageVersion Include="System.Drawing.Common" Version="9.0.0" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
     <PackageVersion Include="ZXing.Net" Version="0.16.9" />
-    <PackageVersion Include="ZXing.Net.Bindings.SkiaSharp" Version="0.16.14" />
+    <PackageVersion Include="ZXing.Net.Bindings.SkiaSharp" Version="0.16.20" />
   </ItemGroup>
 </Project>

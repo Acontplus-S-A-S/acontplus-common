@@ -25,5 +25,6 @@
     <PackageReference Include="AWSSDK.Core" />
     <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="Acontplus.Common.Core" />
+    <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" />
   </ItemGroup>
 </Project>

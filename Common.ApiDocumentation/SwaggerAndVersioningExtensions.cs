@@ -66,7 +66,7 @@ public static class SwaggerAndVersioningExtensions
             foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
             {
                 options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-                    $"My API {description.GroupName.ToUpperInvariant()}");
+                    $"API {description.GroupName.ToUpperInvariant()}");
             }
         });
 

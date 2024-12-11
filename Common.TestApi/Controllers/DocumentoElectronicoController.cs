@@ -3,10 +3,11 @@ using System.Xml;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using FactElect.Application.Helpers;
+using FactElect.Application.Services;
 
 namespace Common.TestApi.Controllers;
 
-public class DocumentoElectronicoController : BaseApiController
+public class DocumentoElectronicoController(IXmlSriFileService xmlSriFileService) : BaseApiController
 {
     [HttpPost]
     public async Task<IActionResult> Post(IFormFile file)
@@ -20,10 +21,9 @@ public class DocumentoElectronicoController : BaseApiController
         //    return BadRequest("Formato de archivo no soportado");
         //}
 
-        var xmlSriFile = new XmlSriFile();
-        await xmlSriFile.Get(file);
-        
-        var xsdStream = ResourceHelper.GetXsdStream("Schemas.factura_V1.1.0.xsd"); 
+        var xmlSriFile = await xmlSriFileService.GetAsync(file);
+
+        var xsdStream = ResourceHelper.GetXsdStream("Schemas.factura_V1.1.0.xsd");
 
         var errors = XmlValidator.Validate(xmlSriFile.XmlSri, xsdStream);
 
@@ -37,13 +37,15 @@ public class DocumentoElectronicoController : BaseApiController
             Console.WriteLine("XML validation failed. Errors:");
             foreach (var error in errors)
             {
-                Console.WriteLine($"{error.Severity}: {error.Message} (Line {error.LineNumber}, Pos {error.LinePosition})");
+                Console.WriteLine(
+                    $"{error.Severity}: {error.Message} (Line {error.LineNumber}, Pos {error.LinePosition})");
             }
 
             // Export errors to JSON
-            XmlValidator.ExportErrorsToJson(errors, "validation_errors.json");
+            //XmlValidator.ExportErrorsToJson(errors, "validation_errors.json");
             Console.WriteLine("Errors exported to validation_errors.json");
         }
+
         return Ok(errors);
     }
 }

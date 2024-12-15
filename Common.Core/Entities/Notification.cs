@@ -11,7 +11,7 @@ public class Notification : BaseEntity
     private string _decompressedContent;
     private string _decompressedParameters;
     [Required] public byte[] CompressedParameters { get; set; }
-    [Required] private byte[] CompressedContent { get; set; }
+    [Required] public byte[] CompressedContent { get; set; }
     [Required] public string Receiver { get; set; }
     [Required] public string Status { get; set; }
     public DateTime? SentDate { get; set; }

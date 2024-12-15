@@ -9,7 +9,8 @@ namespace Common.Core.Entities;
 public class Notification : BaseEntity
 {
     private string _decompressedContent;
-    [Required] public string Parameters { get; set; }
+    private string _decompressedParameters;
+    [Required] public byte[] CompressedParameters { get; set; }
     [Required] private byte[] CompressedContent { get; set; }
     [Required] public string Receiver { get; set; }
     [Required] public string Status { get; set; }
@@ -38,6 +39,30 @@ public class Notification : BaseEntity
             var stringBytes = Encoding.UTF8.GetBytes(value);
             CompressedContent = CompressionUtils.CompressGZip(stringBytes);
             _decompressedContent = value; // Cache the value
+        }
+    } 
+    [NotMapped]
+    public string Parameters
+    {
+        get
+        {
+            switch (_decompressedParameters)
+            {
+                case null when CompressedParameters != null:
+                {
+                    var decompressedBytes = CompressionUtils.DecompressGZip(CompressedParameters);
+                        _decompressedParameters = Encoding.UTF8.GetString(decompressedBytes);
+                    break;
+                }
+            }
+
+            return _decompressedParameters;
+        }
+        set
+        {
+            var stringBytes = Encoding.UTF8.GetBytes(value);
+            CompressedParameters = CompressionUtils.CompressGZip(stringBytes);
+            _decompressedParameters = value; // Cache the value
         }
     }
 }

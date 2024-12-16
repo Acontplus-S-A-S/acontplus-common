@@ -16,6 +16,7 @@ public class Notification : BaseEntity
     [Required] public string Status { get; set; }
     public DateTime? DispatchedAt { get; set; }
     public string ErrorMessage { get; set; }
+    public ICollection<Attachment> Attachments { get; set; }
 
     [NotMapped]
     public string Content

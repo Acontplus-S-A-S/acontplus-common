@@ -1,6 +1,6 @@
-﻿namespace Common.Core.Models;
+﻿namespace Common.Notifications.Models;
 
-public class Email
+public class EmailModel
 {
     public string Host { get; set; }
     public int Port { get; set; }
@@ -12,6 +12,7 @@ public class Email
     public string To { get; set; }
     public string Cc { get; set; }
     public string Subject { get; set; }
+    public bool IsHtml { get; set; }
     public string Template { get; set; }
     public string Logo { get; set; }
     public string Body { get; set; }

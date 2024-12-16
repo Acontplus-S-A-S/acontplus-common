@@ -1,32 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>Acontplus.Common.Core</PackageId>
-    <Version>1.1.14</Version>
+    <PackageId>Acontplus.Common.Notifications</PackageId>
+    <Version>0.0.1</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
-    <Description>Lib to use common entities, enums, models and utils</Description>
-    <PackageTags>entities;enums;models;utils</PackageTags>
+    <Description>Lib to send notifications</Description>
+    <PackageTags>notifications;mailkit;email;whatsapp;push</PackageTags>
     <RepositoryUrl>https://github.com/Acontplus-S-A-S/acontplus-common</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
   <ItemGroup>
-    <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="Acontplus.Common.Core" />
+    <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
-    <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="System.Drawing.Common" />
-    <PackageReference Include="ZXing.Net" />
-    <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" />
+    <PackageReference Include="Scriban" />
   </ItemGroup>
+
   <ItemGroup>
     <None Remove="README.md" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+  
 </Project>

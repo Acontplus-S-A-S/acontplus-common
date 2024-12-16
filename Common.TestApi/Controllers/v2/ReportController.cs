@@ -2,6 +2,7 @@
 using Asp.Versioning;
 using Common.Core.Models;
 using Common.Core.Utils;
+using Common.Notifications.Models;
 using Common.TestApi.Models;
 using Common.TestApi.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +28,7 @@ public class ReportController(
         var dataRow = dt.Rows[0];
 
         var mainParams = JsonConvert.DeserializeObject<Notification>(dataRow.Field<string>("params"));
-        var emailData = JsonConvert.DeserializeObject<Email>(dataRow.Field<string>("emailData"));
+        var emailData = JsonConvert.DeserializeObject<EmailModel>(dataRow.Field<string>("emailData"));
 
 
         if (mainParams.hasFile)

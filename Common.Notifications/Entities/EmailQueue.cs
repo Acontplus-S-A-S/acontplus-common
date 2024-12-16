@@ -1,0 +1,50 @@
+﻿using System.Text;
+using Common.Core.Utils;
+
+namespace Common.Notifications.Entities;
+[Table("EmailQueue", Schema = "Common")]
+public class EmailQueue : BaseEntity
+{
+    private string _decompressedBody;
+    public int NotificationId { get; set; } // Links to Notification table
+    public Notification Notification { get; set; }
+    public int EmailSenderConfigId { get; set; } // Sender email sender configuration
+    public EmailSenderConfig EmailSenderConfig { get; set; }
+    [Required, MaxLength(150)] public string RecipientEmail { get; set; } // Email address of the recipient
+    [Required, MaxLength(300)] public string Subject { get; set; }
+    public bool IsHtml { get; set; }
+    [Required] public byte[] CompressedBody { get; set; }
+    public int PriorityId { get; set; }
+    public Priority Priority { get; set; }
+    public int StatusId { get; set; }
+    public Status Status { get; set; }
+    public int? RetryCount { get; set; } // Number of retry attempts
+    public DateTime? ScheduledAt { get; set; } // When the email is scheduled to be sent
+    public DateTime? SentAt { get; set; } // When the email was actually sent
+    [MaxLength(150)] public string Template { get; set; }
+
+    [NotMapped]
+    public string Content
+    {
+        get
+        {
+            switch (_decompressedBody)
+            {
+                case null when CompressedBody != null:
+                    {
+                        var decompressedBytes = CompressionUtils.DecompressGZip(CompressedBody);
+                        _decompressedBody = Encoding.UTF8.GetString(decompressedBytes);
+                        break;
+                    }
+            }
+
+            return _decompressedBody;
+        }
+        set
+        {
+            var stringBytes = Encoding.UTF8.GetBytes(value);
+            CompressedBody = CompressionUtils.CompressGZip(stringBytes);
+            _decompressedBody = value; // Cache the value
+        }
+    }
+}

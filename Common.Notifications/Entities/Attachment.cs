@@ -1,7 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Common.Core.Entities;
+﻿namespace Common.Notifications.Entities;
 [Table("Attachment", Schema = "Common")]
 public class Attachment : BaseEntity
 {

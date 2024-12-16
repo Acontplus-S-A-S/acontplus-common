@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Common.Core.Entities;
 [Table("Attachment", Schema = "Common")]
-public class Attachment
+public class Attachment : BaseEntity
 {
     public int NotificationId { get; set; }
     public Notification Notification { get; set; }
-    [Required, MaxLength(300)] public string FileName { get; set; } 
+    [Required, MaxLength(300)] public string FileName { get; set; }
     [Required, MaxLength(50)] public string FileType { get; set; }
     public int? FileSize { get; set; }
     [MaxLength(300)] public string FilePath { get; set; } // Nullable for optional local storage

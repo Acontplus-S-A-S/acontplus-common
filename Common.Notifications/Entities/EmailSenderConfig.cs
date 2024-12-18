@@ -17,7 +17,7 @@ public class EmailSenderConfig : BaseEntity
     public bool UseSsl { get; set; } // True if SSL/TLS is required
     [Required, MaxLength(150)] public string Username { get; set; } // SMTP authentication username
     [Required] public byte[] EncryptedPassword { get; set; } // Encrypted password
-    public string PasswordHash { get; set; }
+    [Required] public string PasswordHash { get; set; }
 
     public void SetPassword(string password, DataProtectionHelper securityHelper)
     {

@@ -12,6 +12,7 @@ public class EmailQueue : BaseEntity
     public EmailSenderConfig EmailSenderConfig { get; set; }
     [Required, MaxLength(150)] public string RecipientEmail { get; set; } // Email address of the recipient
     [Required, MaxLength(300)] public string Subject { get; set; }
+    [MaxLength(150)] public string Cc { get; set; }
     public bool IsHtml { get; set; }
     [Required] public byte[] CompressedBody { get; set; }
     public int PriorityId { get; set; }

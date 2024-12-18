@@ -46,26 +46,23 @@ public class MailKitService(IConfiguration configuration) : IMailKitService
 
         if (!email.IsHtml)
         {
-
             var htmlString = await File.ReadAllTextAsync(pathToHtmlFile, ct);
             var emailBody = ProcessTemplate(htmlString,
                 JsonConvert.DeserializeObject<IDictionary<string, object>>(email.Body));
 
-
             body.HtmlBody = emailBody;
+
+            var pathLogo = Path.Combine(configuration.GetSection("Media").GetSection("Images").Value, "Logos", email.Logo);
+
+            var image = await body.LinkedResources.AddAsync(pathLogo, ct);
+            image.ContentId = MimeUtils.GenerateMessageId();
+
+            body.HtmlBody = body.HtmlBody.Replace("[img-logo]", image.ContentId);
         }
         else
         {
             body.HtmlBody = email.Body;
         }
-
-        var pathLogo = Path.Combine(configuration.GetSection("Media").GetSection("Images").Value, "Logos",
-            email.Logo);
-
-        var image = await body.LinkedResources.AddAsync(pathLogo, ct);
-        image.ContentId = MimeUtils.GenerateMessageId();
-
-        body.HtmlBody = body.HtmlBody.Replace("[img-src]", image.ContentId);
 
         if (email.Files is { Count: > 0 })
         {

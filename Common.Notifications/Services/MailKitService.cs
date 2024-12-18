@@ -12,11 +12,11 @@ using Scriban;
 namespace Common.Notifications.Services;
 public interface IMailKitService
 {
-    Task<bool> Send(EmailModel email, CancellationToken ct = default);
+    Task<bool> SendAsync(EmailModel email, CancellationToken ct = default);
 }
 public class MailKitService(IConfiguration configuration) : IMailKitService
 {
-    public async Task<bool> Send(EmailModel email, CancellationToken ct)
+    public async Task<bool> SendAsync(EmailModel email, CancellationToken ct)
     {
         using var message = new MimeMessage();
 

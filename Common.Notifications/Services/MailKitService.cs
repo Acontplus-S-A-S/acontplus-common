@@ -21,11 +21,11 @@ public class MailKitService(IConfiguration configuration) : IMailKitService
         using var message = new MimeMessage();
 
         message.To.Clear();
-        message.From.Add(new MailboxAddress(email.DisplayName, email.From));
-        message.Sender = new MailboxAddress(email.DisplayName, email.From);
+        message.From.Add(new MailboxAddress(email.SenderName, email.SenderEmail));
+        message.Sender = new MailboxAddress(email.SenderName, email.SenderEmail);
 
         var delimiters = new char[] { ',', ';', '|' };
-        var receiver = email.To.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+        var receiver = email.RecipientEmail.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
         foreach (string mailAddress in receiver)
             message.To.Add(MailboxAddress.Parse(mailAddress));
 
@@ -100,8 +100,8 @@ public class MailKitService(IConfiguration configuration) : IMailKitService
         smtpClient.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
 
         smtpClient.CheckCertificateRevocation = false;
-        await smtpClient.ConnectAsync(email.Host, email.Port, false, ct);
-        await smtpClient.AuthenticateAsync(email.From, email.Password, ct);
+        await smtpClient.ConnectAsync(email.SmtpServer, email.SmtpPort, false, ct);
+        await smtpClient.AuthenticateAsync(email.SenderEmail, email.Password, ct);
         await smtpClient.SendAsync(message, ct);
         await smtpClient.DisconnectAsync(true, ct);
         return true;

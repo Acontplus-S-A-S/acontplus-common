@@ -2,14 +2,16 @@
 
 public class EmailModel
 {
-    public string Host { get; set; }
-    public int Port { get; set; }
+    public string SmtpServer { get; set; }
+    public int SmtpPort { get; set; }
     public string Username { get; set; }
+    public byte[] EncryptedPassword { get; set; } // Encrypted password
+    public string PasswordHash { get; set; }
     public string Password { get; set; }
-    public bool EnableSsl { get; set; }
-    public string DisplayName { get; set; }
-    public string From { get; set; }
-    public string To { get; set; }
+    public bool UseSsl { get; set; }
+    public string SenderName { get; set; }
+    public string SenderEmail { get; set; }
+    public string RecipientEmail { get; set; }
     public string Cc { get; set; }
     public string Subject { get; set; }
     public bool IsHtml { get; set; }

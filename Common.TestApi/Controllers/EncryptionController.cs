@@ -6,9 +6,9 @@ namespace Common.TestApi.Controllers;
 public class EncryptionController : BaseApiController
 {
     private readonly IDataEncryptionService _dataEncryptionService;
-    private readonly IPasswordHashingService _passwordHashingService;
+    private readonly IDataSecurityService _passwordHashingService;
 
-    public EncryptionController(IDataEncryptionService dataEncryptionService, IPasswordHashingService passwordHashingService)
+    public EncryptionController(IDataEncryptionService dataEncryptionService, IDataSecurityService passwordHashingService)
     {
         _dataEncryptionService = dataEncryptionService;
         _passwordHashingService = passwordHashingService;

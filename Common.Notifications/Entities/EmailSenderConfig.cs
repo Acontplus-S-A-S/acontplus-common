@@ -19,19 +19,4 @@ public class EmailSenderConfig : BaseEntity
     [Required, MaxLength(150)] public string Username { get; set; } // SMTP authentication username
     [Required] public byte[] EncryptedPassword { get; set; } // Encrypted password
     [Required] public string PasswordHash { get; set; }
-
-    public void SetPassword(string password, IDataEncryptionService dataEncryptionService, IPasswordHashingService passwordHashingService)
-    {
-        EncryptedPassword = dataEncryptionService.EncryptToBytes(password);
-        PasswordHash = passwordHashingService.HashPassword(password);
-    }
-
-    public string GetDecryptedPassword(IDataEncryptionService dataEncryptionService)
-    {
-        return dataEncryptionService.DecryptFromBytes(EncryptedPassword);
-    }
-    public bool VerifyPassword(string password, IPasswordHashingService passwordHashingService)
-    {
-        return passwordHashingService.VerifyPassword(password, PasswordHash);
-    }
 }

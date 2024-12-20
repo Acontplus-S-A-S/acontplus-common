@@ -1,76 +1,69 @@
-﻿namespace Common.Core.Utils;
+﻿using System.Reflection;
+
+namespace Common.Core.Utils;
 
 public static class DataTableMapper
 {
-    //use Foo foo = BindData<Foo>(dt);
-    public static T BindData<T>(DataTable dt)
+    public static T MapDataRowToModel<T>(DataRow row) where T : new()
     {
-        var dr = dt.Rows[0];
+        if (row == null)
+            throw new ArgumentException("DataRow is null");
 
-        // Get all columns' name
-        var columns = (from DataColumn dc in dt.Columns select dc.ColumnName).ToList();
+        var columns = row.Table.Columns.Cast<DataColumn>().Select(dc => dc.ColumnName.ToLower()).ToList();
+        var ob = new T();
+        var type = typeof(T);
 
-        // Create object
-        var ob = Activator.CreateInstance<T>();
-
-        // Get all fields
-        var fields = typeof(T).GetFields();
-        foreach (var fieldInfo in fields)
+        foreach (var member in type.GetMembers(BindingFlags.Public | BindingFlags.Instance))
         {
-            if (columns.Contains(fieldInfo.Name))
+            if (columns.Contains(member.Name.ToLower()))
             {
-                // Fill the data into the field
-                fieldInfo.SetValue(ob, dr[fieldInfo.Name]);
-            }
-        }
-
-        // Get all properties
-        var properties = typeof(T).GetProperties();
-        foreach (var propertyInfo in properties)
-        {
-            if (columns.Contains(propertyInfo.Name))
-            {
-                // Fill the data into the property
-                propertyInfo.SetValue(ob, dr[propertyInfo.Name]);
+                var value = row[member.Name];
+                switch (member.MemberType)
+                {
+                    case MemberTypes.Field:
+                        var field = (FieldInfo)member;
+                        field.SetValue(ob, value);
+                        break;
+                    case MemberTypes.Property:
+                        var property = (PropertyInfo)member;
+                        if (property.CanWrite)
+                            property.SetValue(ob, value);
+                        break;
+                }
             }
         }
 
         return ob;
     }
 
-    //use List<Foo> lst = BindDataList<Foo>(dt);
-    public static List<T> BindDataList<T>(DataTable dt)
+
+    public static List<T> MapDataTableToList<T>(DataTable dt) where T : new()
     {
-        var columns = (from DataColumn dc in dt.Columns select dc.ColumnName).ToList();
-
-        var fields = typeof(T).GetFields();
-        var properties = typeof(T).GetProperties();
-
+        if (dt == null || dt.Rows.Count == 0)
+            throw new ArgumentException("DataTable is null or empty");
+        var columns = dt.Columns.Cast<DataColumn>().Select(dc => dc.ColumnName.ToLower()).ToList();
         var lst = new List<T>();
-
         foreach (DataRow dr in dt.Rows)
         {
-            var ob = Activator.CreateInstance<T>();
-
-            foreach (var fieldInfo in fields)
+            var ob = new T(); var type = typeof(T);
+            foreach (var member in type.GetMembers(BindingFlags.Public | BindingFlags.Instance))
             {
-                if (columns.Contains(fieldInfo.Name))
+                if (columns.Contains(member.Name.ToLower()))
                 {
-                    fieldInfo.SetValue(ob, dr[fieldInfo.Name]);
+                    var value = dr[member.Name]; switch (member.MemberType)
+                    {
+                        case MemberTypes.Field:
+                            var field = (FieldInfo)member; field.SetValue(ob, value);
+                            break;
+                        case MemberTypes.Property:
+                            var property = (PropertyInfo)member;
+                            if (property.CanWrite) property.SetValue(ob, value);
+                            break;
+                    }
                 }
             }
-
-            foreach (var propertyInfo in properties)
-            {
-                if (columns.Contains(propertyInfo.Name))
-                {
-                    propertyInfo.SetValue(ob, dr[propertyInfo.Name]);
-                }
-            }
-
             lst.Add(ob);
         }
-
         return lst;
     }
 }

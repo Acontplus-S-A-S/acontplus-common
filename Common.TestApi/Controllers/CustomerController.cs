@@ -25,7 +25,7 @@ public class CustomerController(
 
         if (!DataValidation.DataTableIsNull(dt))
         {
-            return DataTableMapper.BindData<RucModel>(dt);
+            return DataTableMapper.MapDataRowToModel<RucModel>(dt.Rows[0]);
         }
 
         return await rucService.GetRucSriAsync(ruc);
@@ -43,7 +43,7 @@ public class CustomerController(
 
         if (!DataValidation.DataTableIsNull(dt))
         {
-            return DataTableMapper.BindData<CedulaModel>(dt);
+            return DataTableMapper.MapDataRowToModel<CedulaModel>(dt.Rows[0]);
         }
 
         return await cedulaService.GetCedulaSriAsync(ruc);

@@ -20,6 +20,26 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
+
+string[] nameSpaces =
+[
+    "Common.Infrastructure.Repository.Implementations",
+    "Reports.Application.Services",
+    "FactElect.Application.Services",
+            "Common.TestApi.Services",
+            "Common.Core.Security.Services"
+];
+
+builder.Services.Scan(scan => scan
+    .FromApplicationDependencies()
+    .AddClasses(classes => classes.InNamespaces(nameSpaces))
+    .UsingRegistrationStrategy(RegistrationStrategy.Skip)
+    .AsImplementedInterfaces()
+    .WithTransientLifetime()
+);
+
+builder.Services.AddDataProtection();
+
 builder.Services.AddSwaggerDocumentation();
 
 builder.Services.AddVersioningAndSwagger();
@@ -33,21 +53,6 @@ builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
         container.RegisterType<AdoSqlServer>().As<IAdoSqlServer>();
     });
 
-string[] nameSpaces =
-[
-    "Common.Infrastructure.Repository.Implementations",
-    "Reports.Application.Services",
-    "FactElect.Application.Services",
-            "Common.TestApi.Services"
-];
-
-builder.Services.Scan(scan => scan
-    .FromApplicationDependencies()
-    .AddClasses(classes => classes.InNamespaces(nameSpaces))
-    .UsingRegistrationStrategy(RegistrationStrategy.Skip)
-    .AsImplementedInterfaces()
-    .WithTransientLifetime()
-);
 
 
 

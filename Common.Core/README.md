@@ -5,6 +5,7 @@ A comprehensive .NET utility library providing common functionality for enterpri
 ## Features
 
 ### Core Components
+
 - **Base Entity System** - Common entity structures and interfaces
 - **Error Logging** - Standardized error logging mechanisms
 - **API Communication** - Request/Response models for API integration
@@ -16,6 +17,7 @@ A comprehensive .NET utility library providing common functionality for enterpri
 ### Utility Components
 
 #### Data Processing
+
 - **Data Conversion** - Type conversion and data manipulation utilities
 - **Data Table Mapping** - Database to object mapping utilities
 - **Data Validation** - Input validation and verification tools
@@ -23,15 +25,18 @@ A comprehensive .NET utility library providing common functionality for enterpri
 - **SQL Parameter Handling** - Safe SQL parameter construction
 
 #### File Operations
+
 - **Compression Utils** - File compression and decompression
 - **File Extensions** - File type handling and management
 - **MIME Type Mapping** - File type detection and MIME type handling
 
 #### Security
+
 - **Encryption** - Data encryption/decryption utilities
 - **External Validations** - Third-party validation integrations
 
 #### Misc Utilities
+
 - **Barcode Generation** - Barcode creation and processing
 - **Custom Logging** - Enhanced logging capabilities
 - **Enum Extensions** - Enhanced enum functionality
@@ -47,6 +52,7 @@ dotnet add package Acontplus.Common.Core
 ## Usage Examples
 
 ### Base Entity Usage
+
 ```csharp
 public class MyEntity : BaseEntity
 {
@@ -83,6 +89,7 @@ public class MyEntity : BaseEntity
 [//]: # (```)
 
 [//]: # ()
+
 [//]: # (### AWS S3 Operations)
 
 [//]: # (```csharp)
@@ -98,11 +105,13 @@ public class MyEntity : BaseEntity
 [//]: # (};)
 
 [//]: # ()
+
 [//]: # (// S3 operations)
 
 [//]: # (```)
 
 [//]: # ()
+
 [//]: # (### Data Validation)
 
 [//]: # (```csharp)
@@ -118,15 +127,19 @@ public class MyEntity : BaseEntity
 [//]: # (```)
 
 ## Dependencies
+
 - .NET Standard 2.0+
 - AWS SDK for .NET (for AWS features)
 - Additional dependencies can be found in the Dependencies folder
 
 ## Contributing
+
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
+
 [MIT License]
 
 ## Support
+
 For support, please [https://github.com/Acontplus-S-A-S/acontplus-common]

@@ -1,4 +1,5 @@
 ﻿using Common.Core.Security;
+using Common.Core.Security.Interfaces;
 
 namespace Common.Notifications.Entities;
 
@@ -19,18 +20,18 @@ public class EmailSenderConfig : BaseEntity
     [Required] public byte[] EncryptedPassword { get; set; } // Encrypted password
     [Required] public string PasswordHash { get; set; }
 
-    public void SetPassword(string password, DataProtectionHelper securityHelper)
+    public void SetPassword(string password, IDataEncryptionService dataEncryptionService, IPasswordHashingService passwordHashingService)
     {
-        EncryptedPassword = securityHelper.EncryptToBytes(password);
-        PasswordHash = securityHelper.Hash(password);
+        EncryptedPassword = dataEncryptionService.EncryptToBytes(password);
+        PasswordHash = passwordHashingService.HashPassword(password);
     }
 
-    public string GetDecryptedPassword(DataProtectionHelper securityHelper)
+    public string GetDecryptedPassword(IDataEncryptionService dataEncryptionService)
     {
-        return securityHelper.DecryptFromBytes(EncryptedPassword);
+        return dataEncryptionService.DecryptFromBytes(EncryptedPassword);
     }
-    public bool VerifyPassword(string password, DataProtectionHelper securityHelper)
+    public bool VerifyPassword(string password, IPasswordHashingService passwordHashingService)
     {
-        return securityHelper.VerifyHash(password, PasswordHash);
+        return passwordHashingService.VerifyPassword(password, PasswordHash);
     }
 }

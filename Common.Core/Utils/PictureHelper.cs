@@ -56,7 +56,7 @@ public static class PictureHelper
         (svg_xml_capital, "svg")
     };
 
-    public static string TryGetExtension(Byte[] array)
+    public static string TryGetExtension(byte[] array)
     {
         // check for simple formats first
         foreach (var imageFormat in imageFormats)
@@ -89,7 +89,7 @@ public static class PictureHelper
         return null;
     }
 
-    private static bool IsImage(this Byte[] array, List<byte> comparer, int offset = 0)
+    private static bool IsImage(this byte[] array, List<byte> comparer, int offset = 0)
     {
         var arrayIndex = offset;
         foreach (var c in comparer)

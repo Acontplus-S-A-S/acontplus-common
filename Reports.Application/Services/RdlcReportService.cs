@@ -20,7 +20,7 @@ namespace Reports.Application.Services
 
         public ReportResponse GetReport(DataSet parameters, DataSet data, bool externalDirectory)
         {
-            var reportProps = DataTableMapper.BindData<ReportProps>(parameters.Tables["ReportProps"]);
+            var reportProps = DataTableMapper.MapDataRowToModel<ReportProps>(parameters.Tables["ReportProps"].Rows[0]);
 
             using var lr = new LocalReport();
             string reportPath = GetReportPath(reportProps, externalDirectory);

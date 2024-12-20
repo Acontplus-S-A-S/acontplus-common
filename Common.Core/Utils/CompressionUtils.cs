@@ -73,19 +73,34 @@ public static class CompressionUtils
         }
     }
 
-    public static void DecompressColumn(DataSet dataSet, string tableName, string compressedColumnName, string decompressedColumnName)
+    public static void DecompressColumn(DataSet dataSet, string tableName, string compressedColumnName,
+        string decompressedColumnName)
     {
-        if (dataSet == null) throw new ArgumentNullException(nameof(dataSet));
-        if (!dataSet.Tables.Contains(tableName)) throw new ArgumentException($"Table '{tableName}' does not exist in the DataSet.");
+        if (dataSet == null)
+        {
+            throw new ArgumentNullException(nameof(dataSet));
+        }
 
-        DataTable table = dataSet.Tables[tableName];
+        if (!dataSet.Tables.Contains(tableName))
+        {
+            throw new ArgumentException($"Table '{tableName}' does not exist in the DataSet.");
+        }
+
+        var table = dataSet.Tables[tableName];
         DecompressColumn(table, compressedColumnName, decompressedColumnName);
     }
 
     public static void DecompressColumn(DataTable table, string compressedColumnName, string decompressedColumnName)
     {
-        if (table == null) throw new ArgumentNullException(nameof(table));
-        if (!table.Columns.Contains(compressedColumnName)) throw new ArgumentException($"Column '{compressedColumnName}' does not exist in the DataTable.");
+        if (table == null)
+        {
+            throw new ArgumentNullException(nameof(table));
+        }
+
+        if (!table.Columns.Contains(compressedColumnName))
+        {
+            throw new ArgumentException($"Column '{compressedColumnName}' does not exist in the DataTable.");
+        }
 
         // Add a new column to store the decompressed content if it doesn't exist
         if (!table.Columns.Contains(decompressedColumnName))
@@ -98,7 +113,7 @@ public static class CompressionUtils
         {
             if (row[compressedColumnName] is byte[] compressedData)
             {
-                string decompressedString = Encoding.UTF8.GetString(DecompressGZip(compressedData));
+                var decompressedString = Encoding.UTF8.GetString(DecompressGZip(compressedData));
                 row[decompressedColumnName] = decompressedString;
             }
         }

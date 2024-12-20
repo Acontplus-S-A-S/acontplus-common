@@ -1,7 +1,10 @@
-﻿using System.Xml.Schema;
+﻿using System.Text.Json;
 using System.Xml;
+using System.Xml.Schema;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Common.Core.Utils;
+
 public class ValidationError
 {
     public string Message { get; set; }
@@ -13,7 +16,7 @@ public class ValidationError
 public static class XmlValidator
 {
     /// <summary>
-    /// Validates the provided XmlDocument against an XSD schema file.
+    ///     Validates the provided XmlDocument against an XSD schema file.
     /// </summary>
     /// <param name="xmlDocument">The XML document to validate.</param>
     /// <param name="xsdFilePath">The path to the XSD file.</param>
@@ -23,22 +26,22 @@ public static class XmlValidator
         var validationErrors = new List<ValidationError>();
 
         if (xmlDocument == null)
+        {
             throw new ArgumentNullException(nameof(xmlDocument));
+        }
+
         if (xsdStream == null)
+        {
             throw new ArgumentNullException(nameof(xsdStream));
+        }
 
         try
         {
-
             var schemaSet = new XmlSchemaSet();
             schemaSet.Add(null, XmlReader.Create(xsdStream));
 
             // Configure XmlReaderSettings
-            XmlReaderSettings settings = new XmlReaderSettings
-            {
-                ValidationType = ValidationType.Schema,
-                Schemas = schemaSet
-            };
+            var settings = new XmlReaderSettings { ValidationType = ValidationType.Schema, Schemas = schemaSet };
 
             settings.ValidationEventHandler += (sender, e) =>
             {
@@ -52,8 +55,8 @@ public static class XmlValidator
             };
 
             // Validate XmlDocument
-            using (StringReader stringReader = new StringReader(xmlDocument.OuterXml))
-            using (XmlReader reader = XmlReader.Create(stringReader, settings))
+            using (var stringReader = new StringReader(xmlDocument.OuterXml))
+            using (var reader = XmlReader.Create(stringReader, settings))
             {
                 while (reader.Read()) { } // Read and validate the entire XML
             }
@@ -62,16 +65,14 @@ public static class XmlValidator
         {
             validationErrors.Add(new ValidationError
             {
-                Message = $"XML Exception: {ex.Message}",
-                Severity = XmlSeverityType.Error
+                Message = $"XML Exception: {ex.Message}", Severity = XmlSeverityType.Error
             });
         }
         catch (Exception ex)
         {
             validationErrors.Add(new ValidationError
             {
-                Message = $"Unexpected Exception: {ex.Message}",
-                Severity = XmlSeverityType.Error
+                Message = $"Unexpected Exception: {ex.Message}", Severity = XmlSeverityType.Error
             });
         }
 
@@ -79,19 +80,18 @@ public static class XmlValidator
     }
 
     /// <summary>
-    /// Exports validation errors to a JSON file.
+    ///     Exports validation errors to a JSON file.
     /// </summary>
     /// <param name="errors">List of validation errors.</param>
     /// <param name="outputFilePath">The path to save the JSON file.</param>
     public static void ExportErrorsToJson(List<ValidationError> errors, string outputFilePath)
     {
         if (errors == null || errors.Count == 0)
-            return;
-
-        string json = System.Text.Json.JsonSerializer.Serialize(errors, new System.Text.Json.JsonSerializerOptions
         {
-            WriteIndented = true
-        });
+            return;
+        }
+
+        var json = JsonSerializer.Serialize(errors, new JsonSerializerOptions { WriteIndented = true });
 
         File.WriteAllText(outputFilePath, json);
     }

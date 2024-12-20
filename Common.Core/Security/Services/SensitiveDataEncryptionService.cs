@@ -1,11 +1,12 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using Common.Core.Security.Interfaces;
 
-namespace Common.Core.Security;
+namespace Common.Core.Security.Services;
 
-public static class Encryption
+public class SensitiveDataEncryptionService : ISensitiveDataEncryptionService
 {
-    public static string EncryptString(string key, string data)
+    public string EncryptString(string key, string data)
     {
         var iv = new byte[16];
         byte[] array;
@@ -34,7 +35,7 @@ public static class Encryption
         return Convert.ToBase64String(array);
     }
 
-    public static string DecryptString(string key, string cipherText)
+    public string DecryptString(string key, string cipherText)
     {
         var iv = new byte[16];
         var buffer = Convert.FromBase64String(cipherText);

@@ -73,11 +73,19 @@ public static class CompressionUtils
         }
     }
 
-    public static void DecompressColumn(DataSet dataSet, string tableName, string compressedColumnName,
-        string decompressedColumnName)
+    public static void DecompressColumn(DataSet dataSet, string tableName, string compressedColumnName, string decompressedColumnName)
     {
-        // Get the DataTable from the DataSet
+        if (dataSet == null) throw new ArgumentNullException(nameof(dataSet));
+        if (!dataSet.Tables.Contains(tableName)) throw new ArgumentException($"Table '{tableName}' does not exist in the DataSet.");
+
         DataTable table = dataSet.Tables[tableName];
+        DecompressColumn(table, compressedColumnName, decompressedColumnName);
+    }
+
+    public static void DecompressColumn(DataTable table, string compressedColumnName, string decompressedColumnName)
+    {
+        if (table == null) throw new ArgumentNullException(nameof(table));
+        if (!table.Columns.Contains(compressedColumnName)) throw new ArgumentException($"Column '{compressedColumnName}' does not exist in the DataTable.");
 
         // Add a new column to store the decompressed content if it doesn't exist
         if (!table.Columns.Contains(decompressedColumnName))
@@ -88,14 +96,9 @@ public static class CompressionUtils
         // Loop through each row in the DataTable
         foreach (DataRow row in table.Rows)
         {
-            // Get the compressed data from the specified column
-
             if (row[compressedColumnName] is byte[] compressedData)
             {
-                // Decompress the data
                 string decompressedString = Encoding.UTF8.GetString(DecompressGZip(compressedData));
-
-                // Store the decompressed string in the new column
                 row[decompressedColumnName] = decompressedString;
             }
         }

@@ -3,43 +3,45 @@ using Common.Core.Security.Interfaces;
 
 namespace Common.TestApi.Controllers;
 
-public class EncryptionController : BaseApiController
+public class EncryptionController(
+    IDataEncryptionService dataEncryptionService,
+    ISensitiveDataEncryptionService sensitiveDataEncryptionService,
+    IPasswordSecurityService passwordHashingService) : BaseApiController
 {
-    private readonly IDataEncryptionService _dataEncryptionService;
-    private readonly IDataSecurityService _passwordHashingService;
-
-    public EncryptionController(IDataEncryptionService dataEncryptionService, IDataSecurityService passwordHashingService)
-    {
-        _dataEncryptionService = dataEncryptionService;
-        _passwordHashingService = passwordHashingService;
-    }
-
     [HttpPost("encrypt")]
-    public IActionResult EncryptData([FromBody] EncryptRequest request)
+    public async Task<IActionResult> EncryptData([FromBody] EncryptRequest request)
     {
-        var encryptedBytes = _dataEncryptionService.EncryptToBytes(request.PlainText);
+        // var encryptedBytes = dataEncryptionService.EncryptToBytes(request.PlainText);
+        // var encrypted = 
+        var encryptedBytes = await sensitiveDataEncryptionService.EncryptToBytesAsync("ivan", request.PlainText);
+
+        // Store encryptedData and extracted salt in DB
+
         return Ok(Convert.ToBase64String(encryptedBytes));
     }
 
     [HttpPost("decrypt")]
-    public IActionResult DecryptData([FromBody] DecryptRequest request)
+    public async Task<IActionResult> DecryptData([FromBody] DecryptRequest request)
     {
         var encryptedBytes = Convert.FromBase64String(request.EncryptedData);
-        var decryptedText = _dataEncryptionService.DecryptFromBytes(encryptedBytes);
-        return Ok(decryptedText);
+        // var decryptedText = dataEncryptionService.DecryptFromBytes(encryptedBytes);
+        // Retrieve encryptedData and salt from DB
+        var decryptedData = await sensitiveDataEncryptionService.DecryptFromBytesAsync("ivan", encryptedBytes);
+
+        return Ok(decryptedData);
     }
 
     [HttpPost("hash")]
     public IActionResult HashPassword([FromBody] HashRequest request)
     {
-        var hashedPassword = _passwordHashingService.HashPassword(request.Password);
+        var hashedPassword = passwordHashingService.HashPassword(request.Password);
         return Ok(hashedPassword);
     }
 
     [HttpPost("verify")]
     public IActionResult VerifyPassword([FromBody] VerifyRequest request)
     {
-        var isValid = _passwordHashingService.VerifyPassword(request.Password, request.HashedPassword);
+        var isValid = passwordHashingService.VerifyPassword(request.Password, request.HashedPassword);
         return Ok(isValid);
     }
 }

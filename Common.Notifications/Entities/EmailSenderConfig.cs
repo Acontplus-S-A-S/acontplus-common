@@ -17,6 +17,7 @@ public class EmailSenderConfig : BaseEntity
     public int SmtpPort { get; set; } // Example: 587
     public bool UseSsl { get; set; } // True if SSL/TLS is required
     [Required, MaxLength(150)] public string Username { get; set; } // SMTP authentication username
-    [Required] public byte[] EncryptedPassword { get; set; } // Encrypted password
-    [Required] public string PasswordHash { get; set; }
+    public byte[] EncryptedPassword { get; set; } // Encrypted password
+    public string PasswordHash { get; set; }
+    public string Password { get; set; }
 }

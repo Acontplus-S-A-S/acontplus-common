@@ -5,9 +5,9 @@ namespace Common.TestApi.Controllers
 { 
     public class SecurityController : BaseApiController
     {
-        private readonly IDataSecurityService _dataSecurityService;
+        private readonly IPasswordSecurityService _dataSecurityService;
 
-        public SecurityController(IDataSecurityService dataSecurityService)
+        public SecurityController(IPasswordSecurityService dataSecurityService)
         {
             _dataSecurityService = dataSecurityService;
         }

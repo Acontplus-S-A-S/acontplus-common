@@ -1,6 +1,6 @@
 ﻿namespace Common.Core.Security.Interfaces;
 
-public interface IDataSecurityService
+public interface IPasswordSecurityService
 {
     string HashPassword(string password);
     bool VerifyPassword(string password, string hashedPassword);

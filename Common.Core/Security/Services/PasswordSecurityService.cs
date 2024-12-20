@@ -2,7 +2,7 @@
 
 namespace Common.Core.Security.Services;
 
-public class DataSecurityService(IDataEncryptionService dataEncryptionService) : IDataSecurityService
+public class PasswordSecurityService(IDataEncryptionService dataEncryptionService) : IPasswordSecurityService
 {
     public string GetDecryptedPassword(byte[] encryptedPassword)
     {

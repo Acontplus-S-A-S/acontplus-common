@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <PackageId>Acontplus.Common.Infrastructure</PackageId>
-    <Version>1.1.9</Version>
+    <Version>1.1.14</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Library providing common infrastructure for data access, including ADO.NET and Entity Framework integration.</Description>
@@ -22,6 +22,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Polly" />
+    <!--<PackageReference Include="Polly" />-->
   </ItemGroup>
   <ItemGroup>
     <None Update="README.md">

@@ -1,0 +1,28 @@
+﻿using Common.Core.Utils;
+using Common.Infrastructure.Repository.Interfaces;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Services.Common.Extensions;
+
+namespace Common.TestApi.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class PrintController (IAdoRepository adoRepository): ControllerBase
+    {
+        [HttpGet]
+        public async Task<IActionResult> Print(string json)
+        {
+            var parameters = new Dictionary<string, object>
+            {
+            { "userRoleId", 27 },
+            { "json", SqlStringParam.Sanitize(json) },
+            { "isMobileUserAgent", "false" }
+        };
+            var response = await adoRepository.SpExecuteDeprecatedAsync("Config.Print_Get", parameters);
+            if (response == null || string.IsNullOrEmpty(response)) { return BadRequest(); }
+
+            return Ok(response);
+        }
+    }
+}

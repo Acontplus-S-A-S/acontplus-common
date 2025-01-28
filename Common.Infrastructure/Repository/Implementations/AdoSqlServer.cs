@@ -36,7 +36,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
                 await cmd.Connection.CloseAsync();
             }
@@ -53,7 +53,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         await using var conn =
             new SqlConnection(configuration.GetConnectionString(connectionStringName));
         await using var cmd = new SqlCommand(spname, conn);
-        var wasOpen = cmd.Connection.State == ConnectionState.Open;
+        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
         try
         {
             parameters ??= new Dictionary<string, object>();
@@ -110,7 +110,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
                 await cmd.Connection.CloseAsync();
             }
@@ -151,7 +151,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
                 await cmd.Connection.CloseAsync();
             }
@@ -195,7 +195,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
                 await cmd.Connection.CloseAsync();
             }
@@ -245,7 +245,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
                     var columnName = reader.GetSchemaTable()
                         ?.Rows.Cast<DataRow>()
                         .Where(row =>
-                            row["ColumnName"].ToString().Equals(property.Name, StringComparison.OrdinalIgnoreCase))
+                            row["ColumnName"].ToString()!.Equals(property.Name, StringComparison.OrdinalIgnoreCase))
                         .Select(row => row["ColumnName"].ToString())
                         .FirstOrDefault();
 
@@ -265,7 +265,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
                 await cmd.Connection.CloseAsync();
             }

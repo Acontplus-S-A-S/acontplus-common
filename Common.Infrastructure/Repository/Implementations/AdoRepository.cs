@@ -10,7 +10,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var response = new List<T>();
         var context = contexts.GetContext(configuration["ContextName"]);
         await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
+        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
         try
         {
             parameters ??= new Dictionary<string, object>();
@@ -35,29 +35,30 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
-                if (cmd.Connection != null)
-                {
-                    await cmd.Connection.CloseAsync();
-                }
+                await cmd.Connection.CloseAsync();
             }
         }
 
         return response;
     }
 
-    public async Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters, bool withTableNames, bool timeout)
+    public async Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters,
+        bool withTableNames, bool timeout)
     {
-        DataSet ds = null;
+        DataSet ds = new DataSet();
         await using var context = contexts.GetContext(configuration["ContextName"]);
         await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
+        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
+
         try
         {
             parameters ??= new Dictionary<string, object>();
 
             cmd.CommandText = spName;
+            cmd.CommandType = CommandType.StoredProcedure;
+
             if (parameters.Count > 0)
             {
                 foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
@@ -73,8 +74,6 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 ParametersUtilsEf.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
             }
 
-            cmd.CommandType = CommandType.StoredProcedure;
-
             if (!timeout)
             {
                 cmd.CommandTimeout = 0;
@@ -85,39 +84,31 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                 await context.Database.OpenConnectionAsync();
             }
 
-            using (var adapter = new SqlDataAdapter())
+            using (var adapter = new SqlDataAdapter((SqlCommand)cmd))
             {
-                adapter.SelectCommand = (SqlCommand)cmd;
-                ds = new DataSet();
                 await Task.Run(() => adapter.Fill(ds));
             }
 
             if (withTableNames)
             {
                 var tableNames = ParametersUtilsEf.GetParameter(cmd, outParam).ToString()?.Split(',');
-                await Task.Run(() =>
+                if (tableNames != null)
                 {
-                    if (tableNames != null)
+                    Parallel.ForEach(tableNames, (tableName, state, index) =>
                     {
-                        Parallel.ForEach(tableNames, (tableName, state, index) =>
+                        if (!string.IsNullOrEmpty(tableName))
                         {
-                            if (!string.IsNullOrEmpty(tableName))
-                            {
-                                ds.Tables[(int)index].TableName = tableName;
-                            }
-                        });
-                    }
-                });
+                            ds.Tables[(int)index].TableName = tableName;
+                        }
+                    });
+                }
             }
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
-                if (cmd.Connection != null)
-                {
-                    await cmd.Connection.CloseAsync();
-                }
+                await cmd.Connection.CloseAsync();
             }
         }
 
@@ -129,7 +120,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var dt = new DataTable();
         var context = contexts.GetContext(configuration["ContextName"]);
         await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
+        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
         try
         {
             parameters ??= new Dictionary<string, object>();
@@ -154,12 +145,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
-                if (cmd.Connection != null)
-                {
-                    await cmd.Connection.CloseAsync();
-                }
+                await cmd.Connection.CloseAsync();
             }
         }
 
@@ -171,7 +159,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
     {
         var context = contexts.GetContext(configuration["ContextName"]);
         await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
+        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
         try
         {
             parameters ??= new Dictionary<string, object>();
@@ -201,12 +189,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
-                if (cmd.Connection != null)
-                {
-                    await cmd.Connection.CloseAsync();
-                }
+                await cmd.Connection.CloseAsync();
             }
         }
     }
@@ -217,7 +202,7 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         var response = new T();
         await using var context = contexts.GetContext(configuration["ContextName"]);
         await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
+        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
         try
         {
             parameters ??= new Dictionary<string, object>();
@@ -253,9 +238,10 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
                     // Check if property name matches a column name (case-insensitive)
                     var columnName = (await reader.GetSchemaTableAsync())
                         ?.Rows.Cast<DataRow>()
-                                          .Where(row => row["ColumnName"].ToString().Equals(property.Name, StringComparison.OrdinalIgnoreCase))
-                                          .Select(row => row["ColumnName"].ToString())
-                                          .FirstOrDefault();
+                        .Where(row =>
+                            row["ColumnName"].ToString()!.Equals(property.Name, StringComparison.OrdinalIgnoreCase))
+                        .Select(row => row["ColumnName"].ToString())
+                        .FirstOrDefault();
 
                     if (columnName != null)
                     {
@@ -271,12 +257,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
-                if (cmd.Connection != null)
-                {
-                    await cmd.Connection.CloseAsync();
-                }
+                await cmd.Connection.CloseAsync();
             }
         }
 
@@ -284,12 +267,12 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
     }
 
     public async Task<string> SpExecuteDeprecatedAsync(string spName, Dictionary<string, object> parameters,
-       bool timeout)
+        bool timeout)
     {
         var response = string.Empty;
         await using var context = contexts.GetContext(configuration["ContextName"]);
         await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection is { State: ConnectionState.Open };
+        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
         try
         {
             cmd.CommandText = spName;
@@ -320,12 +303,9 @@ public class AdoRepository(DbContextFactory contexts, IConfiguration configurati
         }
         finally
         {
-            if (!wasOpen)
+            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
             {
-                if (cmd.Connection != null)
-                {
-                    await cmd.Connection.CloseAsync();
-                }
+                await cmd.Connection.CloseAsync();
             }
         }
 

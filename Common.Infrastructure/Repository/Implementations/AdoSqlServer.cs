@@ -21,7 +21,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             {
                 foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsSqlServer.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -62,14 +62,14 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             {
                 foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsSqlServer.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
             const string outParam = "@tableNames";
             if (withTableNames)
             {
-                ParametersUtilsSqlServer.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
+                ParametersUtils.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
             }
 
             if (!timeout)
@@ -92,7 +92,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
 
             if (withTableNames)
             {
-                var tableNames = ParametersUtilsSqlServer.GetParameter(cmd, outParam).ToString()?.Split(',');
+                var tableNames = ParametersUtils.GetParameter(cmd, outParam).ToString()?.Split(',');
                 await Task.Run(() =>
                 {
                     if (tableNames != null)
@@ -136,7 +136,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             {
                 foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsSqlServer.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -176,7 +176,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             {
                 foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsSqlServer.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 
@@ -219,7 +219,7 @@ public class AdoSqlServer(IConfiguration configuration) : IAdoSqlServer
             {
                 foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
                 {
-                    ParametersUtilsSqlServer.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+                    ParametersUtils.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
                 }
             }
 

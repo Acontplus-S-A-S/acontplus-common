@@ -1,314 +1,332 @@
-﻿using Common.Infrastructure.Repository.Interfaces;
+﻿using System.Collections.Concurrent;
+using Common.Infrastructure.Repository.Interfaces;
 using Common.Infrastructure.Utils.Database;
+using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 
 namespace Common.Infrastructure.Repository.Implementations;
 
-public class AdoRepository(DbContextFactory contexts, IConfiguration configuration) : IAdoRepository
+public class AdoRepository(
+    IConfiguration configuration,
+    ILogger<AdoRepository> logger)
+    : IAdoRepository
 {
-    public async Task<List<T>> DynamicListAsync<T>(string spName, Dictionary<string, object> parameters)
+    private readonly ConcurrentDictionary<string, string> _connectionStrings = new();
+
+    private static readonly AsyncRetryPolicy RetryPolicy = Policy
+        .Handle<SqlException>(ex => IsTransientException(ex))
+        .Or<TimeoutException>()
+        .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+
+    private string GetConnectionString(string name)
     {
-        var response = new List<T>();
-        var context = contexts.GetContext(configuration["ContextName"]);
-        await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
-        try
+        // Use "DefaultConnection" if name is null or empty
+        string key = string.IsNullOrEmpty(name) ? "DefaultConnection" : name;
+
+        return _connectionStrings.GetOrAdd(key, k =>
         {
-            parameters ??= new Dictionary<string, object>();
-
-            cmd.CommandText = spName;
-            if (parameters.Count > 0)
+            var connString = configuration.GetConnectionString(k);
+            if (string.IsNullOrEmpty(connString))
             {
-                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
-                {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
-                }
+                throw new InvalidOperationException($"Connection string '{k}' not found");
             }
 
-            cmd.CommandType = CommandType.StoredProcedure;
-            if (!wasOpen)
-            {
-                await context.Database.OpenConnectionAsync();
-            }
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            response = DbDataReaderMapper.ToList<T>(reader);
-        }
-        finally
-        {
-            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
-            {
-                await cmd.Connection.CloseAsync();
-            }
-        }
-
-        return response;
+            return connString;
+        });
     }
 
-    public async Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters,
-        bool withTableNames, bool timeout)
+    private static bool IsTransientException(SqlException ex)
     {
-        DataSet ds = new DataSet();
-        await using var context = contexts.GetContext(configuration["ContextName"]);
-        await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
+        var transientErrorNumbers = new[] { 4060, 40197, 40501, 40613, 49918, 49919, 49920, 4221 };
+        return transientErrorNumbers.Contains(ex.Number);
+    }
 
+    private async Task<SqlConnection> CreateConnectionAsync(string connectionStringName,
+        CancellationToken cancellationToken)
+    {
         try
         {
-            parameters ??= new Dictionary<string, object>();
+            var connection = new SqlConnection(GetConnectionString(connectionStringName));
+            await connection.OpenAsync(cancellationToken);
+            return connection;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating connection for {ConnectionName}", connectionStringName);
+            throw;
+        }
+    }
 
-            cmd.CommandText = spName;
-            cmd.CommandType = CommandType.StoredProcedure;
+    public async Task<List<T>> DynamicListAsync<T>(
+        string spName,
+        Dictionary<string, object> parameters,
+        string connectionStringName,
+        CancellationToken cancellationToken)
+    {
+        parameters ??= new Dictionary<string, object>();
 
-            if (parameters.Count > 0)
+        return await RetryPolicy.ExecuteAsync(async () =>
+        {
+            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure);
+
+            try
             {
-                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
-                {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
-                }
+                await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+                return await DbDataReaderMapper.ToListAsync<T>(reader, cancellationToken);
             }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error executing DynamicListAsync for {SpName}", spName);
+                throw;
+            }
+        });
+    }
 
-            const string outParam = "@tableNames";
+    public async Task<DataSet> GetDataSetAsync(
+        string spName,
+        Dictionary<string, object> parameters,
+        bool withTableNames,
+        bool timeout,
+        string connectionStringName,
+        CancellationToken cancellationToken)
+    {
+        parameters ??= new Dictionary<string, object>();
+
+        return await RetryPolicy.ExecuteAsync(async () =>
+        {
+            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
 
             if (withTableNames)
             {
-                ParametersUtilsEf.AddSqlParameterOut(cmd, outParam, SqlDbType.VarChar, 500);
+                const string outParam = "@tableNames";
+                AddOutputParameter(cmd, outParam, SqlDbType.VarChar, 500);
             }
 
-            if (!timeout)
+            var ds = new DataSet();
+            try
             {
-                cmd.CommandTimeout = 0;
-            }
+                using var adapter = new SqlDataAdapter(cmd);
+                await Task.Run(() => adapter.Fill(ds), cancellationToken);
 
-            if (!wasOpen)
-            {
-                await context.Database.OpenConnectionAsync();
-            }
-
-            using (var adapter = new SqlDataAdapter((SqlCommand)cmd))
-            {
-                await Task.Run(() => adapter.Fill(ds));
-            }
-
-            if (withTableNames)
-            {
-                var tableNames = ParametersUtilsEf.GetParameter(cmd, outParam).ToString()?.Split(',');
-                if (tableNames != null)
+                if (withTableNames)
                 {
-                    Parallel.ForEach(tableNames, (tableName, state, index) =>
-                    {
-                        if (!string.IsNullOrEmpty(tableName))
-                        {
-                            ds.Tables[(int)index].TableName = tableName;
-                        }
-                    });
+                    await ProcessTableNames(cmd, ds);
                 }
-            }
-        }
-        finally
-        {
-            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
-            {
-                await cmd.Connection.CloseAsync();
-            }
-        }
 
-        return ds;
+                return ds;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error executing GetDataSetAsync for {SpName}", spName);
+                throw;
+            }
+        });
     }
 
-    public async Task<DataTable> GetDataTableAsync(string spName, Dictionary<string, object> parameters)
+    public async Task<DataTable> GetDataTableAsync(
+        string spName,
+        Dictionary<string, object> parameters,
+        bool timeout,
+        string connectionStringName,
+        CancellationToken cancellationToken)
     {
-        var dt = new DataTable();
-        var context = contexts.GetContext(configuration["ContextName"]);
-        await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
-        try
+        parameters ??= new Dictionary<string, object>();
+
+        return await RetryPolicy.ExecuteAsync(async () =>
         {
-            parameters ??= new Dictionary<string, object>();
+            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
 
-            cmd.CommandText = spName;
-            if (parameters.Count > 0)
+            var dt = new DataTable();
+            try
             {
-                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
-                {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
-                }
+                await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+                dt.Load(reader);
+                return dt;
             }
-
-            cmd.CommandType = CommandType.StoredProcedure;
-            if (!wasOpen)
+            catch (Exception ex)
             {
-                await context.Database.OpenConnectionAsync();
+                logger.LogError(ex, "Error executing GetDataSetAsync for {SpName}", spName);
+                throw;
             }
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            dt.Load(reader);
-        }
-        finally
-        {
-            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
-            {
-                await cmd.Connection.CloseAsync();
-            }
-        }
-
-        return dt;
+        });
     }
 
-    public async Task<int> OnlyExecuteAsync(string spName, Dictionary<string, object> parameters,
-        bool useStoredProcedure, bool timeout)
+    private static SqlCommand CreateCommand(
+        SqlConnection connection,
+        string commandText,
+        Dictionary<string, object> parameters,
+        CommandType commandType,
+        bool disableTimeout = false)
     {
-        var context = contexts.GetContext(configuration["ContextName"]);
-        await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
-        try
+        var cmd = connection.CreateCommand();
+        cmd.CommandText = commandText;
+        cmd.CommandType = commandType;
+
+        if (disableTimeout)
         {
-            parameters ??= new Dictionary<string, object>();
-
-            cmd.CommandText = spName;
-            if (parameters.Count > 0)
-            {
-                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
-                {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
-                }
-            }
-
-            cmd.CommandType = useStoredProcedure ? CommandType.StoredProcedure : CommandType.Text;
-
-            if (!timeout)
-            {
-                cmd.CommandTimeout = 0;
-            }
-
-            if (!wasOpen)
-            {
-                await context.Database.OpenConnectionAsync();
-            }
-
-            return await cmd.ExecuteNonQueryAsync();
+            cmd.CommandTimeout = 0;
         }
-        finally
+
+        foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
         {
-            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
-            {
-                await cmd.Connection.CloseAsync();
-            }
+            AddParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
         }
+
+        return cmd;
     }
 
-    public async Task<T> SpExecuteAsync<T>(string spName, Dictionary<string, object> parameters,
-        bool timeout) where T : class, new()
+    private static void AddParameter(SqlCommand cmd, string name, object value)
     {
-        var response = new T();
-        await using var context = contexts.GetContext(configuration["ContextName"]);
-        await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
-        try
-        {
-            parameters ??= new Dictionary<string, object>();
-
-            cmd.CommandText = spName;
-
-            if (parameters.Count > 0)
-            {
-                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
-                {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
-                }
-            }
-
-            cmd.CommandType = CommandType.StoredProcedure;
-            if (!timeout)
-            {
-                cmd.CommandTimeout = 0;
-            }
-
-            if (!wasOpen)
-            {
-                await context.Database.OpenConnectionAsync();
-            }
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
-            {
-                // Reflection to access properties dynamically
-                var properties = typeof(T).GetProperties();
-                foreach (var property in properties)
-                {
-                    // Check if property name matches a column name (case-insensitive)
-                    var columnName = (await reader.GetSchemaTableAsync())
-                        ?.Rows.Cast<DataRow>()
-                        .Where(row =>
-                            row["ColumnName"].ToString()!.Equals(property.Name, StringComparison.OrdinalIgnoreCase))
-                        .Select(row => row["ColumnName"].ToString())
-                        .FirstOrDefault();
-
-                    if (columnName != null)
-                    {
-                        var index = reader.GetOrdinal(columnName);
-                        if (index != -1 && !reader.IsDBNull(index))
-                        {
-                            // Set property value based on data type
-                            property.SetValue(response, reader.GetValue(index));
-                        }
-                    }
-                }
-            }
-        }
-        finally
-        {
-            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
-            {
-                await cmd.Connection.CloseAsync();
-            }
-        }
-
-        return response;
+        var param = cmd.CreateParameter();
+        param.ParameterName = name.StartsWith("@") ? name : $"@{name}";
+        param.Value = value;
+        cmd.Parameters.Add(param);
     }
 
-    public async Task<string> SpExecuteDeprecatedAsync(string spName, Dictionary<string, object> parameters,
-        bool timeout)
+    private static void AddOutputParameter(SqlCommand cmd, string name, SqlDbType type, int size)
     {
-        var response = string.Empty;
-        await using var context = contexts.GetContext(configuration["ContextName"]);
-        await using var cmd = context.Database.GetDbConnection().CreateCommand();
-        var wasOpen = cmd.Connection?.State == ConnectionState.Open;
-        try
+        var param = cmd.CreateParameter();
+        param.ParameterName = name;
+        param.SqlDbType = type;
+        param.Size = size;
+        param.Direction = ParameterDirection.Output;
+        cmd.Parameters.Add(param);
+    }
+
+    private static async Task ProcessTableNames(SqlCommand cmd, DataSet ds)
+    {
+        var tableNames = cmd.Parameters["@tableNames"].Value?.ToString()?.Split(',');
+        if (tableNames == null) return;
+
+        await Task.Run(() =>
         {
-            cmd.CommandText = spName;
-            if (parameters.Count > 0)
+            Parallel.ForEach(tableNames, (tableName, _, index) =>
             {
-                foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
+                if (!string.IsNullOrEmpty(tableName))
                 {
-                    ParametersUtilsEf.AddSqlParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+                    ds.Tables[(int)index].TableName = tableName;
                 }
-            }
+            });
+        });
+    }
 
-            cmd.CommandType = CommandType.StoredProcedure;
-            if (!timeout)
-            {
-                cmd.CommandTimeout = 0;
-            }
+    public async Task<T> SpExecuteAsync<T>(
+        string spName,
+        Dictionary<string, object> parameters,
+        bool timeout,
+        string connectionStringName,
+        CancellationToken cancellationToken) where T : class, new()
+    {
+        parameters ??= new Dictionary<string, object>();
 
-            if (!wasOpen)
-            {
-                await context.Database.OpenConnectionAsync();
-            }
-
-            await using var reader = await cmd.ExecuteReaderAsync();
-            if (await reader.ReadAsync())
-            {
-                response = reader.GetString(0);
-            }
-        }
-        finally
+        return await RetryPolicy.ExecuteAsync(async () =>
         {
-            if (!wasOpen && cmd.Connection?.State == ConnectionState.Open)
+            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
+
+            try
             {
-                await cmd.Connection.CloseAsync();
+                await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+                return await reader.ReadAsync(cancellationToken)
+                    ? await MapToObject<T>(reader)
+                    : new T();
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error executing SpExecuteAsync for {SpName}", spName);
+                throw;
+            }
+        });
+    }
+
+    public async Task<string> SpExecuteDeprecatedAsync(
+        string spName,
+        Dictionary<string, object> parameters,
+        bool timeout,
+        string connectionStringName,
+        CancellationToken cancellationToken)
+    {
+        parameters ??= new Dictionary<string, object>();
+
+        return await RetryPolicy.ExecuteAsync(async () =>
+        {
+            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
+
+            try
+            {
+                await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+                return await reader.ReadAsync(cancellationToken)
+                    ? reader.GetString(0)
+                    : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error executing SpExecuteDeprecatedAsync for {SpName}", spName);
+                throw;
+            }
+        });
+    }
+
+    private static async Task<T> MapToObject<T>(SqlDataReader reader) where T : class, new()
+    {
+        var result = new T();
+        var properties = typeof(T).GetProperties();
+        var schemaTable = await reader.GetSchemaTableAsync();
+
+        foreach (var property in properties)
+        {
+            var columnName = schemaTable?.Rows.Cast<DataRow>()
+                .Where(row => row["ColumnName"].ToString()!
+                    .Equals(property.Name, StringComparison.OrdinalIgnoreCase))
+                .Select(row => row["ColumnName"].ToString())
+                .FirstOrDefault();
+
+            if (columnName == null) continue;
+
+            var index = reader.GetOrdinal(columnName);
+            if (index != -1 && !reader.IsDBNull(index))
+            {
+                property.SetValue(result, reader.GetValue(index));
             }
         }
 
-        return response;
+        return result;
+    }
+
+    public async Task<int> ExecuteNonQueryAsync(
+        string commandText,
+        Dictionary<string, object> parameters,
+        bool useStoredProcedure,
+        bool timeout,
+        string connectionStringName,
+        CancellationToken cancellationToken)
+    {
+        parameters ??= new Dictionary<string, object>();
+
+        return await RetryPolicy.ExecuteAsync(async () =>
+        {
+            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
+            await using var cmd = CreateCommand(
+                connection,
+                commandText,
+                parameters,
+                useStoredProcedure ? CommandType.StoredProcedure : CommandType.Text,
+                timeout);
+
+            try
+            {
+                return await cmd.ExecuteNonQueryAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error executing ExecuteNonQueryAsync for {CommandText}", commandText);
+                throw;
+            }
+        });
     }
 }

@@ -7,10 +7,10 @@ public interface ICustomerService
 {
     Task<DataTable> GetByIdCardAsync(Dictionary<string, object> parameters);
 }
-public class CustomerService(IAdoSqlServer adoSqlServer) : ICustomerService
+public class CustomerService(IAdoRepository adoRepository) : ICustomerService
 {
     public Task<DataTable> GetByIdCardAsync(Dictionary<string, object> parameters)
     {
-        return adoSqlServer.GetDataTableAsync("Customer.Customer_Get", parameters);
+        return adoRepository.GetDataTableAsync("Customer.Customer_IDCard_Get", parameters);
     }
 }

@@ -1,4 +1,5 @@
-﻿using Common.Barcode.Utils;
+﻿using Common.Barcode.Models;
+using Common.Barcode.Utils;
 using Common.Core.Utils;
 using Microsoft.AspNetCore.Mvc;
 

@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.ApiDocumentation", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Notifications", "Common.Notifications\Common.Notifications.csproj", "{26DAFDC6-7751-4775-8727-99320E4C9E06}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Barcode", "Common.Barcode\Common.Barcode.csproj", "{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -70,6 +72,10 @@ Global
 		{26DAFDC6-7751-4775-8727-99320E4C9E06}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26DAFDC6-7751-4775-8727-99320E4C9E06}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26DAFDC6-7751-4775-8727-99320E4C9E06}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

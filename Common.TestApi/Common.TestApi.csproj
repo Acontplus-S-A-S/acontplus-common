@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Common.ApiDocumentation\Common.ApiDocumentation.csproj" />
+    <ProjectReference Include="..\Common.Barcode\Common.Barcode.csproj" />
     <ProjectReference Include="..\Common.Core\Common.Core.csproj" />
     <ProjectReference Include="..\Common.Infrastructure\Common.Infrastructure.csproj" />
     <ProjectReference Include="..\Common.Notifications\Common.Notifications.csproj" />

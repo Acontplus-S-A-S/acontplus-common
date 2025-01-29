@@ -1,4 +1,5 @@
-﻿using Common.Core.Utils;
+﻿using Common.Barcode.Utils;
+using Common.Core.Utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Common.TestApi.Controllers

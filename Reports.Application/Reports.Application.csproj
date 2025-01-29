@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Reports.Application</PackageId>
-    <Version>1.1.8</Version>
+    <Version>1.1.9</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Acontplus.Reports.Application is a .NET library designed to simplify the generation of RDLC (Report Definition Language Client-side) reports. It includes features for creating, exporting, and managing reports using RDLC in your .NET applications.</Description>
@@ -26,6 +26,7 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Acontplus.Common.Barcode" />
     <PackageReference Include="Acontplus.Common.Core" />
     <PackageReference Include="ReportViewerCore.NETCore" />
   </ItemGroup>

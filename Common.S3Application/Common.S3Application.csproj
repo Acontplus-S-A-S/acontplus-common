@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.S3Application</PackageId>
-    <Version>1.1.4</Version>
+    <Version>1.1.5</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>A lightweight .NET library providing a simple and consistent interface for AWS S3 storage operations. This package implements basic CRUD operations for S3 objects with async support.</Description>
@@ -25,6 +25,5 @@
     <PackageReference Include="AWSSDK.Core" />
     <PackageReference Include="AWSSDK.S3" />
     <PackageReference Include="Acontplus.Common.Core" />
-    <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" />
   </ItemGroup>
 </Project>

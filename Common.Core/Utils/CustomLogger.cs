@@ -13,8 +13,8 @@ public class CustomLogger(IConfiguration configuration) : ICustomLogger
     {
         try
         {
-            var writeLogs = configuration["Logs:WriteLogs"];
-            if (string.IsNullOrEmpty(writeLogs))
+            var customLogs = configuration["Logs:CustomLogs"];
+            if (string.IsNullOrEmpty(customLogs))
             {
                 return; // Logs are disabled, no need to proceed
             }

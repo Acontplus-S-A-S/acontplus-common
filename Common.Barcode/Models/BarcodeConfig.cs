@@ -1,6 +1,6 @@
 ﻿using SkiaSharp;
-using ZXing.Common;
 using ZXing;
+using ZXing.Common;
 
 namespace Common.Barcode.Models;
 

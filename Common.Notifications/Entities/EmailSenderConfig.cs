@@ -1,7 +1,4 @@
-﻿using Common.Core.Security;
-using Common.Core.Security.Interfaces;
-
-namespace Common.Notifications.Entities;
+﻿namespace Common.Notifications.Entities;
 
 [Table("EmailSenderConfig", Schema = "Config")]
 public class EmailSenderConfig : BaseEntity

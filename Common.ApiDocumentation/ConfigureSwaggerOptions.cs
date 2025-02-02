@@ -22,7 +22,7 @@ public class ConfigureSwaggerOptions(IApiVersionDescriptionProvider provider, IC
     {
         Configure(options);
     }
-    
+
     private static OpenApiInfo CreateVersionInfo(ApiVersionDescription description, IConfiguration configuration)
     {
         var swaggerInfo = configuration.GetSection("SwaggerInfo");

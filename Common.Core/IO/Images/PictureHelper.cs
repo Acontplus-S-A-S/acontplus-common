@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Utils;
+﻿namespace Common.Core.IO.Images;
 
 public static class PictureHelper
 {

@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace Common.Core.Utils;
+namespace Common.Core.Diagnostics;
 
 public interface ICustomLogger
 {

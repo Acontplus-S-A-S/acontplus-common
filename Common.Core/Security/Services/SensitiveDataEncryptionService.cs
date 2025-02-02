@@ -1,5 +1,4 @@
 ﻿using System.Security.Cryptography;
-using System.Text;
 using Common.Core.Security.Helpers;
 using Common.Core.Security.Interfaces;
 

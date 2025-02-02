@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Utils;
+﻿namespace Common.Core.Time;
 
 public static class DateUtils
 {

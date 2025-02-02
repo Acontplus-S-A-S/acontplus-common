@@ -1,7 +1,7 @@
 ﻿using System.IO.Compression;
 using System.Text;
 
-namespace Common.Core.Utils;
+namespace Common.Core.Format;
 
 public static class CompressionUtils
 {

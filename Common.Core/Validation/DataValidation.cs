@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using System.Xml;
 using Newtonsoft.Json.Linq;
 
-namespace Common.Core.Utils;
+namespace Common.Core.Validation;
 
 public static class DataValidation
 {
@@ -23,16 +23,16 @@ public static class DataValidation
         switch (removeEmptyDt)
         {
             case true:
-            {
-                var tablesToRemove = ds.Tables.Cast<DataTable>().Where(dt => dt.Rows.Count == 0).ToList();
-
-                foreach (var dt in tablesToRemove)
                 {
-                    ds.Tables.Remove(dt);
-                }
+                    var tablesToRemove = ds.Tables.Cast<DataTable>().Where(dt => dt.Rows.Count == 0).ToList();
 
-                break;
-            }
+                    foreach (var dt in tablesToRemove)
+                    {
+                        ds.Tables.Remove(dt);
+                    }
+
+                    break;
+                }
         }
 
         return ds == null || ds.Tables.Count == 0;
@@ -83,15 +83,15 @@ public static class DataValidation
         switch (ipAddress.Length)
         {
             case > 13:
-            {
-                var extractedIpAddress = ipAddress.Substring(13);
-                return IPAddress.TryParse(extractedIpAddress, out _) ? extractedIpAddress : "0.0.0.0";
-            }
+                {
+                    var extractedIpAddress = ipAddress.Substring(13);
+                    return IPAddress.TryParse(extractedIpAddress, out _) ? extractedIpAddress : "0.0.0.0";
+                }
             default:
                 return ipAddress ?? "0.0.0.0";
-            // Extract the relevant part of the IP address if necessary
+                // Extract the relevant part of the IP address if necessary
 
-            // Check if the extracted part is a valid IP address
+                // Check if the extracted part is a valid IP address
         }
     }
 }

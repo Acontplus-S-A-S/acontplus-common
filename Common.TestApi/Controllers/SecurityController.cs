@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Common.Core.Security.Interfaces;
+﻿using Common.Core.Security.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Common.TestApi.Controllers
-{ 
+{
     public class SecurityController : BaseApiController
     {
         private readonly IPasswordSecurityService _dataSecurityService;

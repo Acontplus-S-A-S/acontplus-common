@@ -1,7 +1,4 @@
 ﻿using System.Data;
-using Common.Core.Entities;
-using Common.Core.Models;
-using Common.Core.Utils;
 using Common.Infrastructure.Repository.Interfaces;
 
 namespace Common.TestApi.Services;

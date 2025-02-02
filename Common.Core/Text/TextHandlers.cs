@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace Common.Core.Utils;
+namespace Common.Core.Text;
 
 public static class TextHandlers
 {

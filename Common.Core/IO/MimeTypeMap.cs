@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Utils;
+﻿namespace Common.Core.IO;
 
 public static class MimeTypeMap
 {

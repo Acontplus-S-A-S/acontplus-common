@@ -3,7 +3,7 @@ using System.Xml;
 using System.Xml.Schema;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-namespace Common.Core.Utils;
+namespace Common.Core.Validation;
 
 public class ValidationError
 {
@@ -65,14 +65,16 @@ public static class XmlValidator
         {
             validationErrors.Add(new ValidationError
             {
-                Message = $"XML Exception: {ex.Message}", Severity = XmlSeverityType.Error
+                Message = $"XML Exception: {ex.Message}",
+                Severity = XmlSeverityType.Error
             });
         }
         catch (Exception ex)
         {
             validationErrors.Add(new ValidationError
             {
-                Message = $"Unexpected Exception: {ex.Message}", Severity = XmlSeverityType.Error
+                Message = $"Unexpected Exception: {ex.Message}",
+                Severity = XmlSeverityType.Error
             });
         }
 

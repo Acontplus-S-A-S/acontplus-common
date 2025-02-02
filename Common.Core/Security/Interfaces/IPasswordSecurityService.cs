@@ -4,6 +4,6 @@ public interface IPasswordSecurityService
 {
     string HashPassword(string password);
     bool VerifyPassword(string password, string hashedPassword);
-    (byte[] EncryptedPassword, string PasswordHash) SetPassword(string password); 
+    (byte[] EncryptedPassword, string PasswordHash) SetPassword(string password);
     string GetDecryptedPassword(byte[] encryptedPassword);
 }

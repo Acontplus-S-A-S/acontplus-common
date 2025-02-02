@@ -4,11 +4,7 @@ using Common.ApiDocumentation;
 using Common.Infrastructure.Repository.Implementations;
 using Common.Infrastructure.Repository.Interfaces;
 using Common.TestApi.Data;
-using Common.TestApi.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Reports.Application.Interfaces;
-using Reports.Application.Services;
 using Scrutor;
 using Services.Common.Middleware;
 

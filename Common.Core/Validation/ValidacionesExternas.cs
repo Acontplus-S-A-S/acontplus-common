@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Utils;
+﻿namespace Common.Core.Validation;
 
 public class ValidacionesExternas
 
@@ -104,7 +104,7 @@ public class ValidacionesExternas
             aux = par + impar;
             if (aux % 10 != 0)
             {
-                verifi = 10 - (aux % 10);
+                verifi = 10 - aux % 10;
             }
             else
             {
@@ -157,7 +157,7 @@ public class ValidacionesExternas
             aux = par + impar;
             if (aux % 10 != 0)
             {
-                verifi = 10 - (aux % 10);
+                verifi = 10 - aux % 10;
             }
             else
             {

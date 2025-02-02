@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 
-namespace Common.Core.Utils;
+namespace Common.Core.IO;
 
 public static class FileExtensions
 {

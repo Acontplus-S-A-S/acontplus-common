@@ -1,6 +1,6 @@
-﻿using Common.Core.Utils;
+﻿using System.Data;
+using Common.Core.Data;
 using Microsoft.AspNetCore.Mvc;
-using System.Data;
 
 namespace Common.TestApi.Controllers
 {

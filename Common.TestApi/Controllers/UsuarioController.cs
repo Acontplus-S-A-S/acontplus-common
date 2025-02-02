@@ -1,6 +1,5 @@
 ﻿using Common.TestApi.Entities;
 using Common.TestApi.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Common.TestApi.Controllers

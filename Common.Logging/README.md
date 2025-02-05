@@ -11,7 +11,7 @@ To enable and customize the logging system, edit the `appsettings.json` file and
   "EnableLocalFile": true,
   "Shared": false,
   "Buffered": true,
-  "LocalFilePath": "logs/log.log",
+  "LocalFilePath": "logs/log-.log",
   "EnableS3Logging": false,
   "S3BucketName": "my-application-logs",
   "S3AccessKey": "your-access-key",

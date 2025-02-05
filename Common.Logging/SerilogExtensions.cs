@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Formatting.Compact;
+using Serilog.Formatting.Json;
 using Serilog.Sinks.MSSqlServer;
 
 namespace Common.Logging;
@@ -12,6 +13,8 @@ public static class SerilogExtensions
 {
     public static IServiceCollection AddAdvancedLogging(this IServiceCollection services, IConfiguration configuration)
     {
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
         // Enable Serilog self-logging for debugging
         Serilog.Debugging.SelfLog.Enable(Console.WriteLine);
 
@@ -22,22 +25,38 @@ public static class SerilogExtensions
         // Create logger configuration
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Is(loggingOptions.MinimumLogLevel)
-            .WriteTo.Console(new CompactJsonFormatter()) // Use structured logging for better performance
             .Enrich.WithEnvironmentUserName()
             .Enrich.FromLogContext();
 
         // Add asynchronous file sink if enabled
         if (loggingOptions.EnableLocalFile && !string.IsNullOrEmpty(loggingOptions.LocalFilePath))
         {
-            loggerConfiguration.WriteTo.Async(a => a.File(
-                path: loggingOptions.LocalFilePath,
-                rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 7,
-                fileSizeLimitBytes: 10 * 1024 * 1024, // 10MB
-                buffered: true, // Enable buffering for better performance
-                shared: false, // Allow multiple processes to write to the same log file
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-            ));
+            if (environment == "Development")
+            {
+                loggerConfiguration
+                    .WriteTo.Console()
+                    .WriteTo.Async(a => a.File( 
+                    path: loggingOptions.LocalFilePath,
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 7,
+                    fileSizeLimitBytes: 10 * 1024 * 1024, // 10MB
+                    buffered: true, // Enable buffering for better performance
+                    shared: false, // Allow multiple processes to write to the same log file
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                ));
+            }
+            else
+            {
+                loggerConfiguration.WriteTo.Async(a => a.File(
+                   formatter: new CompactJsonFormatter(),
+                   path: loggingOptions.LocalFilePath,
+                   rollingInterval: RollingInterval.Day,
+                   retainedFileCountLimit: 7,
+                   fileSizeLimitBytes: 10 * 1024 * 1024, // 10MB
+                   buffered: true, // Enable buffering for better performance
+                   shared: false // Allow multiple processes to write to the same log file
+               ));
+            }
         }
 
         // Add asynchronous S3 sink if enabled

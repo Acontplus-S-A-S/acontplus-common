@@ -1,18 +1,23 @@
 ﻿using Autofac;
+using Autofac.Core;
 using Autofac.Extensions.DependencyInjection;
 using Common.ApiDocumentation;
 using Common.Infrastructure.Repository.Implementations;
 using Common.Infrastructure.Repository.Interfaces;
 using Common.Logging;
 using Common.TestApi.Data;
+using Common.TestApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Scrutor;
+using Serilog.Events;
 using Services.Common.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add custom logging
 builder.Services.AddAdvancedLogging(builder.Configuration);
+
+builder.Services.AddApplicationServices(builder.Configuration);
 
 // Add services to the container.
 
@@ -52,6 +57,7 @@ builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
     {
         container.RegisterType<AdoSqlServer>().As<IAdoSqlServer>();
     });
+
 
 
 

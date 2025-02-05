@@ -45,7 +45,7 @@ public class ExceptionMiddleware(
                 } : new ProblemDetails
                 {
                     Status = context.Response.StatusCode,
-                    Title = "Server Error" + ex.Message,
+                    Title = "Server Error: " + ex.Message,
                 };
 
             await context.Response.WriteAsJsonAsync(problemDetails);

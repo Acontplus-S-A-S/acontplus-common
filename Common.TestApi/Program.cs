@@ -3,12 +3,16 @@ using Autofac.Extensions.DependencyInjection;
 using Common.ApiDocumentation;
 using Common.Infrastructure.Repository.Implementations;
 using Common.Infrastructure.Repository.Interfaces;
+using Common.Logging;
 using Common.TestApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Scrutor;
 using Services.Common.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Add custom logging
+builder.Services.AddAdvancedLogging(builder.Configuration);
 
 // Add services to the container.
 

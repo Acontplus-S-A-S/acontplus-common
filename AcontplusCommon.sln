@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Notifications", "Com
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Barcode", "Common.Barcode\Common.Barcode.csproj", "{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common.Logging", "Common.Logging\Common.Logging.csproj", "{755B140E-C0AE-4137-AAC0-E23FCA9E32BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -76,6 +78,10 @@ Global
 		{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64325D99-2C7C-45FC-9C16-B4EEF78EFB27}.Release|Any CPU.Build.0 = Release|Any CPU
+		{755B140E-C0AE-4137-AAC0-E23FCA9E32BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{755B140E-C0AE-4137-AAC0-E23FCA9E32BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{755B140E-C0AE-4137-AAC0-E23FCA9E32BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{755B140E-C0AE-4137-AAC0-E23FCA9E32BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

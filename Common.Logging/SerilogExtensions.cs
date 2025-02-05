@@ -12,18 +12,15 @@ public static class SerilogExtensions
 {
     public static IServiceCollection AddAdvancedLogging(this IServiceCollection services, IConfiguration configuration)
     {
-        // Read logging options from configuration
         var loggingOptions = new LoggingOptions();
         configuration.GetSection("AdvancedLogging").Bind(loggingOptions);
 
-        // Create logger configuration
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Is(loggingOptions.MinimumLogLevel)
             .WriteTo.Console()
             .Enrich.WithEnvironmentUserName()
             .Enrich.FromLogContext();
 
-        // Add local file sink if enabled
         if (loggingOptions.EnableLocalFile && !string.IsNullOrEmpty(loggingOptions.LocalFilePath))
         {
             loggerConfiguration.WriteTo.File(
@@ -35,7 +32,6 @@ public static class SerilogExtensions
             );
         }
 
-        // Add S3 sink if enabled
         if (loggingOptions.EnableS3Logging &&
             !string.IsNullOrEmpty(loggingOptions.S3BucketName) &&
             !string.IsNullOrEmpty(loggingOptions.S3AccessKey) &&
@@ -52,48 +48,46 @@ public static class SerilogExtensions
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 levelSwitch: levelSwitch,
                 rollingInterval: Serilog.Sinks.AmazonS3.RollingInterval.Minute,
-                failureCallback: e => Console.WriteLine($"An error occured in my sink: {e.Message}")
+                failureCallback: e => Console.WriteLine($"An error occurred in my sink: {e.Message}")
             );
         }
 
-        // Add SQL Server sink if enabled
         if (loggingOptions.EnableDatabaseLogging &&
             !string.IsNullOrEmpty(loggingOptions.DatabaseConnectionString))
         {
-            //var logDB = @"Server=...";
-            var sinkOpts = new MSSqlServerSinkOptions();
-            sinkOpts.TableName = "Logs";
-            sinkOpts.SchemaName = "Common";
-            sinkOpts.AutoCreateSqlTable = true;
-            sinkOpts.BatchPostingLimit = 1000;
+            var sinkOpts = new MSSqlServerSinkOptions
+            {
+                TableName = "Logs",
+                SchemaName = "Common",
+                AutoCreateSqlTable = true,
+                BatchPostingLimit = 1000
+            };
 
-            var columnOpts = new ColumnOptions();
-            columnOpts.Id.DataType = SqlDbType.BigInt;
+            var columnOpts = new ColumnOptions
+            {
+                Id = { DataType = SqlDbType.BigInt },
+                LogEvent = { DataLength = 2048 }
+            };
             columnOpts.Store.Remove(StandardColumn.Properties);
             columnOpts.Store.Add(StandardColumn.LogEvent);
-            columnOpts.LogEvent.DataLength = 2048;
             columnOpts.PrimaryKey = columnOpts.TimeStamp;
             columnOpts.TimeStamp.NonClusteredIndex = true;
 
             loggerConfiguration.WriteTo.MSSqlServer(
-                    connectionString: loggingOptions.DatabaseConnectionString,
-                    sinkOptions: sinkOpts,
-                    columnOptions: columnOpts
-                );
+                connectionString: loggingOptions.DatabaseConnectionString,
+                sinkOptions: sinkOpts,
+                columnOptions: columnOpts
+            );
         }
 
-        // Create and configure the logger
         Log.Logger = loggerConfiguration.CreateLogger();
-        //Log.Debug("This is a log for test db");
 
-        // Register Serilog with DI
         services.AddLogging(loggingBuilder =>
         {
             loggingBuilder.ClearProviders();
             loggingBuilder.AddSerilog(dispose: true);
         });
 
-        // Register logging options for potential runtime configuration
         services.AddSingleton(loggingOptions);
 
         return services;

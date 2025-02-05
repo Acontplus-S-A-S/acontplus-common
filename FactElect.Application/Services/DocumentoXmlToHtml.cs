@@ -1,6 +1,7 @@
 ﻿using Common.Barcode.Models;
 using Common.Barcode.Utils;
 using Common.Core.Enums;
+using Common.Core.Extensions;
 using Microsoft.Extensions.Configuration;
 
 namespace FactElect.Application.Services;

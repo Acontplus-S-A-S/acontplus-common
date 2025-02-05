@@ -1,6 +1,6 @@
 ﻿using System.Drawing.Imaging;
 using System.Drawing.Printing;
-using Common.Core.Utils;
+using Common.Core.Data;
 using Microsoft.Reporting.NETCore;
 using Newtonsoft.Json;
 using Reports.Application.Models;

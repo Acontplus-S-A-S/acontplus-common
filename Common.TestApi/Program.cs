@@ -1,5 +1,4 @@
 ﻿using Autofac;
-using Autofac.Core;
 using Autofac.Extensions.DependencyInjection;
 using Common.ApiDocumentation;
 using Common.Infrastructure.Repository.Implementations;
@@ -9,7 +8,6 @@ using Common.TestApi.Data;
 using Common.TestApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Scrutor;
-using Serilog.Events;
 using Services.Common.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);

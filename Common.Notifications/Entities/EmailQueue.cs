@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using Common.Core.Utils;
+using Common.Core.Format;
 
 namespace Common.Notifications.Entities;
 [Table("EmailQueue", Schema = "Common")]

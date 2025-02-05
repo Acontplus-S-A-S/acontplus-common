@@ -3,8 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Sinks.MSSqlServer;
 using Serilog.Formatting.Compact;
+using Serilog.Sinks.MSSqlServer;
 
 namespace Common.Logging;
 
@@ -45,7 +45,7 @@ public static class SerilogExtensions
             !string.IsNullOrEmpty(loggingOptions.S3BucketName) &&
             !string.IsNullOrEmpty(loggingOptions.S3AccessKey) &&
             !string.IsNullOrEmpty(loggingOptions.S3SecretKey))
-        { 
+        {
             loggerConfiguration.WriteTo.Async(a => a.AmazonS3(
                 path: "log.text",
                 bucketName: loggingOptions.S3BucketName,

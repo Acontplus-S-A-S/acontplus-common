@@ -17,7 +17,7 @@ public class LoggingOptions
     public string DatabaseConnectionString { get; set; }
     public LogEventLevel MinimumLogLevel { get; set; } = LogEventLevel.Information;
     public LoggingLevelSwitch LevelSwitch { get; set; } = new LoggingLevelSwitch(LogEventLevel.Information);
-    
+
     public void UpdateLogLevel(LogEventLevel logEventLevel)
     {
         LevelSwitch.MinimumLevel = logEventLevel;

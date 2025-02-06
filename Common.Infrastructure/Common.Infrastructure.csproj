@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <PackageId>Acontplus.Common.Infrastructure</PackageId>
-    <Version>1.1.15</Version>
+    <Version>1.1.16</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Library providing common infrastructure for data access, including ADO.NET and Entity Framework integration.</Description>
@@ -12,7 +12,14 @@
     <RepositoryUrl>https://github.com/Acontplus-S-A-S/acontplus-common</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Images\icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </EmbeddedResource>
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Acontplus.Common.Core" />
     <PackageReference Include="FastMember" />

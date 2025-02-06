@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.ApiDocumentation</PackageId>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use common api documentation</Description>
@@ -14,6 +14,7 @@
     <RepositoryUrl>https://github.com/Acontplus-S-A-S/acontplus-common</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +25,13 @@
 
   <ItemGroup>
     <None Remove="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Images\icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />

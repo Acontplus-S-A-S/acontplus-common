@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.FactElect.Application</PackageId>
-    <Version>1.0.9</Version>
+    <Version>1.0.10</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use facturación electronica SRI Ecuador</Description>
@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/Acontplus-S-A-S/acontplus-common</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Schemas\comprobanteRetencion_V1.0.0.xsd" />
@@ -25,6 +26,10 @@
     <None Remove="Schemas\NotaCredito_V1.1.0.xsd" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Images\icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </EmbeddedResource>
     <EmbeddedResource Include="Schemas\comprobanteRetencion_V1.0.0.xsd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>

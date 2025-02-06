@@ -9,6 +9,9 @@ public class LoggingOptions
     public bool Buffered { get; set; }
     public bool Shared { get; set; } //If buffered is false, can set shared to true
     public string LocalFilePath { get; set; }
+    public string RollingInterval { get; set; }
+    public int? RetainedFileCountLimit { get; set; }
+    public long? FileSizeLimitBytes { get; set; }
     public bool EnableS3Logging { get; set; }
     public string S3BucketName { get; set; }
     public string S3AccessKey { get; set; }

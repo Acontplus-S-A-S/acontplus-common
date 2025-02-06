@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Formatting.Compact;
-using Serilog.Formatting.Json;
 using Serilog.Sinks.MSSqlServer;
 
 namespace Common.Logging;
@@ -13,7 +12,9 @@ public static class SerilogExtensions
 {
     public static IServiceCollection AddAdvancedLogging(this IServiceCollection services, IConfiguration configuration)
     {
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ??
+                              Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ??
+                              "Production";
 
         // Enable Serilog self-logging for debugging
         Serilog.Debugging.SelfLog.Enable(Console.WriteLine);
@@ -21,6 +22,14 @@ public static class SerilogExtensions
         // Read logging options from configuration
         var loggingOptions = new LoggingOptions();
         configuration.GetSection("AdvancedLogging").Bind(loggingOptions);
+
+        // Parse the rolling interval
+        var rollingIntervalString = loggingOptions.RollingInterval ?? "Day";
+        var rollingInterval = (RollingInterval)Enum.Parse(typeof(RollingInterval), rollingIntervalString, true);
+
+        // Set default values if retainedFileCountLimit or fileSizeLimitBytes are null or 0
+        var retainedFileCountLimit = (loggingOptions.RetainedFileCountLimit ?? 7) == 0 ? 7 : loggingOptions.RetainedFileCountLimit.Value;
+        var fileSizeLimitBytes = (loggingOptions.FileSizeLimitBytes ?? 10 * 1024 * 1024) == 0 ? 10 * 1024 * 1024 : loggingOptions.FileSizeLimitBytes.Value;
 
         // Create logger configuration
         var loggerConfiguration = new LoggerConfiguration()
@@ -31,31 +40,31 @@ public static class SerilogExtensions
         // Add asynchronous file sink if enabled
         if (loggingOptions.EnableLocalFile && !string.IsNullOrEmpty(loggingOptions.LocalFilePath))
         {
-            if (environment == "Development")
+            if (environment == "Production")
             {
-                loggerConfiguration
-                    .WriteTo.Console()
-                    .WriteTo.Async(a => a.File( 
-                    path: loggingOptions.LocalFilePath,
-                    rollingInterval: RollingInterval.Day,
-                    retainedFileCountLimit: 7,
-                    fileSizeLimitBytes: 10 * 1024 * 1024, // 10MB
-                    buffered: true, // Enable buffering for better performance
-                    shared: false, // Allow multiple processes to write to the same log file
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-                ));
+                loggerConfiguration.WriteTo.Async(a => a.File(
+                formatter: new CompactJsonFormatter(),
+                path: loggingOptions.LocalFilePath,
+                rollingInterval: rollingInterval,
+                retainedFileCountLimit: loggingOptions.RetainedFileCountLimit,
+                fileSizeLimitBytes: loggingOptions.FileSizeLimitBytes,
+                encoding: System.Text.Encoding.UTF8,
+                buffered: true,
+                shared: false
+            ));
             }
             else
             {
-                loggerConfiguration.WriteTo.Async(a => a.File(
-                   formatter: new CompactJsonFormatter(),
-                   path: loggingOptions.LocalFilePath,
-                   rollingInterval: RollingInterval.Day,
-                   retainedFileCountLimit: 7,
-                   fileSizeLimitBytes: 10 * 1024 * 1024, // 10MB
-                   buffered: true, // Enable buffering for better performance
-                   shared: false // Allow multiple processes to write to the same log file
-               ));
+                loggerConfiguration.WriteTo.Console()
+                    .WriteTo.Async(a => a.File(
+                    path: loggingOptions.LocalFilePath,
+                    rollingInterval: rollingInterval,
+                    retainedFileCountLimit: loggingOptions.RetainedFileCountLimit,
+                    encoding: System.Text.Encoding.UTF8,
+                    buffered: true,
+                    shared: false,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                ));
             }
         }
 
@@ -71,6 +80,7 @@ public static class SerilogExtensions
                 Amazon.RegionEndpoint.USEast1,
                 awsAccessKeyId: loggingOptions.S3AccessKey,
                 awsSecretAccessKey: loggingOptions.S3SecretKey,
+                encoding: System.Text.Encoding.UTF8,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 rollingInterval: Serilog.Sinks.AmazonS3.RollingInterval.Minute,
                 failureCallback: e => Console.WriteLine($"An error occurred in the S3 sink: {e.Message}")

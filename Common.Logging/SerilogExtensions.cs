@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -10,7 +11,7 @@ namespace Common.Logging;
 
 public static class SerilogExtensions
 {
-    public static IServiceCollection AddAdvancedLogging(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAdvancedLogging(this IServiceCollection services, IConfiguration configuration, Action<LoggerConfiguration> configureLogger = null)
     {
         var environment = GetEnvironmentName(configuration);
 
@@ -21,34 +22,45 @@ public static class SerilogExtensions
         var loggingOptions = new LoggingOptions();
         configuration.GetSection("AdvancedLogging").Bind(loggingOptions);
 
-        // Configurar Serilog según el entorno
+        // Configure Serilog
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Is(loggingOptions.MinimumLogLevel)
             .Enrich.WithEnvironmentUserName()
             .Enrich.FromLogContext();
 
-        // Configurar los logs locales según el entorno
+        // Add console logging for development
+        if (environment == Environments.Development)
+        {
+            loggerConfiguration.WriteTo.Console(
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+            );
+        }
+
+        // Configure local file logging
         if (loggingOptions.EnableLocalFile && !string.IsNullOrEmpty(loggingOptions.LocalFilePath))
         {
             ConfigureLocalLogging(loggerConfiguration, loggingOptions, environment);
         }
 
-        // Configurar el logging en S3 si está habilitado
+        // Configure S3 logging
         if (loggingOptions.EnableS3Logging)
         {
             ConfigureS3Logging(loggerConfiguration, loggingOptions);
         }
 
-        // Configurar el logging en SQL Server si está habilitado
+        // Configure SQL Server logging
         if (loggingOptions.EnableDatabaseLogging)
         {
             ConfigureDatabaseLogging(loggerConfiguration, loggingOptions);
         }
 
-        // Crear y configurar el logger
+        // Allow custom configuration
+        configureLogger?.Invoke(loggerConfiguration);
+
+        // Create and configure the logger
         Log.Logger = loggerConfiguration.CreateLogger();
 
-        // Registrar Serilog en DI
+        // Register Serilog in DI
         services.AddLogging(loggingBuilder =>
         {
             loggingBuilder.ClearProviders();
@@ -60,14 +72,11 @@ public static class SerilogExtensions
         return services;
     }
 
-    /// <summary>
-    /// Obtiene el nombre del entorno de manera confiable.
-    /// </summary>
     private static string GetEnvironmentName(IConfiguration configuration)
     {
-        return configuration["DOTNET_ENVIRONMENT"] ??
-               configuration["ASPNETCORE_ENVIRONMENT"] ??
-               "Production";
+        return Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ??
+               Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ??
+               Environments.Production;
     }
 
     private static void ConfigureLocalLogging(LoggerConfiguration loggerConfiguration, LoggingOptions options, string environment)
@@ -76,7 +85,20 @@ public static class SerilogExtensions
         var retainedFileCountLimit = options.RetainedFileCountLimit ?? 7;
         var fileSizeLimitBytes = options.FileSizeLimitBytes ?? 10 * 1024 * 1024;
 
-        if (environment == "Production")
+        if (environment == Environments.Development)
+        {
+            loggerConfiguration.WriteTo.Async(a => a.File(
+                path: options.LocalFilePath,
+                rollingInterval: rollingInterval,
+                retainedFileCountLimit: retainedFileCountLimit,
+                fileSizeLimitBytes: fileSizeLimitBytes,
+                encoding: System.Text.Encoding.UTF8,
+                buffered: true,
+                shared: false,
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+            ));
+        }
+        else
         {
             loggerConfiguration.WriteTo.Async(a => a.File(
                 formatter: new CompactJsonFormatter(),
@@ -89,69 +111,60 @@ public static class SerilogExtensions
                 shared: false
             ));
         }
-        else
-        {
-            loggerConfiguration.WriteTo.Console()
-                .WriteTo.Async(a => a.File(
-                    path: options.LocalFilePath,
-                    rollingInterval: rollingInterval,
-                    retainedFileCountLimit: retainedFileCountLimit,
-                    encoding: System.Text.Encoding.UTF8,
-                    buffered: true,
-                    shared: false,
-                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
-                ));
-        }
     }
 
     private static void ConfigureS3Logging(LoggerConfiguration loggerConfiguration, LoggingOptions options)
     {
-        if (!string.IsNullOrEmpty(options.S3BucketName) &&
-            !string.IsNullOrEmpty(options.S3AccessKey) &&
-            !string.IsNullOrEmpty(options.S3SecretKey))
+        if (string.IsNullOrEmpty(options.S3BucketName) || string.IsNullOrEmpty(options.S3AccessKey) || string.IsNullOrEmpty(options.S3SecretKey))
         {
-            loggerConfiguration.WriteTo.Async(a => a.AmazonS3(
-                path: "log.text",
-                bucketName: options.S3BucketName,
-                Amazon.RegionEndpoint.USEast1,
-                awsAccessKeyId: options.S3AccessKey,
-                awsSecretAccessKey: options.S3SecretKey,
-                encoding: System.Text.Encoding.UTF8,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
-                rollingInterval: Serilog.Sinks.AmazonS3.RollingInterval.Minute,
-                failureCallback: e => Console.WriteLine($"An error occurred in the S3 sink: {e.Message}")
-            ));
+            Log.Warning("S3 logging is enabled but required settings are missing. Disabling S3 logging.");
+            return;
         }
+
+        loggerConfiguration.WriteTo.Async(a => a.AmazonS3(
+            path: options.LocalFilePath,
+            bucketName: options.S3BucketName,
+            Amazon.RegionEndpoint.USEast1,
+            awsAccessKeyId: options.S3AccessKey,
+            awsSecretAccessKey: options.S3SecretKey,
+            encoding: System.Text.Encoding.UTF8,
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+            rollingInterval: Serilog.Sinks.AmazonS3.RollingInterval.Minute,
+            failureCallback: e => Console.WriteLine($"An error occurred in the S3 sink: {e.Message}")
+        ));
     }
 
     private static void ConfigureDatabaseLogging(LoggerConfiguration loggerConfiguration, LoggingOptions options)
     {
-        if (!string.IsNullOrEmpty(options.DatabaseConnectionString))
+        if (string.IsNullOrEmpty(options.DatabaseConnectionString))
         {
-            var sinkOpts = new MSSqlServerSinkOptions
-            {
-                TableName = "Logs",
-                SchemaName = "Common",
-                AutoCreateSqlTable = true,
-                BatchPostingLimit = 1000,
-                BatchPeriod = TimeSpan.FromSeconds(5)
-            };
-
-            var columnOpts = new ColumnOptions
-            {
-                Id = { DataType = SqlDbType.BigInt },
-                LogEvent = { DataLength = 2048 }
-            };
-            columnOpts.Store.Remove(StandardColumn.Properties);
-            columnOpts.Store.Add(StandardColumn.LogEvent);
-            columnOpts.PrimaryKey = columnOpts.TimeStamp;
-            columnOpts.TimeStamp.NonClusteredIndex = true;
-
-            loggerConfiguration.WriteTo.Async(a => a.MSSqlServer(
-                connectionString: options.DatabaseConnectionString,
-                sinkOptions: sinkOpts,
-                columnOptions: columnOpts
-            ));
+            Log.Warning("Database logging is enabled but the connection string is missing. Disabling database logging.");
+            return;
         }
+
+        var sinkOpts = new MSSqlServerSinkOptions
+        {
+            TableName = "Logs",
+            SchemaName = "Common",
+            AutoCreateSqlTable = true,
+            BatchPostingLimit = 1000,
+            BatchPeriod = TimeSpan.FromSeconds(5)
+        };
+
+        var columnOpts = new ColumnOptions
+        {
+            Id = { DataType = SqlDbType.BigInt },
+            LogEvent = { DataLength = 2048 }
+        };
+        columnOpts.Store.Remove(StandardColumn.Properties);
+        columnOpts.Store.Add(StandardColumn.LogEvent);
+        columnOpts.PrimaryKey = columnOpts.TimeStamp;
+        columnOpts.TimeStamp.NonClusteredIndex = true;
+
+        loggerConfiguration.WriteTo.Async(a => a.MSSqlServer(
+            connectionString: options.DatabaseConnectionString,
+            sinkOptions: sinkOpts,
+            columnOptions: columnOpts
+        ));
     }
 }

@@ -12,9 +12,7 @@ public static class SerilogExtensions
 {
     public static IServiceCollection AddAdvancedLogging(this IServiceCollection services, IConfiguration configuration)
     {
-        var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ??
-                              Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") ??
-                              "Production";
+        var environment = GetEnvironmentName(configuration);
 
         // Enable Serilog self-logging for debugging
         Serilog.Debugging.SelfLog.Enable(Console.WriteLine);
@@ -23,81 +21,120 @@ public static class SerilogExtensions
         var loggingOptions = new LoggingOptions();
         configuration.GetSection("AdvancedLogging").Bind(loggingOptions);
 
-        // Parse the rolling interval
-        var rollingIntervalString = loggingOptions.RollingInterval ?? "Day";
-        var rollingInterval = (RollingInterval)Enum.Parse(typeof(RollingInterval), rollingIntervalString, true);
-
-        // Set default values if retainedFileCountLimit or fileSizeLimitBytes are null or 0
-        var retainedFileCountLimit = (loggingOptions.RetainedFileCountLimit ?? 7) == 0 ? 7 : loggingOptions.RetainedFileCountLimit.Value;
-        var fileSizeLimitBytes = (loggingOptions.FileSizeLimitBytes ?? 10 * 1024 * 1024) == 0 ? 10 * 1024 * 1024 : loggingOptions.FileSizeLimitBytes.Value;
-
-        // Create logger configuration
+        // Configurar Serilog según el entorno
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Is(loggingOptions.MinimumLogLevel)
             .Enrich.WithEnvironmentUserName()
             .Enrich.FromLogContext();
 
-        // Add asynchronous file sink if enabled
+        // Configurar los logs locales según el entorno
         if (loggingOptions.EnableLocalFile && !string.IsNullOrEmpty(loggingOptions.LocalFilePath))
         {
-            if (environment == "Production")
-            {
-                loggerConfiguration.WriteTo.Async(a => a.File(
+            ConfigureLocalLogging(loggerConfiguration, loggingOptions, environment);
+        }
+
+        // Configurar el logging en S3 si está habilitado
+        if (loggingOptions.EnableS3Logging)
+        {
+            ConfigureS3Logging(loggerConfiguration, loggingOptions);
+        }
+
+        // Configurar el logging en SQL Server si está habilitado
+        if (loggingOptions.EnableDatabaseLogging)
+        {
+            ConfigureDatabaseLogging(loggerConfiguration, loggingOptions);
+        }
+
+        // Crear y configurar el logger
+        Log.Logger = loggerConfiguration.CreateLogger();
+
+        // Registrar Serilog en DI
+        services.AddLogging(loggingBuilder =>
+        {
+            loggingBuilder.ClearProviders();
+            loggingBuilder.AddSerilog(dispose: true);
+        });
+
+        services.AddSingleton(loggingOptions);
+
+        return services;
+    }
+
+    /// <summary>
+    /// Obtiene el nombre del entorno de manera confiable.
+    /// </summary>
+    private static string GetEnvironmentName(IConfiguration configuration)
+    {
+        return configuration["DOTNET_ENVIRONMENT"] ??
+               configuration["ASPNETCORE_ENVIRONMENT"] ??
+               "Production";
+    }
+
+    private static void ConfigureLocalLogging(LoggerConfiguration loggerConfiguration, LoggingOptions options, string environment)
+    {
+        var rollingInterval = (RollingInterval)Enum.Parse(typeof(RollingInterval), options.RollingInterval ?? "Day", true);
+        var retainedFileCountLimit = options.RetainedFileCountLimit ?? 7;
+        var fileSizeLimitBytes = options.FileSizeLimitBytes ?? 10 * 1024 * 1024;
+
+        if (environment == "Production")
+        {
+            loggerConfiguration.WriteTo.Async(a => a.File(
                 formatter: new CompactJsonFormatter(),
-                path: loggingOptions.LocalFilePath,
+                path: options.LocalFilePath,
                 rollingInterval: rollingInterval,
-                retainedFileCountLimit: loggingOptions.RetainedFileCountLimit,
-                fileSizeLimitBytes: loggingOptions.FileSizeLimitBytes,
+                retainedFileCountLimit: retainedFileCountLimit,
+                fileSizeLimitBytes: fileSizeLimitBytes,
                 encoding: System.Text.Encoding.UTF8,
                 buffered: true,
                 shared: false
             ));
-            }
-            else
-            {
-                loggerConfiguration.WriteTo.Console()
-                    .WriteTo.Async(a => a.File(
-                    path: loggingOptions.LocalFilePath,
+        }
+        else
+        {
+            loggerConfiguration.WriteTo.Console()
+                .WriteTo.Async(a => a.File(
+                    path: options.LocalFilePath,
                     rollingInterval: rollingInterval,
-                    retainedFileCountLimit: loggingOptions.RetainedFileCountLimit,
+                    retainedFileCountLimit: retainedFileCountLimit,
                     encoding: System.Text.Encoding.UTF8,
                     buffered: true,
                     shared: false,
                     outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
                 ));
-            }
         }
+    }
 
-        // Add asynchronous S3 sink if enabled
-        if (loggingOptions.EnableS3Logging &&
-            !string.IsNullOrEmpty(loggingOptions.S3BucketName) &&
-            !string.IsNullOrEmpty(loggingOptions.S3AccessKey) &&
-            !string.IsNullOrEmpty(loggingOptions.S3SecretKey))
+    private static void ConfigureS3Logging(LoggerConfiguration loggerConfiguration, LoggingOptions options)
+    {
+        if (!string.IsNullOrEmpty(options.S3BucketName) &&
+            !string.IsNullOrEmpty(options.S3AccessKey) &&
+            !string.IsNullOrEmpty(options.S3SecretKey))
         {
             loggerConfiguration.WriteTo.Async(a => a.AmazonS3(
                 path: "log.text",
-                bucketName: loggingOptions.S3BucketName,
+                bucketName: options.S3BucketName,
                 Amazon.RegionEndpoint.USEast1,
-                awsAccessKeyId: loggingOptions.S3AccessKey,
-                awsSecretAccessKey: loggingOptions.S3SecretKey,
+                awsAccessKeyId: options.S3AccessKey,
+                awsSecretAccessKey: options.S3SecretKey,
                 encoding: System.Text.Encoding.UTF8,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
                 rollingInterval: Serilog.Sinks.AmazonS3.RollingInterval.Minute,
                 failureCallback: e => Console.WriteLine($"An error occurred in the S3 sink: {e.Message}")
             ));
         }
+    }
 
-        // Add asynchronous SQL Server sink if enabled
-        if (loggingOptions.EnableDatabaseLogging &&
-            !string.IsNullOrEmpty(loggingOptions.DatabaseConnectionString))
+    private static void ConfigureDatabaseLogging(LoggerConfiguration loggerConfiguration, LoggingOptions options)
+    {
+        if (!string.IsNullOrEmpty(options.DatabaseConnectionString))
         {
             var sinkOpts = new MSSqlServerSinkOptions
             {
                 TableName = "Logs",
                 SchemaName = "Common",
                 AutoCreateSqlTable = true,
-                BatchPostingLimit = 1000, // Batch logs to reduce database round-trips
-                BatchPeriod = TimeSpan.FromSeconds(5) // Send logs every 5 seconds
+                BatchPostingLimit = 1000,
+                BatchPeriod = TimeSpan.FromSeconds(5)
             };
 
             var columnOpts = new ColumnOptions
@@ -111,25 +148,10 @@ public static class SerilogExtensions
             columnOpts.TimeStamp.NonClusteredIndex = true;
 
             loggerConfiguration.WriteTo.Async(a => a.MSSqlServer(
-                connectionString: loggingOptions.DatabaseConnectionString,
+                connectionString: options.DatabaseConnectionString,
                 sinkOptions: sinkOpts,
                 columnOptions: columnOpts
             ));
         }
-
-        // Create and configure the logger
-        Log.Logger = loggerConfiguration.CreateLogger();
-
-        // Register Serilog with DI
-        services.AddLogging(loggingBuilder =>
-        {
-            loggingBuilder.ClearProviders();
-            loggingBuilder.AddSerilog(dispose: true);
-        });
-
-        // Register logging options for potential runtime configuration
-        services.AddSingleton(loggingOptions);
-
-        return services;
     }
 }

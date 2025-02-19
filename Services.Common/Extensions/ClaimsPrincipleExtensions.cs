@@ -2,12 +2,13 @@
 
 namespace Services.Common.Extensions;
 
-public static class ClaimsPrincipleExtensions
+public static class ClaimsPrincipalExtensions
 {
     public static string GetUsername(this ClaimsPrincipal user)
     {
         return user.FindFirst(ClaimTypes.Name)?.Value;
     }
+
     public static string GetEmail(this ClaimsPrincipal user)
     {
         return user.FindFirstValue(ClaimTypes.Email);
@@ -22,8 +23,43 @@ public static class ClaimsPrincipleExtensions
     {
         return int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
     }
+
     public static int GetUserRoleId(this ClaimsPrincipal user)
     {
         return Convert.ToInt32(user.FindFirst("userRoleId")?.Value);
+    }
+
+    // Método genérico para obtener claims
+    public static T GetClaimValue<T>(this ClaimsPrincipal user, string claimName)
+    {
+        var claim = user.FindFirst(claimName)?.Value;
+        if (claim == null)
+            return default;
+
+        try
+        {
+            // Manejo de tipos comunes
+            if (typeof(T) == typeof(string))
+                return (T)(object)claim;
+
+            if (typeof(T) == typeof(int))
+                return (T)(object)Convert.ToInt32(claim);
+
+            if (typeof(T) == typeof(long))
+                return (T)(object)Convert.ToInt64(claim);
+
+            if (typeof(T) == typeof(bool))
+                return (T)(object)Convert.ToBoolean(claim);
+
+            if (typeof(T) == typeof(Guid))
+                return (T)(object)Guid.Parse(claim);
+
+            // Para otros tipos, intenta una conversión genérica
+            return (T)Convert.ChangeType(claim, typeof(T));
+        }
+        catch
+        {
+            return default;
+        }
     }
 }

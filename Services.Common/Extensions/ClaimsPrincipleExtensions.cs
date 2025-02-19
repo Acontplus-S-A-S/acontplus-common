@@ -24,11 +24,6 @@ public static class ClaimsPrincipalExtensions
         return int.Parse(user.FindFirst(ClaimTypes.NameIdentifier)?.Value!);
     }
 
-    public static int GetUserRoleId(this ClaimsPrincipal user)
-    {
-        return Convert.ToInt32(user.FindFirst("userRoleId")?.Value);
-    }
-
     // Método genérico para obtener claims
     // Obtener claims personalizados
     //int companyId = user.GetClaimValue<int>("companyId");

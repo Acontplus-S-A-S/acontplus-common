@@ -5,7 +5,7 @@ namespace Services.Common.Extensions;
 public interface IUserContext
 {
     int GetUserId();
-    int GetUserRoleId();
+    T GetClaimValue<T>(string claimName);
     string GetUserName();
     string GetEmail();
     string GetRoleName();
@@ -14,7 +14,7 @@ public interface IUserContext
 public class UserContext(IHttpContextAccessor httpContextAccessor) : IUserContext
 {
     public int GetUserId() { return httpContextAccessor.HttpContext!.User.GetUserId(); }
-    public int GetUserRoleId() { return httpContextAccessor.HttpContext!.User.GetUserRoleId(); }
+    public T GetClaimValue<T>(string claimName) { return httpContextAccessor.HttpContext!.User.GetClaimValue<T>(claimName) ?? default; }
     public string GetUserName() { return httpContextAccessor.HttpContext?.User.GetUsername(); }
     public string GetEmail() { return httpContextAccessor.HttpContext?.User.GetEmail(); }
     public string GetRoleName() { return httpContextAccessor.HttpContext?.User.GetRoleName(); }

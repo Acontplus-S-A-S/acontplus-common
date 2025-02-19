@@ -30,6 +30,15 @@ public static class ClaimsPrincipalExtensions
     }
 
     // Método genérico para obtener claims
+    // Obtener claims personalizados
+    //int companyId = user.GetClaimValue<int>("companyId");
+    //string idCardCompany = user.GetClaimValue<string>("idCardCompany");
+    //bool isActive = user.GetClaimValue<bool>("isActive");
+    //Guid tenantId = user.GetClaimValue<Guid>("tenantId");
+
+    // Obtener claims estándar
+    //string email = user.GetClaimValue<string>(ClaimTypes.Email);
+    //int userId = user.GetClaimValue<int>(ClaimTypes.NameIdentifier);
     public static T GetClaimValue<T>(this ClaimsPrincipal user, string claimName)
     {
         var claim = user.FindFirst(claimName)?.Value;

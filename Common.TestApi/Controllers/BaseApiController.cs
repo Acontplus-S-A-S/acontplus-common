@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace Common.TestApi.Controllers
+﻿namespace Common.TestApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

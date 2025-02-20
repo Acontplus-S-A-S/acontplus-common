@@ -1,6 +1,4 @@
-﻿using Common.Core.Data;
-using Common.Infrastructure.Repository.Interfaces;
-using Microsoft.AspNetCore.Mvc;
+﻿using Common.Infrastructure.Repository.Interfaces;
 
 namespace Common.TestApi.Controllers
 {

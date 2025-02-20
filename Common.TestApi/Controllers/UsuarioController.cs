@@ -1,6 +1,4 @@
 ﻿using Common.TestApi.Entities;
-using Common.TestApi.Services;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Common.TestApi.Controllers
 {

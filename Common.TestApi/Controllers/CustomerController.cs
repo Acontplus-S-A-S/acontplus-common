@@ -1,9 +1,5 @@
-﻿using Common.Core.Data;
-using Common.Core.Validation;
-using Common.TestApi.Services;
-using FactElect.Application.Models;
-using FactElect.Application.Services;
-using Microsoft.AspNetCore.Mvc;
+﻿using Common.Core.Validation;
+using Common.FactElect.Services;
 
 namespace Common.TestApi.Controllers;
 

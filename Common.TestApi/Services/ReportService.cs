@@ -1,5 +1,4 @@
-﻿using System.Data;
-using Common.Infrastructure.Repository.Interfaces;
+﻿using Common.Infrastructure.Repository.Interfaces;
 
 namespace Common.TestApi.Services;
 

@@ -1,5 +1,4 @@
 ﻿using Common.Core.Security.Interfaces;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Common.TestApi.Controllers;
 

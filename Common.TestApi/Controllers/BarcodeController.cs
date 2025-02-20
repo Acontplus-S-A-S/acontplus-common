@@ -1,6 +1,5 @@
 ﻿using Common.Barcode.Models;
 using Common.Barcode.Utils;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Common.TestApi.Controllers
 {

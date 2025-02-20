@@ -1,0 +1,11 @@
+﻿global using System.Data;
+global using Asp.Versioning;
+global using Common.Core.Data;
+global using Common.Core.Models;
+global using Common.FactElect.Models;
+global using Common.Notifications.Models;
+global using Common.Reports.Interfaces;
+global using Common.TestApi.Models;
+global using Common.TestApi.Services;
+global using Microsoft.AspNetCore.Mvc;
+global using Newtonsoft.Json;

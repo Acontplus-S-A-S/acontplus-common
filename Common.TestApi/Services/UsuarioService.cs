@@ -1,5 +1,4 @@
-﻿using Common.Core.Models;
-using Common.TestApi.Data;
+﻿using Common.TestApi.Data;
 using Common.TestApi.Entities;
 
 namespace Common.TestApi.Services

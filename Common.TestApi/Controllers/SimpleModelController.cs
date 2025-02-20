@@ -1,8 +1,4 @@
-﻿using System.Data;
-using Common.Core.Data;
-using Microsoft.AspNetCore.Mvc;
-
-namespace Common.TestApi.Controllers
+﻿namespace Common.TestApi.Controllers
 {
     public class SimpleModel
     {

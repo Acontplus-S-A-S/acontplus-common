@@ -1,15 +1,4 @@
-﻿using System.Data;
-using Asp.Versioning;
-using Common.Core.Data;
-using Common.Core.Models;
-using Common.Notifications.Models;
-using Common.TestApi.Models;
-using Common.TestApi.Services;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using Reports.Application.Interfaces;
-
-namespace Common.TestApi.Controllers.v1;
+﻿namespace Common.TestApi.Controllers.v1;
 
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]

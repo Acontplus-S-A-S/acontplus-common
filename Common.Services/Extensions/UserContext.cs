@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-
-namespace Common.Services.Extensions;
+﻿namespace Common.Services.Extensions;
 
 public interface IUserContext
 {

@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-
-namespace Common.Services.Middleware
+﻿namespace Common.Services.Middleware
 {
     public class MobileRequestMiddleware(RequestDelegate next)
     {

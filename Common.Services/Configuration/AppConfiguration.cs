@@ -1,7 +1,4 @@
-﻿using System.Runtime.InteropServices;
-using Microsoft.Extensions.Configuration;
-
-namespace Common.Services.Configuration;
+﻿namespace Common.Services.Configuration;
 
 public static class AppConfiguration
 {

@@ -1,10 +1,4 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.IdentityModel.Tokens;
-
-namespace Common.Services.Extensions;
+﻿namespace Common.Services.Extensions;
 
 public static class IdentityServiceExtensions
 {

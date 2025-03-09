@@ -1,7 +1,4 @@
-﻿using Serilog.Core;
-using Serilog.Events;
-
-namespace Common.Logging;
+﻿namespace Common.Logging;
 
 public class LoggingOptions
 {
@@ -20,6 +17,7 @@ public class LoggingOptions
     public string DatabaseConnectionString { get; set; }
     public LogEventLevel MinimumLogLevel { get; set; } = LogEventLevel.Information;
     public LoggingLevelSwitch LevelSwitch { get; set; } = new LoggingLevelSwitch(LogEventLevel.Information);
+    public string TimeZoneId { get; set; } = "UTC"; // Default to UTC
 
     public void UpdateLogLevel(LogEventLevel logEventLevel)
     {

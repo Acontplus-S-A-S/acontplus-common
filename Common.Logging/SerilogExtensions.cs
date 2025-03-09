@@ -1,13 +1,4 @@
-﻿using System.Data;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using Serilog.Formatting.Compact;
-using Serilog.Sinks.MSSqlServer;
-
-namespace Common.Logging;
+﻿namespace Common.Logging;
 
 public static class SerilogExtensions
 {
@@ -26,13 +17,14 @@ public static class SerilogExtensions
         var loggerConfiguration = new LoggerConfiguration()
             .MinimumLevel.Is(loggingOptions.MinimumLogLevel)
             .Enrich.WithEnvironmentUserName()
-            .Enrich.FromLogContext();
+            .Enrich.FromLogContext()
+            .Enrich.With(new CustomTimeZoneEnricher(loggingOptions.TimeZoneId));
 
         // Add console logging for development
         if (environment == Environments.Development)
         {
             loggerConfiguration.WriteTo.Console(
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                outputTemplate: "{CustomTimestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
             );
         }
 
@@ -95,7 +87,7 @@ public static class SerilogExtensions
                 encoding: System.Text.Encoding.UTF8,
                 buffered: true,
                 shared: false,
-                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
+                outputTemplate: "{CustomTimestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
             ));
         }
         else
@@ -128,7 +120,7 @@ public static class SerilogExtensions
             awsAccessKeyId: options.S3AccessKey,
             awsSecretAccessKey: options.S3SecretKey,
             encoding: System.Text.Encoding.UTF8,
-            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+            outputTemplate: "{CustomTimestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
             rollingInterval: Serilog.Sinks.AmazonS3.RollingInterval.Minute,
             failureCallback: e => Console.WriteLine($"An error occurred in the S3 sink: {e.Message}")
         ));

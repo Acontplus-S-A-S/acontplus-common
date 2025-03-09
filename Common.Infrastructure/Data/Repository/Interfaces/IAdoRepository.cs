@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Repository.Interfaces;
+﻿namespace Common.Infrastructure.Data.Repository.Interfaces;
 
 public interface IAdoRepository
 {
@@ -7,14 +7,16 @@ public interface IAdoRepository
 
     public Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters = null,
         bool withTableNames = true, bool timeout = true, string connectionStringName = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        int tableNamesLength = 500);
 
     public Task<int> ExecuteNonQueryAsync(string query, Dictionary<string, object> parameters = null,
         bool useStoredProcedure = true, bool timeout = true, string connectionStringName = null,
         CancellationToken cancellationToken = default);
 
     public Task<T> SpExecuteAsync<T>(string spName, Dictionary<string, object> parameters = null, bool timeout = true,
-        string connectionStringName = null, CancellationToken cancellationToken = default)
+        string connectionStringName = null,
+        CancellationToken cancellationToken = default)
         where T : class, new();
 
     //DEPRECATED
@@ -22,7 +24,7 @@ public interface IAdoRepository
     bool timeout = true,
     string connectionStringName = null, CancellationToken cancellationToken = default);
 
-
+    //DEPRECATED
     public Task<string> SpExecuteDeprecatedAsync(string spName, Dictionary<string, object> parameters,
         bool timeout = true, string connectionStringName = null,
         CancellationToken cancellationToken = default);

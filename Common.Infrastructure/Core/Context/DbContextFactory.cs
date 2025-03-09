@@ -1,6 +1,4 @@
-﻿using Common.Infrastructure.Data.Configurations;
-
-namespace Common.Infrastructure.Data;
+﻿namespace Common.Infrastructure.Core.Context;
 
 public class DbContextFactory(IDictionary<string, BaseContext> context)
 {

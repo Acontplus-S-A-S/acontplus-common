@@ -1,6 +1,4 @@
-﻿using Common.Core.Entities;
-
-namespace Common.Infrastructure.Data.Configurations;
+﻿namespace Common.Infrastructure.Core.Context;
 
 public class BaseContext(DbContextOptions options) : DbContext(options)
 {
@@ -35,7 +33,7 @@ public class BaseContext(DbContextOptions options) : DbContext(options)
             }
         }
 
-        int result = await base.SaveChangesAsync(cancellationToken);
+        var result = await base.SaveChangesAsync(cancellationToken);
         return result;
     }
 };

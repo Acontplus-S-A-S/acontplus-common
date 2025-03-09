@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
-using Common.Infrastructure.Data.Configurations;
+using Common.Infrastructure.Core.Context;
+using Common.Infrastructure.Core.Entity;
 using Common.TestApi.Entities;
 using Microsoft.EntityFrameworkCore;
 

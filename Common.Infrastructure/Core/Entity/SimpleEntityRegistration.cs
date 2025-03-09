@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Data.Configurations;
+﻿namespace Common.Infrastructure.Core.Entity;
 
 public static class SimpleEntityRegistration
 {

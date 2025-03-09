@@ -1,8 +1,6 @@
 ﻿using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using Common.ApiDocumentation;
-using Common.Infrastructure.Repository.Implementations;
-using Common.Infrastructure.Repository.Interfaces;
 using Common.Logging;
 using Common.Services.Middleware;
 using Common.TestApi.Data;
@@ -26,11 +24,11 @@ builder.Services.AddOpenApi();
 
 string[] nameSpaces =
 [
-    "Common.Infrastructure.Repository.Implementations",
-    "Reports.Application.Services",
-    "FactElect.Application.Services",
-            "Common.TestApi.Services",
-            "Common.Core.Security.Services"
+    "Common.Infrastructure.Data.Repository.Implementations",
+    "Common.Reports.Services",
+    "Common.FactElect.Services",
+    "Common.TestApi.Services",
+    "Common.Core.Security.Services"
 ];
 
 builder.Services.Scan(scan => scan
@@ -49,16 +47,6 @@ builder.Services.AddVersioningAndSwagger();
 
 builder.Services.AddDbContextPool<TestContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory())
-    .ConfigureContainer<ContainerBuilder>((hostContext, container) =>
-    {
-        container.RegisterType<AdoSqlServer>().As<IAdoSqlServer>();
-    });
-
-
-
-
 
 var app = builder.Build();
 

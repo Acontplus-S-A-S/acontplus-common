@@ -1,4 +1,4 @@
-﻿using Common.Infrastructure.Repository.Interfaces;
+﻿using Common.Infrastructure.Data.Repository.Interfaces;
 
 namespace Common.TestApi.Services;
 
@@ -7,15 +7,15 @@ public interface IReportService
     Task<DataSet> GetParamsAsync(Dictionary<string, object> parameters);
     Task<DataSet> GetDataAsync(string spname, Dictionary<string, object> parameters, bool withTableNames = false);
 }
-public class ReportService(IAdoSqlServer adoSqlServer) : IReportService
+public class ReportService(IAdoRepository adoRepository) : IReportService
 {
     public async Task<DataSet> GetParamsAsync(Dictionary<string, object> parameters)
     {
-        return await adoSqlServer.GetDataSetAsync("Reporte.Report_Get", parameters);
+        return await adoRepository.GetDataSetAsync("Reporte.Report_Get", parameters);
     }
 
     public async Task<DataSet> GetDataAsync(string spname, Dictionary<string, object> parameters, bool withTableNames)
     {
-        return await adoSqlServer.GetDataSetAsync(spname, parameters, withTableNames);
+        return await adoRepository.GetDataSetAsync(spname, parameters, withTableNames);
     }
 }

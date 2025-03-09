@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace Common.Infrastructure.Utils.Database;
+namespace Common.Infrastructure.Data.Mapping;
 
 public static class DbDataReaderMapper
 {

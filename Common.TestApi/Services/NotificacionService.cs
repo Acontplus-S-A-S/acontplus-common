@@ -1,4 +1,4 @@
-﻿using Common.Infrastructure.Repository.Interfaces;
+﻿using Common.Infrastructure.Data.Repository.Interfaces;
 
 namespace Common.TestApi.Services;
 
@@ -8,7 +8,7 @@ public interface IEmailService
     public Task<int> UpdateAsync(int id, string estado, string msgError = null);
 }
 
-public sealed class NotificacionService(IAdoSqlServer repository) : IEmailService
+public sealed class NotificacionService(IAdoRepository repository) : IEmailService
 {
     public async Task<DataTable> GetAsync(int cantidad)
     {
@@ -24,6 +24,6 @@ public sealed class NotificacionService(IAdoSqlServer repository) : IEmailServic
             { "estado", estado },
             { "msgError", msgError ?? "" }
         };
-        return await repository.OnlyExecuteAsync("App.Notificacion_Serv_Update", parameters);
+        return await repository.ExecuteNonQueryAsync("App.Notificacion_Serv_Update", parameters);
     }
 }

@@ -1,11 +1,4 @@
-﻿using System.Collections.Concurrent;
-using Common.Infrastructure.Repository.Interfaces;
-using Common.Infrastructure.Utils.Database;
-using Microsoft.Extensions.Logging;
-using Polly;
-using Polly.Retry;
-
-namespace Common.Infrastructure.Repository.Implementations;
+﻿namespace Common.Infrastructure.Data.Repository.Implementations;
 
 public class AdoRepository(
     IConfiguration configuration,
@@ -22,7 +15,7 @@ public class AdoRepository(
     private string GetConnectionString(string name)
     {
         // Use "DefaultConnection" if name is null or empty
-        string key = string.IsNullOrEmpty(name) ? "DefaultConnection" : name;
+        var key = string.IsNullOrEmpty(name) ? "DefaultConnection" : name;
 
         return _connectionStrings.GetOrAdd(key, k =>
         {
@@ -90,7 +83,8 @@ public class AdoRepository(
         bool withTableNames,
         bool timeout,
         string connectionStringName,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int tableNamesLength)
     {
         parameters ??= new Dictionary<string, object>();
 
@@ -102,7 +96,7 @@ public class AdoRepository(
             if (withTableNames)
             {
                 const string outParam = "@tableNames";
-                AddOutputParameter(cmd, outParam, SqlDbType.VarChar, 500);
+                CommandParameterBuilder.AddOutputParameter(cmd, outParam, SqlDbType.VarChar, tableNamesLength);
             }
 
             var ds = new DataSet();
@@ -173,28 +167,10 @@ public class AdoRepository(
 
         foreach (var parameter in parameters.Where(p => !string.IsNullOrEmpty(p.Key)))
         {
-            AddParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
+            CommandParameterBuilder.AddParameter(cmd, parameter.Key, parameter.Value ?? DBNull.Value);
         }
 
         return cmd;
-    }
-
-    private static void AddParameter(SqlCommand cmd, string name, object value)
-    {
-        var param = cmd.CreateParameter();
-        param.ParameterName = name.StartsWith("@") ? name : $"@{name}";
-        param.Value = value;
-        cmd.Parameters.Add(param);
-    }
-
-    private static void AddOutputParameter(SqlCommand cmd, string name, SqlDbType type, int size)
-    {
-        var param = cmd.CreateParameter();
-        param.ParameterName = name;
-        param.SqlDbType = type;
-        param.Size = size;
-        param.Direction = ParameterDirection.Output;
-        cmd.Parameters.Add(param);
     }
 
     private static async Task ProcessTableNames(SqlCommand cmd, DataSet ds)

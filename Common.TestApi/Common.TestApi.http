@@ -35,7 +35,7 @@ GET {{Common.TestApi_HostAddress}}/api/report
 ###
 
 @ruc=1105246605001
-@sriOnly=true
+@sriOnly=false
 GET {{Common.TestApi_HostAddress}}/api/customer/GetRucSri?ruc={{ruc}}&sriOnly={{sriOnly}}
 
 ###

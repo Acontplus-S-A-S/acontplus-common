@@ -11,6 +11,8 @@ namespace Common.TestApi.Controllers
         public async Task<IActionResult> Post([FromBody] UsuarioDto usuarioDto)
         {
             var usuario = ObjectMapper.Map<UsuarioDto, Usuario>(usuarioDto);
+            var serialized = DataConverters.SerializeObjectCustom<Usuario>(usuario);
+
 
             return Ok(await usuarioService.AddAsync(usuario));
         }

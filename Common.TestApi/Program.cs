@@ -1,6 +1,4 @@
-﻿using Autofac;
-using Autofac.Extensions.DependencyInjection;
-using Common.ApiDocumentation;
+﻿using Common.ApiDocumentation;
 using Common.Logging;
 using Common.Services.Middleware;
 using Common.TestApi.Data;

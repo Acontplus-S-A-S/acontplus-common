@@ -1,7 +1,7 @@
 ﻿using System.Net;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Newtonsoft.Json.Linq;
 
 namespace Common.Core.Validation;
 
@@ -59,15 +59,21 @@ public static class DataValidation
         return Regex.Replace(text, "[^0-9A-Za-z _-]", "");
     }
 
-    //https://www.techieclues.com/blogs/how-to-check-if-a-string-is-a-valid-json-in-csharp#:~:text=TryParse%20method%20from%20the%20System,that%20the%20string%20is%20valid.
     public static bool IsValidJson(string jsonString)
     {
+        if (string.IsNullOrWhiteSpace(jsonString))
+        {
+            return false;
+        }
+
         try
         {
-            JToken.Parse(jsonString);
-            return true;
+            using (JsonDocument.Parse(jsonString))
+            {
+                return true;
+            }
         }
-        catch (JsonReaderException)
+        catch (JsonException)
         {
             return false;
         }

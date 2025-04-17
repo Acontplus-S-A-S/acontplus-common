@@ -31,6 +31,8 @@
             try
             {
                 DataTable dt = CreateSampleDataTable();
+                var serialized = DataConverters.DataTableToJson(dt);
+
                 List<SimpleModel> models = DataTableMapper.MapDataTableToList<SimpleModel>(dt);
                 return Ok(models);
             }

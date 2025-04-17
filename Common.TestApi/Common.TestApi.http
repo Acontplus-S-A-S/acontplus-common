@@ -44,3 +44,7 @@ GET {{Common.TestApi_HostAddress}}/api/customer/GetRucSri?ruc={{ruc}}&sriOnly={{
 GET {{Common.TestApi_HostAddress}}/api/customer/GetCedulaSri?ruc={{ci}}&sriOnly={{sriOnly}}
 
 ###
+
+GET {{Common.TestApi_HostAddress}}/api/simplemodel/map-data-list
+
+###

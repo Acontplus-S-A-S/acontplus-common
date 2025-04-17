@@ -33,13 +33,16 @@ public static class DataConverters
 
         // Convert DataTable to a list of row dictionaries to avoid System.Type serialization issues
         var rows = new List<Dictionary<string, object>>();
+        var namingPolicy = JsonNamingPolicy.CamelCase;
 
         foreach (DataRow dr in table.Rows)
         {
             var row = new Dictionary<string, object>();
             foreach (DataColumn col in table.Columns)
             {
-                row[col.ColumnName] = dr[col] == DBNull.Value ? null : dr[col];
+                // Apply camelCase naming to column names
+                var camelCaseName = namingPolicy.ConvertName(col.ColumnName);
+                row[camelCaseName] = dr[col] == DBNull.Value ? null : dr[col];
             }
             rows.Add(row);
         }
@@ -55,6 +58,8 @@ public static class DataConverters
         if (ds == null)
             return "null";
 
+        var namingPolicy = JsonNamingPolicy.CamelCase;
+
         if (oldConverter)
         {
             var root = new List<object>();
@@ -66,7 +71,9 @@ public static class DataConverters
                     var row = new Dictionary<string, object>();
                     foreach (DataColumn col in dt.Columns)
                     {
-                        row[col.ColumnName] = dr[col] == DBNull.Value ? null : dr[col];
+                        // Apply camelCase naming to column names
+                        var camelCaseName = namingPolicy.ConvertName(col.ColumnName);
+                        row[camelCaseName] = dr[col] == DBNull.Value ? null : dr[col];
                     }
                     tableRows.Add(row);
                 }
@@ -86,16 +93,19 @@ public static class DataConverters
                 var row = new Dictionary<string, object>();
                 foreach (DataColumn col in dt.Columns)
                 {
-                    row[col.ColumnName] = dr[col] == DBNull.Value ? null : dr[col];
+                    // Apply camelCase naming to column names
+                    var camelCaseName = namingPolicy.ConvertName(col.ColumnName);
+                    row[camelCaseName] = dr[col] == DBNull.Value ? null : dr[col];
                 }
                 tableRows.Add(row);
             }
-            dataSetDict[dt.TableName] = tableRows;
+            // Also apply camelCase to table names
+            var camelCaseTableName = namingPolicy.ConvertName(dt.TableName);
+            dataSetDict[camelCaseTableName] = tableRows;
         }
 
         return JsonSerializer.Serialize(dataSetDict, GetDefaultOptions());
     }
-
     /// <summary>
     /// Converts a JSON string to DataTable
     /// </summary>

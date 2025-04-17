@@ -30,6 +30,7 @@ To enable and customize the logging system, edit the `appsettings.json` file and
     "S3SecretKey": "your-secret-key",
     "EnableDatabaseLogging": false,
     "DatabaseConnectionString": "Server=...",
+    "TimeZoneId": "America/Guayaquil",
     "MinimumLogLevel": "Information"
 }
 ```

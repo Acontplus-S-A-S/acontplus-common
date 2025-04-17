@@ -1,0 +1,428 @@
+﻿namespace Common.Core.Data;
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
+
+/// <summary>
+/// A lightweight object mapper that provides AutoMapper-like functionality.
+/// </summary>
+public static class ObjectMapper
+{
+    private static readonly Dictionary<string, MappingConfiguration> _mappingConfigurations = new Dictionary<string, MappingConfiguration>();
+
+    /// <summary>
+    /// Creates a mapping configuration between source and target types.
+    /// </summary>
+    public static MappingConfiguration<TSource, TTarget> CreateMap<TSource, TTarget>()
+        where TTarget : new()
+    {
+        var config = new MappingConfiguration<TSource, TTarget>();
+        string key = GetMappingKey(typeof(TSource), typeof(TTarget));
+        _mappingConfigurations[key] = config;
+        return config;
+    }
+
+    /// <summary>
+    /// Maps a source object to a new instance of a target type.
+    /// </summary>
+    public static TTarget Map<TSource, TTarget>(TSource source)
+        where TTarget : new()
+    {
+        if (source == null)
+            return default;
+
+        TTarget target = new TTarget();
+        return Map(source, target);
+    }
+
+    /// <summary>
+    /// Maps a source object to an existing target object.
+    /// </summary>
+    public static TTarget Map<TSource, TTarget>(TSource source, TTarget target)
+    {
+        if (source == null)
+            return target;
+
+        // Check if we have a configuration for this mapping
+        string key = GetMappingKey(typeof(TSource), typeof(TTarget));
+        if (_mappingConfigurations.TryGetValue(key, out var configuration))
+        {
+            return (TTarget)configuration.Map(source, target);
+        }
+
+        // If no configuration exists, perform standard property mapping
+        return MapProperties(source, target);
+    }
+
+    /// <summary>
+    /// Maps an object to another type without using a predefined mapping configuration.
+    /// </summary>
+    private static TTarget MapProperties<TSource, TTarget>(TSource source, TTarget target)
+    {
+        var sourceProperties = typeof(TSource).GetProperties();
+        var targetProperties = typeof(TTarget).GetProperties();
+
+        foreach (var sourceProp in sourceProperties)
+        {
+            var targetProp = targetProperties.FirstOrDefault(p => p.Name == sourceProp.Name && p.CanWrite);
+            if (targetProp == null)
+                continue;
+
+            var sourceValue = sourceProp.GetValue(source);
+            if (sourceValue == null)
+                continue;
+
+            // Handle direct assignment if types are compatible
+            if (targetProp.PropertyType.IsAssignableFrom(sourceProp.PropertyType))
+            {
+                targetProp.SetValue(target, sourceValue);
+                continue;
+            }
+
+            // Handle collections
+            if (IsCollection(sourceProp.PropertyType) && IsCollection(targetProp.PropertyType))
+            {
+                MapCollection(sourceValue, target, targetProp);
+                continue;
+            }
+
+            // Handle complex types that need recursive mapping
+            if (!IsSimpleType(sourceProp.PropertyType) && !IsSimpleType(targetProp.PropertyType))
+            {
+                var nestedTargetValue = targetProp.GetValue(target);
+                if (nestedTargetValue == null)
+                {
+                    // Create an instance if null
+                    nestedTargetValue = Activator.CreateInstance(targetProp.PropertyType);
+                }
+
+                var nestedMappedValue = typeof(ObjectMapper)
+                    .GetMethod("Map", new[] { sourceProp.PropertyType, targetProp.PropertyType })
+                    .Invoke(null, new[] { sourceValue, nestedTargetValue });
+
+                targetProp.SetValue(target, nestedMappedValue);
+                continue;
+            }
+
+            // Try type conversion for simple types
+            try
+            {
+                var convertedValue = Convert.ChangeType(sourceValue, targetProp.PropertyType);
+                targetProp.SetValue(target, convertedValue);
+            }
+            catch (InvalidCastException)
+            {
+                // Silently ignore failed type conversions
+            }
+        }
+
+        return target;
+    }
+
+    private static void MapCollection(object sourceCollection, object target, PropertyInfo targetProperty)
+    {
+        var targetCollectionType = targetProperty.PropertyType;
+        var targetElementType = GetElementType(targetCollectionType);
+
+        if (targetElementType == null)
+            return;
+
+        // Handle IEnumerable/ICollection/IList type targets
+        if (targetCollectionType.IsInterface)
+        {
+            var concreteType = typeof(List<>).MakeGenericType(targetElementType);
+            var targetCollection = Activator.CreateInstance(concreteType);
+            var addMethod = concreteType.GetMethod("Add");
+
+            foreach (var sourceItem in (IEnumerable)sourceCollection)
+            {
+                if (sourceItem == null)
+                    continue;
+
+                var sourceItemType = sourceItem.GetType();
+
+                // Map simple types directly
+                if (IsSimpleType(sourceItemType) && targetElementType.IsAssignableFrom(sourceItemType))
+                {
+                    addMethod.Invoke(targetCollection, new[] { sourceItem });
+                }
+                // Map complex types
+                else if (!IsSimpleType(sourceItemType))
+                {
+                    var targetItem = Activator.CreateInstance(targetElementType);
+                    var mappedItem = typeof(ObjectMapper)
+                        .GetMethod("Map", new[] { sourceItemType, targetElementType })
+                        .Invoke(null, new[] { sourceItem, targetItem });
+                    addMethod.Invoke(targetCollection, new[] { mappedItem });
+                }
+            }
+
+            targetProperty.SetValue(target, targetCollection);
+        }
+        // Handle concrete collection types
+        else if (!targetCollectionType.IsAbstract)
+        {
+            var targetCollection = Activator.CreateInstance(targetCollectionType);
+            var addMethod = targetCollectionType.GetMethod("Add");
+
+            if (addMethod != null)
+            {
+                foreach (var sourceItem in (IEnumerable)sourceCollection)
+                {
+                    if (sourceItem == null)
+                        continue;
+
+                    var sourceItemType = sourceItem.GetType();
+
+                    // Map simple types directly
+                    if (IsSimpleType(sourceItemType) && targetElementType.IsAssignableFrom(sourceItemType))
+                    {
+                        addMethod.Invoke(targetCollection, new[] { sourceItem });
+                    }
+                    // Map complex types
+                    else if (!IsSimpleType(sourceItemType))
+                    {
+                        var targetItem = Activator.CreateInstance(targetElementType);
+                        var mappedItem = typeof(ObjectMapper)
+                            .GetMethod("Map", new[] { sourceItemType, targetElementType })
+                            .Invoke(null, new[] { sourceItem, targetItem });
+                        addMethod.Invoke(targetCollection, new[] { mappedItem });
+                    }
+                }
+
+                targetProperty.SetValue(target, targetCollection);
+            }
+        }
+    }
+
+    private static bool IsCollection(Type type)
+    {
+        return type != typeof(string) && typeof(IEnumerable).IsAssignableFrom(type);
+    }
+
+    private static Type GetElementType(Type collectionType)
+    {
+        if (collectionType.IsArray)
+            return collectionType.GetElementType();
+
+        if (collectionType.IsGenericType &&
+            (typeof(IEnumerable<>).IsAssignableFrom(collectionType.GetGenericTypeDefinition()) ||
+             typeof(ICollection<>).IsAssignableFrom(collectionType.GetGenericTypeDefinition()) ||
+             typeof(IList<>).IsAssignableFrom(collectionType.GetGenericTypeDefinition())))
+        {
+            return collectionType.GetGenericArguments()[0];
+        }
+
+        var interfaces = collectionType.GetInterfaces();
+        foreach (var iface in interfaces)
+        {
+            if (iface.IsGenericType &&
+                (iface.GetGenericTypeDefinition() == typeof(IEnumerable<>) ||
+                 iface.GetGenericTypeDefinition() == typeof(ICollection<>) ||
+                 iface.GetGenericTypeDefinition() == typeof(IList<>)))
+            {
+                return iface.GetGenericArguments()[0];
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsSimpleType(Type type)
+    {
+        return type.IsPrimitive
+            || type == typeof(string)
+            || type == typeof(decimal)
+            || type == typeof(DateTime)
+            || type == typeof(DateTimeOffset)
+            || type == typeof(TimeSpan)
+            || type == typeof(Guid)
+            || type.IsEnum
+            || Nullable.GetUnderlyingType(type) != null && IsSimpleType(Nullable.GetUnderlyingType(type));
+    }
+
+    private static string GetMappingKey(Type sourceType, Type targetType)
+    {
+        return $"{sourceType.FullName}=>{targetType.FullName}";
+    }
+
+    /// <summary>
+    /// Base mapping configuration class.
+    /// </summary>
+    public abstract class MappingConfiguration
+    {
+        public abstract object Map(object source, object target);
+    }
+
+    /// <summary>
+    /// Mapping configuration for source and target types.
+    /// </summary>
+    public class MappingConfiguration<TSource, TTarget> : MappingConfiguration
+        where TTarget : new()
+    {
+        private readonly List<Action<TSource, TTarget>> _mappingActions = new List<Action<TSource, TTarget>>();
+        private readonly Dictionary<string, LambdaExpression> _customMappings = new Dictionary<string, LambdaExpression>();
+        private bool _ignoreUnmappedProperties = false;
+
+        /// <summary>
+        /// Configures a custom mapping for a target property.
+        /// </summary>
+        public MappingConfiguration<TSource, TTarget> ForMember<TProperty>(
+            Expression<Func<TTarget, TProperty>> destinationMember,
+            Expression<Func<TSource, TProperty>> sourceMember)
+        {
+            string memberName = GetMemberName(destinationMember);
+            _customMappings[memberName] = sourceMember;
+            return this;
+        }
+
+        /// <summary>
+        /// Configures a custom mapping function for a target property.
+        /// </summary>
+        public MappingConfiguration<TSource, TTarget> ForMember<TProperty>(
+            Expression<Func<TTarget, TProperty>> destinationMember,
+            Func<TSource, TProperty> mappingFunction)
+        {
+            _mappingActions.Add((source, target) =>
+            {
+                var memberExp = destinationMember.Body as MemberExpression;
+                var property = memberExp.Member as PropertyInfo;
+                var value = mappingFunction(source);
+                property.SetValue(target, value);
+            });
+            return this;
+        }
+
+        /// <summary>
+        /// Ignores a specific property during mapping.
+        /// </summary>
+        public MappingConfiguration<TSource, TTarget> Ignore<TProperty>(
+            Expression<Func<TTarget, TProperty>> destinationMember)
+        {
+            string memberName = GetMemberName(destinationMember);
+            _customMappings[memberName] = null; // null indicates ignore
+            return this;
+        }
+
+        /// <summary>
+        /// Ignores all unmapped properties.
+        /// </summary>
+        public MappingConfiguration<TSource, TTarget> IgnoreUnmappedProperties()
+        {
+            _ignoreUnmappedProperties = true;
+            return this;
+        }
+
+        public override object Map(object source, object target)
+        {
+            var typedSource = (TSource)source;
+            var typedTarget = (TTarget)target;
+
+            // Apply any custom mapping functions
+            foreach (var action in _mappingActions)
+            {
+                action(typedSource, typedTarget);
+            }
+
+            // Map properties
+            var sourceProperties = typeof(TSource).GetProperties();
+            var targetProperties = typeof(TTarget).GetProperties();
+
+            foreach (var targetProp in targetProperties)
+            {
+                // Skip if property is configured to be ignored
+                if (_customMappings.TryGetValue(targetProp.Name, out var customMapping) && customMapping == null)
+                    continue;
+
+                // Apply custom mapping if configured
+                if (customMapping != null)
+                {
+                    var func = customMapping.Compile();
+                    var value = func.DynamicInvoke(typedSource);
+                    targetProp.SetValue(typedTarget, value);
+                    continue;
+                }
+
+                // Otherwise look for matching property in source
+                var sourceProp = sourceProperties.FirstOrDefault(p => p.Name == targetProp.Name);
+                if (sourceProp != null)
+                {
+                    var sourceValue = sourceProp.GetValue(typedSource);
+                    if (sourceValue == null)
+                        continue;
+
+                    // Handle direct assignment if types are compatible
+                    if (targetProp.PropertyType.IsAssignableFrom(sourceProp.PropertyType))
+                    {
+                        targetProp.SetValue(typedTarget, sourceValue);
+                        continue;
+                    }
+
+                    // Handle collections
+                    if (IsCollection(sourceProp.PropertyType) && IsCollection(targetProp.PropertyType))
+                    {
+                        MapCollection(sourceValue, typedTarget, targetProp);
+                        continue;
+                    }
+
+                    // Handle complex types that need recursive mapping
+                    if (!IsSimpleType(sourceProp.PropertyType) && !IsSimpleType(targetProp.PropertyType))
+                    {
+                        var nestedTargetValue = targetProp.GetValue(typedTarget);
+                        if (nestedTargetValue == null)
+                        {
+                            // Create an instance if null
+                            nestedTargetValue = Activator.CreateInstance(targetProp.PropertyType);
+                        }
+
+                        var nestedMappedValue = typeof(ObjectMapper)
+                            .GetMethod("Map", new[] { sourceProp.PropertyType, targetProp.PropertyType })
+                            .Invoke(null, new[] { sourceValue, nestedTargetValue });
+
+                        targetProp.SetValue(typedTarget, nestedMappedValue);
+                        continue;
+                    }
+
+                    // Try type conversion for simple types
+                    try
+                    {
+                        var convertedValue = Convert.ChangeType(sourceValue, targetProp.PropertyType);
+                        targetProp.SetValue(typedTarget, convertedValue);
+                    }
+                    catch (InvalidCastException)
+                    {
+                        // Silently ignore failed type conversions
+                    }
+                }
+                else if (!_ignoreUnmappedProperties)
+                {
+                    // Missing source property, use default value if not ignoring unmapped properties
+                    targetProp.SetValue(typedTarget, GetDefaultValue(targetProp.PropertyType));
+                }
+            }
+
+            return typedTarget;
+        }
+
+        private string GetMemberName<TProperty>(Expression<Func<TTarget, TProperty>> expression)
+        {
+            var memberExp = expression.Body as MemberExpression;
+            if (memberExp == null)
+            {
+                throw new ArgumentException("Expression must be a member expression");
+            }
+            return memberExp.Member.Name;
+        }
+
+        private static object GetDefaultValue(Type type)
+        {
+            if (type.IsValueType)
+                return Activator.CreateInstance(type);
+            return null;
+        }
+    }
+}

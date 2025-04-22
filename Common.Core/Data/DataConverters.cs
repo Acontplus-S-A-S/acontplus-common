@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Xml;
 
+
 namespace Common.Core.Data;
 
 /// <summary>
@@ -114,92 +115,9 @@ public static class DataConverters
         if (string.IsNullOrWhiteSpace(json))
             return new DataTable();
 
-        try
-        {
-            // Deserialize to List of Dictionaries
-            var rows = JsonSerializer.Deserialize<List<Dictionary<string, JsonElement>>>(json);
-
-            if (rows == null || rows.Count == 0)
-                return new DataTable();
-
-            // Create DataTable structure based on the first row
-            var dt = new DataTable();
-            foreach (var key in rows[0].Keys)
-            {
-                dt.Columns.Add(key);
-            }
-
-            // Populate the DataTable
-            foreach (var row in rows)
-            {
-                var dataRow = dt.NewRow();
-                foreach (var kvp in row)
-                {
-                    dataRow[kvp.Key] = GetValueFromJsonElement(kvp.Value);
-                }
-                dt.Rows.Add(dataRow);
-            }
-
-            return dt;
-        }
-        catch
-        {
-            // Try alternate format (dictionary of arrays)
-            try
-            {
-                var jsonDoc = JsonDocument.Parse(json);
-                var root = jsonDoc.RootElement;
-
-                // If it's a single object, create one row
-                if (root.ValueKind == JsonValueKind.Object)
-                {
-                    var dt = new DataTable();
-                    var row = dt.NewRow();
-
-                    foreach (var property in root.EnumerateObject())
-                    {
-                        dt.Columns.Add(property.Name);
-                        row[property.Name] = GetValueFromJsonElement(property.Value);
-                    }
-
-                    dt.Rows.Add(row);
-                    return dt;
-                }
-            }
-            catch
-            {
-                // Ignore and return empty table as fallback
-            }
-
-            return new DataTable();
-        }
+        var dt = Newtonsoft.Json.JsonConvert.DeserializeObject(json, typeof(DataTable)) as DataTable;
+        return dt;
     }
-
-    /// <summary>
-    /// Helper method to convert JsonElement to appropriate .NET type
-    /// </summary>
-    private static object GetValueFromJsonElement(JsonElement element)
-    {
-        return element.ValueKind switch
-        {
-            JsonValueKind.Null => DBNull.Value,
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            JsonValueKind.Number when element.TryGetInt32(out var i) => i,
-            JsonValueKind.Number when element.TryGetInt64(out var l) => l,
-            JsonValueKind.Number when element.TryGetDecimal(out var d) => d,
-            JsonValueKind.Number => element.GetDouble(),
-            JsonValueKind.String when DateTime.TryParse(element.GetString(), out var dt) => dt,
-            JsonValueKind.String => element.GetString(),
-            JsonValueKind.Array => element.ToString(), // Just serialize arrays as strings
-            JsonValueKind.Object => element.ToString(), // Just serialize objects as strings
-            _ => element.ToString()
-        };
-    }
-
-    /// <summary>
-    /// Serialize a dictionary to JSON string directly preserving original values
-    /// </summary>
 
     public static string SerializeDictionary(Dictionary<string, object> data)
     {

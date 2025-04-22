@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
     <PackageId>Acontplus.Common.Infrastructure</PackageId>
-    <Version>1.2.6</Version>
+    <Version>1.2.7</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Library providing common infrastructure for data access, including ADO.NET and Entity Framework integration.</Description>
@@ -14,6 +14,11 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Utils\**" />
+    <EmbeddedResource Remove="Utils\**" />
+    <None Remove="Utils\**" />
+  </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Images\icon.png">
       <PackagePath>\</PackagePath>
@@ -35,8 +40,5 @@
       <PackagePath>\</PackagePath>
       <Pack>true</Pack>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Utils\Database\" />
   </ItemGroup>
 </Project>

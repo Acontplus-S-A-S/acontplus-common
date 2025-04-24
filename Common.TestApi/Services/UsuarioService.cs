@@ -1,23 +1,46 @@
-﻿using Common.TestApi.Data;
+﻿using Common.Core.DTOs;
+using Common.TestApi.Data;
+using Common.TestApi.DTOs;
 using Common.TestApi.Entities;
+using Common.TestApi.Repositories.Interfaces;
 
 namespace Common.TestApi.Services
 {
     public interface IUsuarioService
     {
         Task<ApiResponse> AddAsync(Usuario usuario);
+        Task<PagedResult<UsuarioDto>> GetPaginatedUsersAsync(PaginationDto pagination);
         Task<ApiResponse> UpdateAsync(int id, Usuario usuario);
     }
-    public class UsuarioService(TestContext context) : IUsuarioService
+    public class UsuarioService(TestContext context, IUserRepository userRepository) : IUsuarioService
     {
         public async Task<ApiResponse> AddAsync(Usuario usuario)
         {
             context.Usuarios.Add(usuario);
             await context.SaveChangesAsync();
 
-            return new ApiResponse { Code = "1", Message = " Success", Payload = usuario };
+            return ApiResponse.Success();
         }
 
+        public async Task<PagedResult<UsuarioDto>> GetPaginatedUsersAsync(PaginationDto paginationDto)
+        {
+            // Get paged data from repository
+            var pagedUsers = await userRepository.GetPaginatedUsersAsync(paginationDto);
+
+            // Map to DTOs
+            var userDtos = pagedUsers.Items.Select(user => ObjectMapper.Map<Usuario, UsuarioDto>(user)).ToList();
+
+            // Create new paged result with DTOs
+            return new PagedResult<UsuarioDto>
+            {
+                Items = userDtos,
+                PageIndex = pagedUsers.PageIndex,
+                PageSize = pagedUsers.PageSize,
+                TotalCount = pagedUsers.TotalCount
+            };
+        }
+       
+ 
         public async Task<ApiResponse> UpdateAsync(int id, Usuario usuario)
         {
             var userFound = await context.Usuarios.FindAsync(id);
@@ -28,7 +51,8 @@ namespace Common.TestApi.Services
 
             context.Update(userFound);
             await context.SaveChangesAsync();
-            return new ApiResponse { Code = "1", Message = "Sucess", Payload = usuario };
+            //return new ApiResponse { Code = "1", Message = "Sucess", Payload = usuario };
+            return ApiResponse.Success(payload: usuario);
 
         }
     }

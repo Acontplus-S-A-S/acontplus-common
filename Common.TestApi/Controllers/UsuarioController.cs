@@ -1,4 +1,5 @@
-﻿using Common.TestApi.DTOs;
+﻿using Common.Core.DTOs;
+using Common.TestApi.DTOs;
 using Common.TestApi.Entities;
 
 namespace Common.TestApi.Controllers
@@ -22,6 +23,14 @@ namespace Common.TestApi.Controllers
             var usuario = ObjectMapper.Map<UsuarioDto, Usuario>(usuarioDto);
 
             return Ok(await usuarioService.UpdateAsync(id, usuario));
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<ApiResponse<PagedResult<UsuarioDto>>>> GetUsers([FromQuery] PaginationDto pagination)
+        {
+            var result = await usuarioService.GetPaginatedUsersAsync(pagination);
+
+            return Ok(ApiResponse<PagedResult<UsuarioDto>>.Success(result));
         }
     }
 }

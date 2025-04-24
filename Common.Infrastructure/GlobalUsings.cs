@@ -10,3 +10,5 @@ global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.Logging;
 global using Polly;
 global using Polly.Retry;
+global using Common.Core.DTOs;
+global using Common.Core.Models;

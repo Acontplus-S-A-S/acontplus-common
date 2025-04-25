@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Repositories;
+﻿namespace Common.Infrastructure.Data.Repository.Interfaces;
 
 public interface IRepository<T> where T : class
 {

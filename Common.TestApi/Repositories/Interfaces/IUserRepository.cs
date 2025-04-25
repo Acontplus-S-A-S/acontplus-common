@@ -1,5 +1,5 @@
 ﻿using Common.Core.DTOs;
-using Common.Infrastructure.Repositories;
+using Common.Infrastructure.Data.Repository.Interfaces;
 using Common.TestApi.Entities;
 
 namespace Common.TestApi.Repositories.Interfaces;

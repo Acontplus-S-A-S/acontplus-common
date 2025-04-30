@@ -140,7 +140,8 @@ public static class SerilogExtensions
             SchemaName = "Common",
             AutoCreateSqlTable = true,
             BatchPostingLimit = 1000,
-            BatchPeriod = TimeSpan.FromSeconds(5)
+            BatchPeriod = TimeSpan.FromSeconds(5),
+            EagerlyEmitFirstEvent = false  // Add this line to prevent issues with initial batching
         };
 
         var columnOpts = new ColumnOptions
@@ -148,6 +149,24 @@ public static class SerilogExtensions
             Id = { DataType = SqlDbType.BigInt },
             LogEvent = { DataLength = 2048 }
         };
+
+        // Make sure Id is auto-incremented
+        columnOpts.Id.NonClusteredIndex = false;
+        columnOpts.Id.AllowNull = false;
+
+        // This is critical - use SQL Server's identity column for the primary key
+        columnOpts.AdditionalColumns = new List<SqlColumn>
+            {
+                new SqlColumn
+                {
+                    ColumnName = "Id",
+                    DataType = SqlDbType.BigInt,
+                    AllowNull = false,
+                    DataLength = -1,
+                    NonClusteredIndex = false
+                }
+            };
+
         columnOpts.Store.Remove(StandardColumn.Properties);
         columnOpts.Store.Add(StandardColumn.LogEvent);
         columnOpts.PrimaryKey = columnOpts.Id;
@@ -158,6 +177,5 @@ public static class SerilogExtensions
             sinkOptions: sinkOpts,
             columnOptions: columnOpts
         ));
-
     }
 }

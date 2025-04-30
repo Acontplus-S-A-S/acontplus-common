@@ -134,48 +134,52 @@ public static class SerilogExtensions
             return;
         }
 
-        var sinkOpts = new MSSqlServerSinkOptions
+        try
         {
-            TableName = "Logs",
-            SchemaName = "Common",
-            AutoCreateSqlTable = true,
-            BatchPostingLimit = 1000,
-            BatchPeriod = TimeSpan.FromSeconds(5),
-            EagerlyEmitFirstEvent = false  // Add this line to prevent issues with initial batching
-        };
-
-        var columnOpts = new ColumnOptions
-        {
-            Id = { DataType = SqlDbType.BigInt },
-            LogEvent = { DataLength = 2048 }
-        };
-
-        // Make sure Id is auto-incremented
-        columnOpts.Id.NonClusteredIndex = false;
-        columnOpts.Id.AllowNull = false;
-
-        // This is critical - use SQL Server's identity column for the primary key
-        columnOpts.AdditionalColumns = new List<SqlColumn>
+            var sinkOpts = new MSSqlServerSinkOptions
             {
-                new SqlColumn
-                {
-                    ColumnName = "Id",
-                    DataType = SqlDbType.BigInt,
-                    AllowNull = false,
-                    DataLength = -1,
-                    NonClusteredIndex = false
-                }
+                TableName = "Logs",
+                SchemaName = "Common",
+                AutoCreateSqlTable = true,
+                BatchPostingLimit = 1000,
+                BatchPeriod = TimeSpan.FromSeconds(5),
+                EagerlyEmitFirstEvent = false
             };
 
-        columnOpts.Store.Remove(StandardColumn.Properties);
-        columnOpts.Store.Add(StandardColumn.LogEvent);
-        columnOpts.PrimaryKey = columnOpts.Id;
-        columnOpts.TimeStamp.NonClusteredIndex = true;
+            var columnOpts = new ColumnOptions();
 
-        loggerConfiguration.WriteTo.Async(a => a.MSSqlServer(
-            connectionString: options.DatabaseConnectionString,
-            sinkOptions: sinkOpts,
-            columnOptions: columnOpts
-        ));
+            // Configure Id column properties
+            columnOpts.Id.DataType = SqlDbType.BigInt;
+            columnOpts.Id.AllowNull = false;
+            columnOpts.Id.NonClusteredIndex = false;
+
+            // Configure LogEvent column with increased size
+            columnOpts.LogEvent.DataType = SqlDbType.NVarChar;
+            columnOpts.LogEvent.DataLength = 4000;  // Increased from 2048
+            columnOpts.LogEvent.AllowNull = true;
+
+            // Set Id as primary key with identity/autoincrement
+            columnOpts.PrimaryKey = columnOpts.Id;
+
+            // Add timestamp index for better query performance
+            columnOpts.TimeStamp.NonClusteredIndex = true;
+
+            // Remove Properties which we're not using and add LogEvent
+            columnOpts.Store.Remove(StandardColumn.Properties);
+            columnOpts.Store.Add(StandardColumn.LogEvent);
+
+            // Apply settings to logger
+            loggerConfiguration.WriteTo.Async(a => a.MSSqlServer(
+                connectionString: options.DatabaseConnectionString,
+                sinkOptions: sinkOpts,
+                columnOptions: columnOpts)
+            );
+
+            Log.Information("Database logging configured successfully.");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "Failed to configure database logging: {ErrorMessage}", ex.Message);
+        }
     }
 }

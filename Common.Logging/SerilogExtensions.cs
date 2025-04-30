@@ -150,7 +150,7 @@ public static class SerilogExtensions
         };
         columnOpts.Store.Remove(StandardColumn.Properties);
         columnOpts.Store.Add(StandardColumn.LogEvent);
-        columnOpts.PrimaryKey = columnOpts.TimeStamp;
+        columnOpts.PrimaryKey = columnOpts.Id;
         columnOpts.TimeStamp.NonClusteredIndex = true;
 
         loggerConfiguration.WriteTo.Async(a => a.MSSqlServer(
@@ -158,5 +158,6 @@ public static class SerilogExtensions
             sinkOptions: sinkOpts,
             columnOptions: columnOpts
         ));
+
     }
 }

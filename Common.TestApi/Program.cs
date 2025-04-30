@@ -5,11 +5,8 @@ using Common.TestApi.Data;
 using Common.TestApi.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Scrutor;
-using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Host.UseSerilog();
 
 // Add custom logging
 builder.Services.AddAdvancedLogging(builder.Configuration);

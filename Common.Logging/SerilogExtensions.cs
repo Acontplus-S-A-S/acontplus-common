@@ -143,37 +143,23 @@ public static class SerilogExtensions
                 AutoCreateSqlTable = true,
                 BatchPostingLimit = 1000,
                 BatchPeriod = TimeSpan.FromSeconds(5),
-                EagerlyEmitFirstEvent = false
             };
 
-            var columnOpts = new ColumnOptions();
+            var columnOpts = new ColumnOptions
+            {
+                LogEvent = { DataLength = 4000 }
+            };
 
-            // Configure Id column properties
-            columnOpts.Id.DataType = SqlDbType.BigInt;
-            columnOpts.Id.AllowNull = false;
-            columnOpts.Id.NonClusteredIndex = false;
-
-            // Configure LogEvent column with increased size
-            columnOpts.LogEvent.DataType = SqlDbType.NVarChar;
-            columnOpts.LogEvent.DataLength = 4000;  // Increased from 2048
-            columnOpts.LogEvent.AllowNull = true;
-
-            // Set Id as primary key with identity/autoincrement
-            columnOpts.PrimaryKey = columnOpts.Id;
-
-            // Add timestamp index for better query performance
-            columnOpts.TimeStamp.NonClusteredIndex = true;
-
-            // Remove Properties which we're not using and add LogEvent
             columnOpts.Store.Remove(StandardColumn.Properties);
             columnOpts.Store.Add(StandardColumn.LogEvent);
 
-            // Apply settings to logger
+            // Configurar el logger
             loggerConfiguration.WriteTo.Async(a => a.MSSqlServer(
                 connectionString: options.DatabaseConnectionString,
                 sinkOptions: sinkOpts,
-                columnOptions: columnOpts)
-            );
+                columnOptions: columnOpts
+            ));
+
 
             Log.Information("Database logging configured successfully.");
         }

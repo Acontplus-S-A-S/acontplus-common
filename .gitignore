@@ -10,3 +10,4 @@ bin-release/
 *.user
 /.idea/.idea.AcontplusCommon/.idea
 /Common.TestApi/appsettings.Development.json
+/Test.Api/appsettings.Development.json

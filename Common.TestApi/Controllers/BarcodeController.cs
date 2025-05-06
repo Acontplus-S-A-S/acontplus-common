@@ -1,12 +1,13 @@
 ﻿using Common.Barcode.Models;
 using Common.Barcode.Utils;
+using Common.Infrastructure.Data.Repository.Implementations;
 
 namespace Common.TestApi.Controllers;
 
-public class BarcodeController : BaseApiController
+public class BarcodeController (IUsuarioService usuarioService): BaseApiController
 {
     [HttpGet]
-    public IActionResult Get(string text, bool includeLabel = false)
+    public async Task<IActionResult> Get(string text, bool includeLabel = false)
     {
         var barcodeConfig = new BarcodeConfig
         {
@@ -15,6 +16,9 @@ public class BarcodeController : BaseApiController
             IncludeLabel = includeLabel
         };
         var barcode = BarcodeGen.Create(barcodeConfig);
+
+        var response = await usuarioService.CreateAsync();
+
         return File(barcode, "image/png", "ci.png");
     }
 }

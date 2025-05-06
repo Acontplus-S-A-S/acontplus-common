@@ -1,4 +1,5 @@
 ﻿using Common.Core.DTOs;
+using Common.Infrastructure.Data.Repository.Interfaces;
 using Common.TestApi.Data;
 using Common.TestApi.DTOs;
 using Common.TestApi.Entities;
@@ -9,10 +10,11 @@ namespace Common.TestApi.Services
     public interface IUsuarioService
     {
         Task<ApiResponse> AddAsync(Usuario usuario);
+        Task<int> CreateAsync();
         Task<PagedResult<UsuarioDto>> GetPaginatedUsersAsync(PaginationDto pagination);
         Task<ApiResponse> UpdateAsync(int id, Usuario usuario);
     }
-    public class UsuarioService(TestContext context, IUserRepository userRepository) : IUsuarioService
+    public class UsuarioService(TestContext context, IUserRepository userRepository, IAdoRepository adoRepository) : IUsuarioService
     {
         public async Task<ApiResponse> AddAsync(Usuario usuario)
         {
@@ -20,6 +22,10 @@ namespace Common.TestApi.Services
             await context.SaveChangesAsync();
 
             return ApiResponse.Success();
+        }
+        public async Task<int> CreateAsync()
+        {
+            return await adoRepository.ExecuteNonQueryAsync("INSERT INTO Test.WorkerTest(Content) VALUES ('Inserting')", useStoredProcedure: false);
         }
 
         public async Task<PagedResult<UsuarioDto>> GetPaginatedUsersAsync(PaginationDto paginationDto)

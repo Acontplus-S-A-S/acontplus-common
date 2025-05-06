@@ -11,3 +11,4 @@ bin-release/
 /.idea/.idea.AcontplusCommon/.idea
 /Common.TestApi/appsettings.Development.json
 /Test.Api/appsettings.Development.json
+/task-definition.json

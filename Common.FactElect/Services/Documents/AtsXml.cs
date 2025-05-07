@@ -1,4 +1,6 @@
-﻿namespace Common.FactElect.Services;
+﻿using Formatting = System.Xml.Formatting;
+
+namespace Common.FactElect.Services.Documents;
 
 public class AtsXml
 {

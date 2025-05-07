@@ -1,4 +1,4 @@
-﻿namespace Common.FactElect.Models;
+﻿namespace Common.FactElect.Models.Validation;
 
 public class ClasificacionMiPyme
 {

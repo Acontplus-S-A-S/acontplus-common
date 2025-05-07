@@ -2,14 +2,12 @@
 using Common.Barcode.Utils;
 using Common.Core.Enums;
 using Common.Core.Extensions;
+using Common.FactElect.Models.Documents;
 using Microsoft.Extensions.Configuration;
 
-namespace Common.FactElect.Services;
-public interface IDocumentoXmlToHtml
-{
-    string CreateHtml(ComprobanteElectronico comprobanteElectronico);
-}
-public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentoXmlToHtml
+namespace Common.FactElect.Services.Conversion;
+
+public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConverter
 {
     public string CreateHtml(ComprobanteElectronico data)
     {

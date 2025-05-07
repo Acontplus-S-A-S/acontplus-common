@@ -1,6 +1,7 @@
 ﻿using Common.Core.Data;
 using Common.Infrastructure.Data.Repository.Implementations;
 using Common.Infrastructure.Data.Repository.Interfaces;
+using Test.Api;
 using Test.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -51,7 +52,10 @@ app.MapGet("/getrucsri", async (ICustomerService icustomerService, string ruc, b
 
 app.Run();
 
-internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+namespace Test.Api
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+    {
+        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    }
 }

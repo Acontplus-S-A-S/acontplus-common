@@ -1,4 +1,4 @@
-﻿namespace Common.FactElect.Models;
+﻿namespace Common.FactElect.Models.Documents;
 
 public class ComprobanteElectronico
 {

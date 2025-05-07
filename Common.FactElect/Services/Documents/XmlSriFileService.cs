@@ -1,12 +1,4 @@
-﻿using System.Xml.Linq;
-using Microsoft.AspNetCore.Http;
-
-namespace Common.FactElect.Services;
-
-public interface IXmlSriFileService
-{
-    Task<XmlSriFileModel> GetAsync(IFormFile file);
-}
+﻿namespace Common.FactElect.Services.Documents;
 
 public class XmlSriFileService : IXmlSriFileService
 {

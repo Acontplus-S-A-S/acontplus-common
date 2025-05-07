@@ -1,4 +1,4 @@
-﻿namespace Common.FactElect.Models;
+﻿namespace Common.FactElect.Models.Responses;
 
 public class ResponseSri
 {

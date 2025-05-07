@@ -1,13 +1,9 @@
 ﻿using System.Net;
 using System.Web;
+using Common.FactElect.Models.Validation;
 using Newtonsoft.Json;
 
-namespace Common.FactElect.Services;
-
-public interface ICaptchaService
-{
-    Task<string> ValidateAsync(string html, CookieContainer cookies);
-}
+namespace Common.FactElect.Services.External;
 
 public class CaptchaService : ICaptchaService
 {

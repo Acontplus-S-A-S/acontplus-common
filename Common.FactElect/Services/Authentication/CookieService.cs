@@ -1,8 +1,4 @@
-﻿using System.Net;
-using System.Web;
-using Common.FactElect.Models.Authentication;
-
-namespace Common.FactElect.Services.Authentication;
+﻿namespace Common.FactElect.Services.Authentication;
 
 public class CookieService : ICookieService
 {

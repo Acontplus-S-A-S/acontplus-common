@@ -1,7 +1,4 @@
-﻿using System.Text;
-using Common.FactElect.Models.Responses;
-
-namespace Common.FactElect.Services.External;
+﻿namespace Common.FactElect.Services.External;
 
 public class WebServiceSri : IWebServiceSri
 {

@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace Common.FactElect.Models.Authentication;
+﻿namespace Common.FactElect.Models.Authentication;
 
 public class CookieResponse
 {

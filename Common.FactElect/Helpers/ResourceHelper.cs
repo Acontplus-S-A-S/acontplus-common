@@ -1,6 +1,4 @@
-﻿using System.Reflection;
-
-namespace Common.FactElect.Helpers;
+﻿namespace Common.FactElect.Helpers;
 
 public static class ResourceHelper
 {

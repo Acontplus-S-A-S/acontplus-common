@@ -1,6 +1,4 @@
-﻿using Common.FactElect.Models.Responses;
-
-namespace Common.FactElect.Interfaces.Services;
+﻿namespace Common.FactElect.Interfaces.Services;
 
 public interface IWebServiceSri
 {

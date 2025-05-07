@@ -1,12 +1,4 @@
-﻿using System.Net;
-using System.Net.Http.Headers;
-using System.Web;
-using Common.FactElect.Models.Authentication;
-using Common.FactElect.Services.Authentication;
-using Common.FactElect.Services.External;
-using Newtonsoft.Json;
-
-namespace Common.FactElect.Services.Validation;
+﻿namespace Common.FactElect.Services.Validation;
 
 public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
 {

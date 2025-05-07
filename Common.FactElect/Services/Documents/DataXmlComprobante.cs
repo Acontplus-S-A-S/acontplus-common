@@ -1,6 +1,4 @@
-﻿using Common.FactElect.Models.Documents;
-
-namespace Common.FactElect.Services.Documents;
+﻿namespace Common.FactElect.Services.Documents;
 
 public class DataXmlComprobante
 {

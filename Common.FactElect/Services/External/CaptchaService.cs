@@ -1,9 +1,4 @@
-﻿using System.Net;
-using System.Web;
-using Common.FactElect.Models.Validation;
-using Newtonsoft.Json;
-
-namespace Common.FactElect.Services.External;
+﻿namespace Common.FactElect.Services.External;
 
 public class CaptchaService : ICaptchaService
 {

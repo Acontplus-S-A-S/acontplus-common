@@ -466,21 +466,19 @@ public class DataXmlComprobante
         var reembolsos = new List<ReembolsoDetalle>();
         foreach (XmlElement item in nodeReemb)
         {
-            var reembolso = new ReembolsoDetalle();
-            reembolso.tipoIdentificacionProveedorReembolso =
-                item.GetElementsByTagName("tipoIdentificacionProveedorReembolso")[0]?.InnerText;
-            reembolso.identificacionProveedorReembolso =
-                item.GetElementsByTagName("identificacionProveedorReembolso")[0]?.InnerText;
-            reembolso.codPaisPagoProveedorReembolso =
-                item.GetElementsByTagName("codPaisPagoProveedorReembolso")[0]?.InnerText;
-            reembolso.tipoProveedorReembolso = item.GetElementsByTagName("tipoProveedorReembolso")[0]?.InnerText;
-            reembolso.codDocReembolso = item.GetElementsByTagName("codDocReembolso")[0]?.InnerText;
-            reembolso.estabDocReembolso = item.GetElementsByTagName("estabDocReembolso")[0]?.InnerText;
-            reembolso.ptoEmiDocReembolso = item.GetElementsByTagName("ptoEmiDocReembolso")[0]?.InnerText;
-            reembolso.secuencialDocReembolso = item.GetElementsByTagName("secuencialDocReembolso")[0]?.InnerText;
-            reembolso.fechaEmisionDocReembolso = item.GetElementsByTagName("fechaEmisionDocReembolso")[0]?.InnerText;
-            reembolso.numeroAutorizacionDocReemb =
-                item.GetElementsByTagName("numeroAutorizacionDocReemb")[0]?.InnerText;
+            var reembolso = new ReembolsoDetalle
+            {
+                tipoIdentificacionProveedorReembolso = item.GetElementsByTagName("tipoIdentificacionProveedorReembolso")[0]?.InnerText,
+                identificacionProveedorReembolso = item.GetElementsByTagName("identificacionProveedorReembolso")[0]?.InnerText,
+                codPaisPagoProveedorReembolso = item.GetElementsByTagName("codPaisPagoProveedorReembolso")[0]?.InnerText,
+                tipoProveedorReembolso = item.GetElementsByTagName("tipoProveedorReembolso")[0]?.InnerText,
+                codDocReembolso = item.GetElementsByTagName("codDocReembolso")[0]?.InnerText,
+                estabDocReembolso = item.GetElementsByTagName("estabDocReembolso")[0]?.InnerText,
+                ptoEmiDocReembolso = item.GetElementsByTagName("ptoEmiDocReembolso")[0]?.InnerText,
+                secuencialDocReembolso = item.GetElementsByTagName("secuencialDocReembolso")[0]?.InnerText,
+                fechaEmisionDocReembolso = item.GetElementsByTagName("fechaEmisionDocReembolso")[0]?.InnerText,
+                numeroAutorizacionDocReemb = item.GetElementsByTagName("numeroAutorizacionDocReemb")[0]?.InnerText
+            };
             GetImpuestosReembolsos(reembolso, item.SelectSingleNode("detalleImpuestos"));
             reembolsos.Add(reembolso);
         }
@@ -505,14 +503,7 @@ public class DataXmlComprobante
 
     private void GetRetencionPayments(DocSustento doc, XmlNode payments)
     {
-        var pagos = new List<Pago>();
-        foreach (XmlNode item in payments)
-        {
-            var pago = new Pago();
-            pago.formaPago = item.SelectSingleNode("formaPago")?.InnerText;
-            pago.total = item.SelectSingleNode("total")?.InnerText;
-            pagos.Add(pago);
-        }
+        var pagos = (from XmlNode item in payments select new Pago { formaPago = item.SelectSingleNode("formaPago")?.InnerText, total = item.SelectSingleNode("total")?.InnerText }).ToList();
 
         doc.CreatePayments(pagos);
     }

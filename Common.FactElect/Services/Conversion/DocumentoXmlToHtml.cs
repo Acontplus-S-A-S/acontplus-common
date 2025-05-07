@@ -320,7 +320,6 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
         {
             case "01":
                 foreach (var item in data.detalles)
-                {
                     details += @"<tr class=""small"">
                                                     <td> " + item.codigoPrincipal + @" </td >
                                                     <td> " + item.codigoAuxiliar + @" </td >
@@ -333,12 +332,10 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                                     <td class=""text-right"">" + item.descuento + @"</td>
                                                     <td class=""text-right"">" + item.precioTotalSinImpuesto + @"</td>
                                                 </tr>";
-                }
 
                 break;
             case "04":
                 foreach (var item in data.detalles)
-                {
                     details += @"<tr class=""small"">
                                                     <td> " + item.codigoPrincipal + @" </td >
                                                     <td> " + item.codigoAuxiliar + @" </td >
@@ -351,7 +348,6 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                                     <td class=""text-right"">" + item.descuento + @"</td>
                                                     <td class=""text-right"">" + item.precioTotalSinImpuesto + @"</td>
                                                 </tr>";
-                }
 
                 break;
         }
@@ -361,10 +357,7 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
 
     public static string GetInfoAdicional(ComprobanteElectronico data)
     {
-        if (data.infoAdicional == null)
-        {
-            return string.Empty;
-        }
+        if (data.infoAdicional == null) return string.Empty;
 
         var info =
             @"<div class=""col-xl-7 col-lg-7 col-md-7 col-sm-7 col-7""><div class=""card border border-dark rounded"" ng-show=""infoAdicional.length > 0"">
@@ -379,10 +372,8 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                         </thead>
                                         <tbody>";
         foreach (var item in data.infoAdicional)
-        {
             info += @"<tr><td>" + item.nombre + @"</td>
                 <td>" + item.valor + @"</td ></tr>";
-        }
 
         info += @"</tbody></table></div></div>
                         </div>";
@@ -412,72 +403,58 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                 foreach (var item in data.infoFactura.totalImpuestos)
                 {
                     if (item.codigo == "2" && item.codigoPorcentaje == "2")
-                    {
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal Iva 12%</strong></td>
                                             <td class=""text-right"">" +
                                   Convert.ToString(subtotal12 += Convert.ToDouble(item.baseImponible)) + @"</td>
                                         </tr>";
-                    }
 
                     if (item.codigo == "2" && item.codigoPorcentaje == "0")
-                    {
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal Iva 0%</strong></td>
                                             <td class=""text-right"">" +
                                   Convert.ToString(subtotalIva0 += Convert.ToDouble(item.baseImponible)) + @"</td>
                                         </tr>";
-                    }
 
                     if (item.codigo == "2" && item.codigoPorcentaje == "6")
-                    {
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal No Objeto Iva</strong></td>
                                             <td class=""text-right"">" +
                                   Convert.ToString(subtotalNoObjetoIva += Convert.ToDouble(item.baseImponible)) +
                                   @"</td>
                                         </tr>";
-                    }
 
                     if (item.codigo == "2" && item.codigoPorcentaje == "7")
-                    {
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal Excento Iva</strong></td>
                                             <td class=""text-right"">" +
                                   Convert.ToString(subtotalExcentoIva += Convert.ToDouble(item.baseImponible)) + @"</td>
                                         </tr>";
-                    }
 
                     totals += @"<tr>
                                             <td class=""text-right""><strong>Total Sin Impuestos</strong></td>
                                             <td class=""text-right"">" + data.infoFactura.totalSinImpuestos + @"</td>
                                         </tr>";
                     if (item.codigo == "3")
-                    {
                         totals += @"<tr>
                                             <td class=""text-right""><strong>ICE</strong></td>
                                             <td class=""text-right"">" +
                                   Convert.ToString(ice += Convert.ToDouble(item.valor)) + @"</td>
                                         </tr>";
-                    }
 
                     if (item.codigo == "2" && item.codigoPorcentaje == "2")
-                    {
                         totals += @"<tr>
                                             <td class=""text-right""><strong>IVA 12%</strong></td>
                                             <td class=""text-right"">" +
                                   Convert.ToString(iva12 += Convert.ToDouble(item.valor)) + @"</td>
                                         </tr>";
-                    }
 
                     if (item.codigo == "5")
-                    {
                         totals += @"<tr>
                                             <td class=""text-right""><strong>IRBPNR</strong></td>
                                             <td class=""text-right"">" +
                                   Convert.ToString(IRBPNR += Convert.ToDouble(item.valor)) + @"</td>
                                         </tr>";
-                    }
                 }
 
                 totals += @" <tr><td class=""text-right""><strong>Propina</strong></td>

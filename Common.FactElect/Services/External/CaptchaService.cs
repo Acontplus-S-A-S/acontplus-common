@@ -24,10 +24,7 @@ public class CaptchaService : ICaptchaService
         client.DefaultRequestHeaders.Add("User-Agent",
             "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0");
         var response = await client.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
+        if (!response.IsSuccessStatusCode) return null;
 
         var stream = await response.Content.ReadAsStreamAsync();
         using var sr = new StreamReader(stream);

@@ -11,13 +11,9 @@ public class DataXmlComprobante
             var nodeComp = nodeAuth?.SelectSingleNode("comprobante");
             var xmlComp = new XmlDocument();
             if (nodeComp != null)
-            {
                 xmlComp.LoadXml(nodeComp.InnerText);
-            }
             else
-            {
                 return false;
-            }
 
             comp.numeroAutorizacion = nodeAuth.SelectSingleNode("numeroAutorizacion")?.InnerText;
             comp.fechaAutorizacion = nodeAuth.SelectSingleNode("fechaAutorizacion")?.InnerText;
@@ -36,10 +32,7 @@ public class DataXmlComprobante
                     comp.versionComp = nodeFact.Attributes["version"].Value;
 
                     var nodeInfoFactura = xmlComp.GetElementsByTagName("infoFactura")[0];
-                    if (nodeInfoFactura != null)
-                    {
-                        GetInfoFactura(comp.codDoc, comp, nodeInfoFactura);
-                    }
+                    if (nodeInfoFactura != null) GetInfoFactura(comp.codDoc, comp, nodeInfoFactura);
 
                     GetDetails(comp, xmlComp.GetElementsByTagName("detalles")[0]);
 
@@ -54,10 +47,7 @@ public class DataXmlComprobante
 
                     var nodeInfoNotaCredito = xmlComp.GetElementsByTagName("infoNotaCredito")[0];
 
-                    if (nodeInfoNotaCredito != null)
-                    {
-                        GetInfoNotaCredito(comp.codDoc, comp, nodeInfoNotaCredito);
-                    }
+                    if (nodeInfoNotaCredito != null) GetInfoNotaCredito(comp.codDoc, comp, nodeInfoNotaCredito);
 
                     GetDetails(comp, xmlComp.GetElementsByTagName("detalles")[0]);
 
@@ -79,21 +69,15 @@ public class DataXmlComprobante
                     GetInfoCompRetencion(comp.versionComp, comp, nodeInfoCompRetencion);
 
                     if (comp.versionComp == "2.0.0")
-                    {
                         GetDocSustento(comp, xmlComp.GetElementsByTagName("docsSustento")[0]);
-                    }
                     else
-                    {
                         GetImpuestoRetencion(comp, xmlComp.GetElementsByTagName("impuestos")[0]);
-                    }
 
                     break;
             }
 
             if (xmlComp.GetElementsByTagName("infoAdicional")[0] != null)
-            {
                 GetInfoAdicional(comp, xmlComp.GetElementsByTagName("infoAdicional")[0]);
-            }
         }
         catch (Exception ex)
         {
@@ -167,11 +151,11 @@ public class DataXmlComprobante
     public void GetInfoAdicional(ComprobanteElectronico comp, XmlNode infoAdi)
     {
         var infoAdicionals = (from XmlNode item in infoAdi
-                              select new InfoAdicional
-                              {
-                                  nombre = item.Attributes.GetNamedItem("nombre").Value,
-                                  valor = item.InnerText
-                              })
+                select new InfoAdicional
+                {
+                    nombre = item.Attributes.GetNamedItem("nombre").Value,
+                    valor = item.InnerText
+                })
             .ToList();
 
         comp.CreateAdditionalInfo(infoAdicionals);
@@ -212,9 +196,7 @@ public class DataXmlComprobante
         GetTotalTaxes(codDoc, infoFac, nodeInfoFactura.SelectSingleNode("totalConImpuestos"));
 
         if (nodeInfoFactura.SelectSingleNode("pagos") != null)
-        {
             GetInvoicePayments(infoFac, nodeInfoFactura.SelectSingleNode("pagos"));
-        }
 
         ce.CreateInfoComp(codDoc, infoFac);
     }
@@ -222,16 +204,16 @@ public class DataXmlComprobante
     private void GetTotalTaxes(string codDoc, object obj, XmlNode impuestos)
     {
         var totalImpuestos = (from XmlNode item in impuestos
-                              select new TotalImpuesto
-                              {
-                                  codigo = item.SelectSingleNode("codigo")?.InnerText,
-                                  codigoPorcentaje = item.SelectSingleNode("codigoPorcentaje")?.InnerText,
-                                  descuentoAdicional = item.SelectSingleNode("descuentoAdicional") == null
-                                      ? "0.00"
-                                      : item.SelectSingleNode("descuentoAdicional")?.InnerText,
-                                  baseImponible = item.SelectSingleNode("baseImponible")?.InnerText,
-                                  valor = item.SelectSingleNode("valor")?.InnerText
-                              }).ToList();
+            select new TotalImpuesto
+            {
+                codigo = item.SelectSingleNode("codigo")?.InnerText,
+                codigoPorcentaje = item.SelectSingleNode("codigoPorcentaje")?.InnerText,
+                descuentoAdicional = item.SelectSingleNode("descuentoAdicional") == null
+                    ? "0.00"
+                    : item.SelectSingleNode("descuentoAdicional")?.InnerText,
+                baseImponible = item.SelectSingleNode("baseImponible")?.InnerText,
+                valor = item.SelectSingleNode("valor")?.InnerText
+            }).ToList();
 
         switch (codDoc)
         {
@@ -249,15 +231,15 @@ public class DataXmlComprobante
     private void GetInvoicePayments(InfoFactura comp, XmlNode payments)
     {
         var pagos = (from XmlNode item in payments
-                     select new Pago
-                     {
-                         formaPago = item.SelectSingleNode("formaPago")?.InnerText,
-                         total = item.SelectSingleNode("total")?.InnerText,
-                         plazo = item.SelectSingleNode("plazo") == null ? "" : item.SelectSingleNode("plazo")?.InnerText,
-                         unidadTiempo = item.SelectSingleNode("unidadTiempo") == null
-                             ? ""
-                             : item.SelectSingleNode("unidadTiempo")?.InnerText
-                     }).ToList();
+            select new Pago
+            {
+                formaPago = item.SelectSingleNode("formaPago")?.InnerText,
+                total = item.SelectSingleNode("total")?.InnerText,
+                plazo = item.SelectSingleNode("plazo") == null ? "" : item.SelectSingleNode("plazo")?.InnerText,
+                unidadTiempo = item.SelectSingleNode("unidadTiempo") == null
+                    ? ""
+                    : item.SelectSingleNode("unidadTiempo")?.InnerText
+            }).ToList();
 
         comp.CreatePayments(pagos);
     }
@@ -271,17 +253,13 @@ public class DataXmlComprobante
         {
             var detail = new Detalle { idDetalle = idDetalle };
             if (comp.codDoc == "01")
-            {
                 detail.codigoPrincipal = item.SelectSingleNode("codigoPrincipal") == null
                     ? ""
                     : item.SelectSingleNode("codigoPrincipal")?.InnerText;
-            }
             else
-            {
                 detail.codigoPrincipal = item.SelectSingleNode("codigoInterno") == null
                     ? ""
                     : item.SelectSingleNode("codigoInterno")?.InnerText;
-            }
 
             detail.codigoAuxiliar = item.SelectSingleNode("codigoAuxiliar") == null
                 ? ""
@@ -300,16 +278,16 @@ public class DataXmlComprobante
                 ? ""
                 : item.SelectNodes("detallesAdicionales")[0].OuterXml;
             impuestos.AddRange(from XmlElement taxes in item.SelectNodes("impuestos")
-                               select new Impuesto
-                               {
-                                   idDetalle = idDetalle,
-                                   codArticulo = detail.codigoPrincipal,
-                                   codigo = taxes.GetElementsByTagName("codigo")[0]?.InnerText,
-                                   codigoPorcentaje = taxes.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
-                                   tarifa = taxes.GetElementsByTagName("tarifa")[0]?.InnerText,
-                                   baseImponible = taxes.GetElementsByTagName("baseImponible")[0]?.InnerText,
-                                   valor = taxes.GetElementsByTagName("valor")[0]?.InnerText
-                               });
+                select new Impuesto
+                {
+                    idDetalle = idDetalle,
+                    codArticulo = detail.codigoPrincipal,
+                    codigo = taxes.GetElementsByTagName("codigo")[0]?.InnerText,
+                    codigoPorcentaje = taxes.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
+                    tarifa = taxes.GetElementsByTagName("tarifa")[0]?.InnerText,
+                    baseImponible = taxes.GetElementsByTagName("baseImponible")[0]?.InnerText,
+                    valor = taxes.GetElementsByTagName("valor")[0]?.InnerText
+                });
 
             detalles.Add(detail);
             idDetalle++;
@@ -416,15 +394,10 @@ public class DataXmlComprobante
             docSustento.importeTotal = item.GetElementsByTagName("importeTotal")[0].InnerText;
             GetImpuestoDocSustento(docSustento, item.SelectSingleNode("impuestosDocSustento"));
             GetRetenciones(docSustento, item.SelectSingleNode("retenciones"), ce);
-            if (docSustento.codDocSustento == "41")
-            {
-                GetReembolsos(docSustento, item.SelectSingleNode("reembolsos"));
-            }
+            if (docSustento.codDocSustento == "41") GetReembolsos(docSustento, item.SelectSingleNode("reembolsos"));
 
             if (item.SelectSingleNode("pagos") != null)
-            {
                 GetRetencionPayments(docSustento, item.SelectSingleNode("pagos"));
-            }
 
             docsSustento.Add(docSustento);
         }

@@ -54,9 +54,7 @@ public class AtsXml
 
         //Compras
         if (dtShopping.Rows.Count > 0 && dtShopping.Columns.Contains("codSustento"))
-        {
             NodeShopping(xtr, dtShopping, dtRetenciones);
-        }
 
         //Ventas
         if (dtSales.Rows.Count > 0)
@@ -87,10 +85,7 @@ public class AtsXml
         }
 
         //Anulados
-        if (dtCanceled.Rows.Count > 0)
-        {
-            NodeCanceledDocs(xtr, dtCanceled);
-        }
+        if (dtCanceled.Rows.Count > 0) NodeCanceledDocs(xtr, dtCanceled);
 
         xtr.WriteEndElement();
         xtr.WriteEndDocument();
@@ -323,7 +318,6 @@ public class AtsXml
     public void NodeRetenciones(XmlTextWriter xtr, string nroDoc, DataTable dt)
     {
         foreach (DataRow dr in dt.Rows)
-        {
             if (nroDoc == dr["nroDocumento"].ToString())
             {
                 xtr.WriteStartElement("detalleAir"); //start detalleAir
@@ -346,7 +340,6 @@ public class AtsXml
 
                 xtr.WriteEndElement(); //end detalleAir
             }
-        }
     }
 
     public void NodeSales(XmlTextWriter xtr, DataTable dt)

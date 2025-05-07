@@ -3,11 +3,14 @@
 [![NuGet](https://img.shields.io/nuget/v/Acontplus.Common.FactElect.svg)](https://www.nuget.org/packages/Acontplus.Common.FactElect/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive .NET library for electronic invoicing and digital document handling in Ecuador, providing models, services, and utilities to facilitate integration with SRI (Servicio de Rentas Internas) systems.
+A comprehensive .NET library for electronic invoicing and digital document handling in Ecuador, providing models,
+services, and utilities to facilitate integration with SRI (Servicio de Rentas Internas) systems.
 
 ## Overview
 
-Acontplus.Common.FactElect is a specialized .NET package that provides essential tools for electronic invoicing and digital document processing according to Ecuadorian tax regulations. The library handles captcha validation, XML document generation, SRI integration, and more.
+Acontplus.Common.FactElect is a specialized .NET package that provides essential tools for electronic invoicing and
+digital document processing according to Ecuadorian tax regulations. The library handles captcha validation, XML
+document generation, SRI integration, and more.
 
 ## Features
 

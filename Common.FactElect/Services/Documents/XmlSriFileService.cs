@@ -47,10 +47,7 @@ public class XmlSriFileService : IXmlSriFileService
             RemoveXmlDeclarations(xmlSri);
 
             var root = xmlSri.GetElementsByTagName("autorizacion")[0];
-            if (root != null)
-            {
-                root.SelectSingleNode("comprobante")!.InnerText = xmlComprobante.OuterXml;
-            }
+            if (root != null) root.SelectSingleNode("comprobante")!.InnerText = xmlComprobante.OuterXml;
 
             return new XmlSriFileModel
             {

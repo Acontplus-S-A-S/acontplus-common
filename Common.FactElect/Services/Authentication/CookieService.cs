@@ -25,10 +25,7 @@ public class CookieService : ICookieService
 
         var response = await client.SendAsync(request);
 
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
+        if (!response.IsSuccessStatusCode) return null;
 
         var stream = await response.Content.ReadAsStreamAsync();
         using var sr = new StreamReader(stream);

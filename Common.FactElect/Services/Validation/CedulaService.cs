@@ -2,6 +2,25 @@
 
 public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
 {
+    public async Task<CedulaModel> GetCedulaSriAsync(string numeroCedula)
+    {
+        if (!await CheckExistenceAsync(numeroCedula)) return new CedulaModel { error = "Cedula No existe" };
+
+        using var scope = serviceProvider.CreateScope();
+        var cookieService = scope.ServiceProvider.GetRequiredService<ICookieService>();
+
+        var cookieContainer = await cookieService.GetAsync();
+
+        if (cookieContainer == null) return new CedulaModel { error = "No se pudo consultar la pagina" };
+        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
+
+        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
+
+        return htmlResponse == null
+            ? new CedulaModel { error = "No se pudo validar el captcha" }
+            : await GetCedulaSriAsync(numeroCedula, cookieContainer.Cookie, htmlResponse);
+    }
+
     private async Task<bool> CheckExistenceAsync(string cedula)
     {
         using var client =
@@ -18,10 +37,7 @@ public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
             "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:67.0) Gecko/20100101 Firefox/67.0");
 
         var response = await client.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            return false;
-        }
+        if (!response.IsSuccessStatusCode) return false;
 
         var stream = await response.Content.ReadAsStreamAsync();
         using var sr = new StreamReader(stream);
@@ -61,10 +77,7 @@ public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue(contentType));
         client.DefaultRequestHeaders.Add("Authorization", strtoken);
         var response = await client.SendAsync(request);
-        if (!response.IsSuccessStatusCode)
-        {
-            throw new Exception();
-        }
+        if (!response.IsSuccessStatusCode) throw new Exception();
 
         var stream = await response.Content.ReadAsStreamAsync();
         using var sr = new StreamReader(stream);
@@ -72,37 +85,9 @@ public class CedulaService(IServiceProvider serviceProvider) : ICedulaService
         html = html.Replace("[", "");
         html = html.Replace("]", "");
         personaDatosError = JsonConvert.DeserializeObject<CedulaModel>(html);
-        if (personaDatosError != null)
-        {
-            return personaDatosError;
-        }
+        if (personaDatosError != null) return personaDatosError;
 
         personaDatosError = new CedulaModel { error = " No existe contribuyente con ese Ruc" };
         return personaDatosError;
-    }
-
-    public async Task<CedulaModel> GetCedulaSriAsync(string numeroCedula)
-    {
-        if (!await CheckExistenceAsync(numeroCedula))
-        {
-            return new CedulaModel { error = "Cedula No existe" };
-        }
-
-        using var scope = serviceProvider.CreateScope();
-        var cookieService = scope.ServiceProvider.GetRequiredService<ICookieService>();
-
-        var cookieContainer = await cookieService.GetAsync();
-
-        if (cookieContainer == null)
-        {
-            return new CedulaModel { error = "No se pudo consultar la pagina" };
-        }
-        var captchaService = scope.ServiceProvider.GetRequiredService<ICaptchaService>();
-
-        var htmlResponse = await captchaService.ValidateAsync(cookieContainer.Html, cookieContainer.Cookie);
-
-        return htmlResponse == null
-            ? new CedulaModel { error = "No se pudo validar el captcha" }
-            : await GetCedulaSriAsync(numeroCedula, cookieContainer.Cookie, htmlResponse);
     }
 }

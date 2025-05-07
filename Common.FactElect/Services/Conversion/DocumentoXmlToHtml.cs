@@ -1,4 +1,6 @@
-﻿namespace Common.FactElect.Services.Conversion;
+﻿using System.Globalization;
+
+namespace Common.FactElect.Services.Conversion;
 
 public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConverter
 {
@@ -38,7 +40,7 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                   data.infoTributaria.secuencial + @"
                                     </h5>
                                     <label>NÚMERO DE AUTORIZACIÓN</label><br>
-                                    <small>
+                                    <small id=""claveAcceso"">
                                         " + data.infoTributaria.claveAcceso + @"
                                     </small>
                                     <label>FECHA Y HORA DE AUTORIZACIÓN</label>
@@ -74,7 +76,7 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                     <div class=""row"">
                         <div class=""col-xl-12 col-lg-12 col-md-12 col-sm-12 col-12"">
                             <div class=""form-group"">
-                                <labelobs"">Observación:</label>
+                                <label for=""obs"">Observación:</label>
                                 <textarea name=""obs"" id=""obs"" class=""form-control"" ng-model=""Factura.obs""></textarea>
                             </div>
                         </div>
@@ -82,13 +84,11 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
         return doc;
     }
 
-    public static string GetInfoTrib(ComprobanteElectronico data)
+    private static string GetInfoTrib(ComprobanteElectronico data)
     {
-        var infoTrib = string.Empty;
-        switch (data.codDoc)
+        var infoTrib = data.codDoc switch
         {
-            case "01":
-                infoTrib = @"<h6>
+            "01" => @"<h6>
                                         <label>Dirección Sucursal: </label>
                                         " + data.infoFactura.dirEstablecimiento + @"
                                     </h6>
@@ -103,10 +103,8 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                     <h6>
                                         <label>OBLIGADO A LLEVAR CONTABILIDAD </label>
                                         " + data.infoFactura.obligadoContabilidad + @"
-                                    </h6>";
-                break;
-            case "04":
-                infoTrib = @"<h5>
+                                    </h6>",
+            "04" => @"<h5>
                                         <label>Dirección Sucursal: </label>
                                         " + data.infoNotaCredito.dirEstablecimiento + @"
                                     </h5>
@@ -121,10 +119,8 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                     <h5>
                                         <label>OBLIGADO A LLEVAR CONTABILIDAD </label>
                                         " + data.infoNotaCredito.obligadoContabilidad + @"
-                                    </h5>";
-                break;
-            case "07":
-                infoTrib = @"<h5>
+                                    </h5>",
+            "07" => @"<h5>
                                         <label>Dirección Sucursal: </label>
                                         " + data.infoCompRetencion.dirEstablecimiento + @"
                                     </h5>
@@ -139,14 +135,14 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                     <h5>
                                         <label>OBLIGADO A LLEVAR CONTABILIDAD </label>
                                         " + data.infoCompRetencion.obligadoContabilidad + @"
-                                    </h5>";
-                break;
-        }
+                                    </h5>",
+            _ => string.Empty
+        };
 
         return infoTrib;
     }
 
-    public static string GetInfoComprobante(ComprobanteElectronico data)
+    private static string GetInfoComprobante(ComprobanteElectronico data)
     {
         var infoComp = string.Empty;
         switch (data.codDoc)
@@ -313,14 +309,12 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
         return infoComp;
     }
 
-    public static string GetDetails(ComprobanteElectronico data)
+    private static string GetDetails(ComprobanteElectronico data)
     {
         var details = string.Empty;
-        switch (data.codDoc)
+        details = data.codDoc switch
         {
-            case "01":
-                foreach (var item in data.detalles)
-                    details += @"<tr class=""small"">
+            "01" or "04" => data.detalles.Aggregate(details, (current, item) => current + (@"<tr class=""small"">
                                                     <td> " + item.codigoPrincipal + @" </td >
                                                     <td> " + item.codigoAuxiliar + @" </td >
                                                     <td> " + item.cantidad + @" </td>
@@ -331,35 +325,18 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                                     <td class=""text-right"">" + item.precioUnitario + @"</td>
                                                     <td class=""text-right"">" + item.descuento + @"</td>
                                                     <td class=""text-right"">" + item.precioTotalSinImpuesto + @"</td>
-                                                </tr>";
-
-                break;
-            case "04":
-                foreach (var item in data.detalles)
-                    details += @"<tr class=""small"">
-                                                    <td> " + item.codigoPrincipal + @" </td >
-                                                    <td> " + item.codigoAuxiliar + @" </td >
-                                                    <td> " + item.cantidad + @" </td>
-                                                    <td> " + item.descripcion + @" </td >
-                                                    <td></td>
-                                                    <td></td>
-                                                    <td></td>
-                                                    <td class=""text-right"">" + item.precioUnitario + @"</td>
-                                                    <td class=""text-right"">" + item.descuento + @"</td>
-                                                    <td class=""text-right"">" + item.precioTotalSinImpuesto + @"</td>
-                                                </tr>";
-
-                break;
-        }
+                                                </tr>")),
+            _ => details
+        };
 
         return details;
     }
 
-    public static string GetInfoAdicional(ComprobanteElectronico data)
+    private static string GetInfoAdicional(ComprobanteElectronico data)
     {
         if (data.infoAdicional == null) return string.Empty;
 
-        var info =
+        var info = data.infoAdicional.Aggregate(
             @"<div class=""col-xl-7 col-lg-7 col-md-7 col-sm-7 col-7""><div class=""card border border-dark rounded"" ng-show=""infoAdicional.length > 0"">
                                 <div class=""card-body"">
 
@@ -370,28 +347,25 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                                 <th>Valor</th>
                                             </tr>
                                         </thead>
-                                        <tbody>";
-        foreach (var item in data.infoAdicional)
-            info += @"<tr><td>" + item.nombre + @"</td>
-                <td>" + item.valor + @"</td ></tr>";
+                                        <tbody>", (current, item) => current + (@"<tr><td>" + item.nombre + @"</td>
+                <td>" + item.valor + @"</td ></tr>"));
 
         info += @"</tbody></table></div></div>
                         </div>";
         return info;
     }
 
-    public static string GetTotals(ComprobanteElectronico data)
+    private static string GetTotals(ComprobanteElectronico data)
     {
-        var totals = string.Empty;
         double subtotalIva0 = 0;
         double subtotal12 = 0;
         var subtotalNoObjetoIva = 0.00;
         var subtotalExcentoIva = 0.00;
         var ice = 0.00;
         var iva12 = 0.00;
-        var IRBPNR = 0.00;
+        var irbpnr = 0.00;
 
-        totals = @"<div class=""col-xl-5 col-lg-5 col-md-5 col-sm-5 col-5"">
+        var totals = @"<div class=""col-xl-5 col-lg-5 col-md-5 col-sm-5 col-5"">
                             <div class=""table-responsive"">
                                 <h5><strong></strong></h5>
                                 <table class=""table table-bordered"">
@@ -406,21 +380,30 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal Iva 12%</strong></td>
                                             <td class=""text-right"">" +
-                                  Convert.ToString(subtotal12 += Convert.ToDouble(item.baseImponible)) + @"</td>
+                                  Convert.ToString(subtotal12 += Convert.ToDouble(item.baseImponible),
+                                      CultureInfo.InvariantCulture) + @"</td>
+                                        </tr>";
+                    if (item.codigo == "2" && item.codigoPorcentaje == "4")
+                        totals += @"<tr>
+                                            <td class=""text-right""><strong>SubTotal Iva 15%</strong></td>
+                                            <td class=""text-right"">" +
+                                  Convert.ToString(subtotal12 += Convert.ToDouble(item.baseImponible),
+                                      CultureInfo.InvariantCulture) + @"</td>
                                         </tr>";
 
                     if (item.codigo == "2" && item.codigoPorcentaje == "0")
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal Iva 0%</strong></td>
                                             <td class=""text-right"">" +
-                                  Convert.ToString(subtotalIva0 += Convert.ToDouble(item.baseImponible)) + @"</td>
+                                  Convert.ToString(subtotalIva0 += Convert.ToDouble(item.baseImponible),
+                                      CultureInfo.InvariantCulture) + @"</td>
                                         </tr>";
 
                     if (item.codigo == "2" && item.codigoPorcentaje == "6")
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal No Objeto Iva</strong></td>
                                             <td class=""text-right"">" +
-                                  Convert.ToString(subtotalNoObjetoIva += Convert.ToDouble(item.baseImponible)) +
+                                  Convert.ToString(subtotalNoObjetoIva += Convert.ToDouble(item.baseImponible), CultureInfo.InvariantCulture) +
                                   @"</td>
                                         </tr>";
 
@@ -428,33 +411,40 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                         totals += @"<tr>
                                             <td class=""text-right""><strong>SubTotal Excento Iva</strong></td>
                                             <td class=""text-right"">" +
-                                  Convert.ToString(subtotalExcentoIva += Convert.ToDouble(item.baseImponible)) + @"</td>
+                                  Convert.ToString(subtotalExcentoIva += Convert.ToDouble(item.baseImponible), CultureInfo.InvariantCulture) + @"</td>
                                         </tr>";
 
                     totals += @"<tr>
                                             <td class=""text-right""><strong>Total Sin Impuestos</strong></td>
                                             <td class=""text-right"">" + data.infoFactura.totalSinImpuestos + @"</td>
                                         </tr>";
-                    if (item.codigo == "3")
-                        totals += @"<tr>
+                    switch (item.codigo)
+                    {
+                        case "3":
+                            totals += @"<tr>
                                             <td class=""text-right""><strong>ICE</strong></td>
                                             <td class=""text-right"">" +
-                                  Convert.ToString(ice += Convert.ToDouble(item.valor)) + @"</td>
+                                      Convert.ToString(ice += Convert.ToDouble(item.valor),
+                                          CultureInfo.InvariantCulture) + @"</td>
                                         </tr>";
-
-                    if (item.codigo == "2" && item.codigoPorcentaje == "2")
-                        totals += @"<tr>
+                            break;
+                        case "2" when item.codigoPorcentaje == "2":
+                            totals += @"<tr>
                                             <td class=""text-right""><strong>IVA 12%</strong></td>
                                             <td class=""text-right"">" +
-                                  Convert.ToString(iva12 += Convert.ToDouble(item.valor)) + @"</td>
+                                      Convert.ToString(iva12 += Convert.ToDouble(item.valor),
+                                          CultureInfo.InvariantCulture) + @"</td>
                                         </tr>";
-
-                    if (item.codigo == "5")
-                        totals += @"<tr>
+                            break;
+                        case "5":
+                            totals += @"<tr>
                                             <td class=""text-right""><strong>IRBPNR</strong></td>
                                             <td class=""text-right"">" +
-                                  Convert.ToString(IRBPNR += Convert.ToDouble(item.valor)) + @"</td>
+                                      Convert.ToString(irbpnr += Convert.ToDouble(item.valor),
+                                          CultureInfo.InvariantCulture) + @"</td>
                                         </tr>";
+                            break;
+                    }
                 }
 
                 totals += @" <tr><td class=""text-right""><strong>Propina</strong></td>

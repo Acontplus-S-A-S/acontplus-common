@@ -6,6 +6,8 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
 {
     public string CreateHtml(ComprobanteElectronico data)
     {
+        var imagePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Images", "logo-generic.png");
+        var base64Image = Convert.ToBase64String(File.ReadAllBytes(imagePath));
         var dt = (SriDocument)Convert.ToInt32(data.codDoc);
         var documentName = dt.DisplayName();
         var doc = @"
@@ -15,8 +17,8 @@ public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConvert
                                 <div class=""card-body"">
 <div class=""text-center"">
                                     <img src=" +
-                  $"data:image/png;base64,{Convert.ToBase64String(File.ReadAllBytes($"{configuration["Logos:Generic"]}NoLogo.png"))}" +
-                  @" alt=""NO LOGO"" class=""img-fluid"" align=""center"" width=""100"">
+                  $"data:image/png;base64,{base64Image}" +
+                  @" alt=""No Logo"" class=""img-fluid"" align=""center"" width=""100"">
 </div>
                                     <h6>" + data.infoTributaria.razonSocial + @"</h6>
                                     

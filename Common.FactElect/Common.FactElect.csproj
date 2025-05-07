@@ -26,34 +26,22 @@
     <None Remove="Schemas\NotaCredito_V1.1.0.xsd" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Images\icon.png">
+    <EmbeddedResource Include="Resources\Images\icon.png">
+      <PackagePath>\</PackagePath>
+      <Pack>True</Pack>
+    </EmbeddedResource>    
+    <EmbeddedResource Include="Resources\Images\logo-generic.png">
       <PackagePath>\</PackagePath>
       <Pack>True</Pack>
     </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\comprobanteRetencion_V1.0.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\comprobanteRetencion_V2.0.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\factura_V1.0.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\factura_V1.1.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\factura_V2.0.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\factura_V2.1.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\NotaCredito_V1.0.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Schemas\NotaCredito_V1.1.0.xsd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\Schemas\comprobanteRetencion_V1.0.0.xsd" />
+    <EmbeddedResource Include="Resources\Schemas\comprobanteRetencion_V2.0.0.xsd" />
+    <EmbeddedResource Include="Resources\Schemas\factura_V1.0.0.xsd" />
+    <EmbeddedResource Include="Resources\Schemas\factura_V1.1.0.xsd" />
+    <EmbeddedResource Include="Resources\Schemas\factura_V2.0.0.xsd" />
+    <EmbeddedResource Include="Resources\Schemas\factura_V2.1.0.xsd" />
+    <EmbeddedResource Include="Resources\Schemas\NotaCredito_V1.0.0.xsd" />
+    <EmbeddedResource Include="Resources\Schemas\NotaCredito_V1.1.0.xsd" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Acontplus.Common.Barcode" />
@@ -66,5 +54,8 @@
       <Pack>true</Pack>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
   </ItemGroup>
 </Project>

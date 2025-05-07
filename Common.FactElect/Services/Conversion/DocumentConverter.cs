@@ -2,7 +2,7 @@
 
 namespace Common.FactElect.Services.Conversion;
 
-public class DocumentoXmlToHtml(IConfiguration configuration) : IDocumentConverter
+public class DocumentConverter : IDocumentConverter
 {
     public string CreateHtml(ComprobanteElectronico data)
     {

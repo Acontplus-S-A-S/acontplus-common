@@ -1,10 +1,5 @@
 ﻿namespace Common.FactElect.Services.Validation;
 
-public interface IRucService
-{
-    Task<RucModel> GetRucSriAsync(string ruc);
-}
-
 public class RucService(IServiceProvider serviceProvider) : IRucService
 {
     public async Task<RucModel> GetRucSriAsync(string ruc)

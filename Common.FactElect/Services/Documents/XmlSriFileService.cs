@@ -1,53 +1,69 @@
-﻿namespace Common.FactElect.Services.Documents;
-
-public class XmlSriFileService : IXmlSriFileService
+﻿namespace Common.FactElect.Services.Documents
 {
-    private const string TagFechaEmision = "fechaEmision";
-    private const string TagVersionComp = "version";
-
-    public async Task<XmlSriFileModel> GetAsync(IFormFile file)
+    public class XmlSriFileService : IXmlSriFileService
     {
-        if (file == null || file.Length == 0)
-            throw new ArgumentException("File is null or empty", nameof(file));
+        private const string TagFechaEmision = "fechaEmision";
+        private const string TagVersionComp = "version";
 
-        XDocument xmlLoaded;
-
-        using (var memoryStream = new MemoryStream())
+        public async Task<XmlSriFileModel> GetAsync(IFormFile file)
         {
-            await file.CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
-            xmlLoaded = XDocument.Load(memoryStream);
-        }
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("File is null or empty", nameof(file));
 
-        var xmlComplete = new XmlDocument();
-        using (var xmlReader = xmlLoaded.CreateReader())
-        {
-            xmlComplete.Load(xmlReader);
-        }
+            string rawXml;
+            using (var reader = new StreamReader(file.OpenReadStream()))
+            {
+                rawXml = await reader.ReadToEndAsync();
+            }
 
-        var authorizationNode = xmlComplete.GetElementsByTagName("autorizacion")[0];
-        var comprobanteNode = authorizationNode?.SelectSingleNode("comprobante");
-        if (comprobanteNode != null)
-        {
+            // Limpiar el XML usando la nueva función
+            rawXml = XmlValidator.CleanXmlForSqlServer(rawXml);
+
+            var xmlDocSri = new XmlDocument();
+            xmlDocSri.LoadXml(rawXml);
+
+            var nodeAuth = xmlDocSri.GetElementsByTagName("autorizacion")?[0];
+            var nodeComp = nodeAuth?.SelectSingleNode("comprobante");
+
+            if (nodeComp == null)
+                return null;
+
+            // Decodificar y limpiar el contenido interno del comprobante
+            var xmlInterno = WebUtility.HtmlDecode(nodeComp.InnerText);
+            xmlInterno = XmlValidator.CleanXmlForSqlServer(xmlInterno);
+
             var xmlComprobante = new XmlDocument();
-            xmlComprobante.LoadXml(comprobanteNode.InnerText);
+            xmlComprobante.LoadXml(xmlInterno);
 
-            RemoveXmlDeclarations(xmlComprobante);
+            var infoTributariaNode = xmlComprobante.GetElementsByTagName("infoTributaria")?[0];
+            if (infoTributariaNode == null)
+                return null;
 
-            var infoTributariaNode = xmlComprobante.GetElementsByTagName("infoTributaria")[0];
+            var claveAcceso = infoTributariaNode.SelectSingleNode("claveAcceso")?.InnerText;
+            var codDoc = infoTributariaNode.SelectSingleNode("codDoc")?.InnerText;
+            var fechaAutorizacion = xmlDocSri.SelectSingleNode("//fechaAutorizacion")?.InnerText;
 
-            var claveAcceso = infoTributariaNode?.SelectSingleNode("claveAcceso")?.InnerText;
-            var codDoc = infoTributariaNode?.SelectSingleNode("codDoc")?.InnerText;
+            string versionComp, fechaEmision;
 
-            SetVersionAndFechaEmision(xmlComprobante, codDoc, out var versionComp, out var fechaEmision);
+            if (string.IsNullOrEmpty(codDoc))
+                throw new InvalidOperationException("codDoc no encontrado.");
 
-            var xmlSri = new XmlDocument();
-            xmlSri.LoadXml(authorizationNode.OuterXml);
+            if (codDoc == "06") // Guía de remisión usa fecha de autorización
+            {
+                SetVersionAndFechaEmision(xmlComprobante, codDoc, out versionComp, out _);
+                fechaEmision = fechaAutorizacion;
+            }
+            else
+            {
+                SetVersionAndFechaEmision(xmlComprobante, codDoc, out versionComp, out fechaEmision);
+            }
 
-            RemoveXmlDeclarations(xmlSri);
+            // Reemplazar el contenido del nodo <comprobante> con CDATA limpio
+            nodeComp.InnerXml = $"<![CDATA[{xmlInterno}]]>";
 
-            var root = xmlSri.GetElementsByTagName("autorizacion")[0];
-            if (root != null) root.SelectSingleNode("comprobante")!.InnerText = xmlComprobante.OuterXml;
+            // Generar nuevo documento final
+            var xmlFinal = new XmlDocument();
+            xmlFinal.LoadXml(nodeAuth.OuterXml);
 
             return new XmlSriFileModel
             {
@@ -55,65 +71,55 @@ public class XmlSriFileService : IXmlSriFileService
                 ClaveAcceso = claveAcceso,
                 FechaEmision = fechaEmision,
                 VersionComp = versionComp,
-                XmlSri = xmlSri,
+                XmlSri = xmlFinal,
                 XmlComprobante = xmlComprobante
             };
         }
 
-        return null;
-    }
-
-    private void RemoveXmlDeclarations(XmlDocument xmlDocument)
-    {
-        var declarations = xmlDocument.ChildNodes.OfType<XmlNode>()
-            .Where(x => x.NodeType == XmlNodeType.XmlDeclaration)
-            .ToList();
-
-        declarations.ForEach(x => xmlDocument.RemoveChild(x));
-    }
-
-    private void SetVersionAndFechaEmision(XmlDocument xmlComprobante, string codDoc, out string versionComp,
-        out string fechaEmision)
-    {
-        switch (codDoc)
+        private void SetVersionAndFechaEmision(XmlDocument xmlComprobante, string codDoc, out string versionComp,
+            out string fechaEmision)
         {
-            case "01":
-                versionComp = GetAttributeValue(xmlComprobante, "factura", TagVersionComp);
-                fechaEmision = GetInnerText(xmlComprobante, "infoFactura", TagFechaEmision);
-                break;
-            case "03":
-                versionComp = GetAttributeValue(xmlComprobante, "liquidacionCompra", TagVersionComp);
-                fechaEmision = GetInnerText(xmlComprobante, "infoLiquidacionCompra", TagFechaEmision);
-                break;
-            case "04":
-                versionComp = GetAttributeValue(xmlComprobante, "notaCredito", TagVersionComp);
-                fechaEmision = GetInnerText(xmlComprobante, "infoNotaCredito", TagFechaEmision);
-                break;
-            case "05":
-                versionComp = GetAttributeValue(xmlComprobante, "notaDebito", TagVersionComp);
-                fechaEmision = GetInnerText(xmlComprobante, "infoNotaDebito", TagFechaEmision);
-                break;
-            case "06":
-                versionComp = GetAttributeValue(xmlComprobante, "guiaRemision", TagVersionComp);
-                fechaEmision = GetInnerText(xmlComprobante, "infoGuiaRemision", TagFechaEmision);
-                break;
-            case "07":
-                versionComp = GetAttributeValue(xmlComprobante, "comprobanteRetencion", TagVersionComp);
-                fechaEmision = GetInnerText(xmlComprobante, "infoCompRetencion", TagFechaEmision);
-                break;
-            default: throw new InvalidOperationException($"Unsupported CodDoc: {codDoc}");
+            switch (codDoc)
+            {
+                case "01":
+                    versionComp = GetAttributeValue(xmlComprobante, "factura", TagVersionComp);
+                    fechaEmision = GetInnerText(xmlComprobante, "infoFactura", TagFechaEmision);
+                    break;
+                case "03":
+                    versionComp = GetAttributeValue(xmlComprobante, "liquidacionCompra", TagVersionComp);
+                    fechaEmision = GetInnerText(xmlComprobante, "infoLiquidacionCompra", TagFechaEmision);
+                    break;
+                case "04":
+                    versionComp = GetAttributeValue(xmlComprobante, "notaCredito", TagVersionComp);
+                    fechaEmision = GetInnerText(xmlComprobante, "infoNotaCredito", TagFechaEmision);
+                    break;
+                case "05":
+                    versionComp = GetAttributeValue(xmlComprobante, "notaDebito", TagVersionComp);
+                    fechaEmision = GetInnerText(xmlComprobante, "infoNotaDebito", TagFechaEmision);
+                    break;
+                case "06":
+                    versionComp = GetAttributeValue(xmlComprobante, "guiaRemision", TagVersionComp);
+                    fechaEmision = ""; // se asignará desde la autorización
+                    break;
+                case "07":
+                    versionComp = GetAttributeValue(xmlComprobante, "comprobanteRetencion", TagVersionComp);
+                    fechaEmision = GetInnerText(xmlComprobante, "infoCompRetencion", TagFechaEmision);
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unsupported CodDoc: {codDoc}");
+            }
         }
-    }
 
-    private string GetAttributeValue(XmlDocument xmlDocument, string tagName, string attributeName)
-    {
-        return xmlDocument.GetElementsByTagName(tagName)[0]?.Attributes?[attributeName]?.Value ??
-               throw new InvalidOperationException($"Attribute '{attributeName}' not found in tag '{tagName}'");
-    }
+        private string GetAttributeValue(XmlDocument xmlDocument, string tagName, string attributeName)
+        {
+            return xmlDocument.GetElementsByTagName(tagName)[0]?.Attributes?[attributeName]?.Value ??
+                   throw new InvalidOperationException($"Attribute '{attributeName}' not found in tag '{tagName}'");
+        }
 
-    private string GetInnerText(XmlDocument xmlDocument, string parentTagName, string childTagName)
-    {
-        return xmlDocument.GetElementsByTagName(parentTagName)[0]?.SelectSingleNode(childTagName)?.InnerText ??
-               throw new InvalidOperationException($"Tag '{childTagName}' not found in '{parentTagName}'");
+        private string GetInnerText(XmlDocument xmlDocument, string parentTagName, string childTagName)
+        {
+            return xmlDocument.GetElementsByTagName(parentTagName)[0]?.SelectSingleNode(childTagName)?.InnerText ??
+                   throw new InvalidOperationException($"Tag '{childTagName}' not found in '{parentTagName}'");
+        }
     }
 }

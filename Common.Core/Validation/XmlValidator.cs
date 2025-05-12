@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Schema;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -96,5 +97,80 @@ public static class XmlValidator
         var json = JsonSerializer.Serialize(errors, new JsonSerializerOptions { WriteIndented = true });
 
         File.WriteAllText(outputFilePath, json);
+    }
+    /// <summary>
+    /// Limpia un XML para hacerlo compatible con SQL Server
+    /// </summary>
+    public static string CleanXmlForSqlServer(string xml)
+    {
+        // Si el XML está vacío o es nulo, retornarlo tal cual
+        if (string.IsNullOrWhiteSpace(xml))
+            return xml;
+
+        try
+        {
+            // 1. Eliminar la declaración XML (<?xml version="1.0" encoding="UTF-8"?>)
+            xml = Regex.Replace(xml, @"<\?xml.*?\?>", "", RegexOptions.Singleline).TrimStart();
+
+            // 2. Eliminar caracteres BOM (Byte Order Mark) si existen
+            xml = RemoveBomChars(xml);
+
+            // 3. Normalizar saltos de línea
+            xml = NormalizeLineBreaks(xml);
+
+            // 4. Eliminar caracteres no válidos para XML
+            xml = RemoveInvalidXmlChars(xml);
+
+            return xml;
+        }
+        catch (Exception ex)
+        {
+            // En caso de error, al menos eliminar la declaración XML
+            return RemoveXmlDeclaration(xml);
+        }
+    }
+    /// <summary>
+    /// Elimina caracteres BOM (Byte Order Mark) que pueden causar problemas de codificación
+    /// </summary>
+    private static string RemoveBomChars(string xml)
+    {
+        // BOM para UTF-8: EF BB BF
+        if (xml.StartsWith("\xEF\xBB\xBF"))
+            xml = xml.Substring(3);
+
+        // Otros BOM comunes
+        if (xml.StartsWith("\xFE\xFF") || xml.StartsWith("\xFF\xFE"))
+            xml = xml.Substring(2);
+
+        return xml;
+    }
+
+    /// <summary>
+    /// Normaliza los saltos de línea para evitar problemas con diferentes sistemas operativos
+    /// </summary>
+    private static string NormalizeLineBreaks(string xml)
+    {
+        // Convertir todos los tipos de saltos de línea a \n
+        return Regex.Replace(xml, @"\r\n?|\n", "\n");
+    }
+
+    /// <summary>
+    /// Elimina caracteres que no son válidos en XML según la especificación
+    /// </summary>
+    private static string RemoveInvalidXmlChars(string xml)
+    {
+        // Según la especificación XML, estos caracteres no son válidos
+        return Regex.Replace(xml, @"[\x00-\x08\x0B\x0C\x0E-\x1F]", "");
+    }
+
+    /// <summary>
+    /// Método original para eliminar declaración XML
+    /// </summary>
+    public static string RemoveXmlDeclaration(string xml)
+    {
+        if (string.IsNullOrWhiteSpace(xml)) return xml;
+
+        // Elimina cualquier declaración como <?xml version="1.0" encoding="UTF-8"?>
+        return Regex.Replace(xml, @"<\?xml.*?\?>", "", RegexOptions.Singleline).TrimStart();
     }
 }

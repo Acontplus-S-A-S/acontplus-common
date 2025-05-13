@@ -1,4 +1,6 @@
 ﻿using Common.ApiDocumentation;
+using Common.FactElect.Interfaces.Services;
+using Common.FactElect.Services.External;
 using Common.Logging;
 using Common.Services.Middleware;
 using Common.TestApi.Data;
@@ -25,7 +27,6 @@ string[] nameSpaces =
     "Common.Infrastructure.Data.Repository.Implementations",
     "Common.Infrastructure.Repositories",
     "Common.Reports.Services",
-    "Common.FactElect.Services",
     "Common.TestApi.Services",
     "Common.TestApi.Repositories.Implementations",
     "Common.Core.Security.Services"
@@ -38,6 +39,9 @@ builder.Services.Scan(scan => scan
     .AsImplementedInterfaces()
     .WithTransientLifetime()
 );
+
+builder.Services.AddTransient<IWebServiceSri, WebServiceSri>();
+builder.Services.AddTransient<ICustomerService, CustomerService>();
 
 builder.Services.AddDataProtection();
 

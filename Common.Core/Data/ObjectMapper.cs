@@ -18,7 +18,6 @@ public static class ObjectMapper
     /// Creates a mapping configuration between source and target types.
     /// </summary>
     public static MappingConfiguration<TSource, TTarget> CreateMap<TSource, TTarget>()
-        where TTarget : new()
     {
         var config = new MappingConfiguration<TSource, TTarget>();
         string key = GetMappingKey(typeof(TSource), typeof(TTarget));
@@ -30,12 +29,15 @@ public static class ObjectMapper
     /// Maps a source object to a new instance of a target type.
     /// </summary>
     public static TTarget Map<TSource, TTarget>(TSource source)
-        where TTarget : new()
     {
         if (source == null)
             return default;
 
-        TTarget target = new TTarget();
+        Type targetType = typeof(TTarget);
+
+        // Create a new instance, handling required constructor parameters if needed
+        TTarget target = CreateInstance<TSource, TTarget>(source);
+
         return Map(source, target);
     }
 
@@ -59,6 +61,118 @@ public static class ObjectMapper
     }
 
     /// <summary>
+    /// Creates an instance of the target type, using constructor parameters matched from the source if necessary.
+    /// </summary>
+    private static TTarget CreateInstance<TSource, TTarget>(TSource source)
+    {
+        Type targetType = typeof(TTarget);
+        Type sourceType = typeof(TSource);
+
+        // If the type has a parameterless constructor, use it
+        var parameterlessCtor = targetType.GetConstructor(Type.EmptyTypes);
+        if (parameterlessCtor != null)
+        {
+            return (TTarget)Activator.CreateInstance(targetType);
+        }
+
+        // Find the constructor with the most parameters that we can satisfy
+        var ctors = targetType.GetConstructors()
+            .OrderByDescending(c => c.GetParameters().Length);
+
+        foreach (var ctor in ctors)
+        {
+            var parameters = ctor.GetParameters();
+            var paramValues = new object[parameters.Length];
+            bool canSatisfyAllParams = true;
+
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var param = parameters[i];
+                var sourceProp = sourceType.GetProperty(param.Name,
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+                if (sourceProp != null)
+                {
+                    var sourceValue = sourceProp.GetValue(source);
+
+                    // Try to convert the value if needed
+                    if (sourceValue != null && !param.ParameterType.IsAssignableFrom(sourceProp.PropertyType))
+                    {
+                        try
+                        {
+                            sourceValue = Convert.ChangeType(sourceValue, param.ParameterType);
+                        }
+                        catch
+                        {
+                            // If conversion fails, check if we need to map a complex type
+                            if (!IsSimpleType(sourceProp.PropertyType) && !IsSimpleType(param.ParameterType))
+                            {
+                                // Try to create and map the complex parameter
+                                var mappingMethod = typeof(ObjectMapper).GetMethod("Map",
+                                    new[] { sourceProp.PropertyType });
+
+                                if (mappingMethod != null)
+                                {
+                                    try
+                                    {
+                                        var genericMethod = mappingMethod.MakeGenericMethod(sourceProp.PropertyType, param.ParameterType);
+                                        sourceValue = genericMethod.Invoke(null, new[] { sourceValue });
+                                    }
+                                    catch
+                                    {
+                                        // If mapping fails, we can't satisfy this parameter
+                                        canSatisfyAllParams = false;
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    canSatisfyAllParams = false;
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                canSatisfyAllParams = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    paramValues[i] = sourceValue;
+                }
+                else if (param.HasDefaultValue)
+                {
+                    // Use default value for the parameter if available
+                    paramValues[i] = param.DefaultValue;
+                }
+                else
+                {
+                    // Can't satisfy this parameter
+                    canSatisfyAllParams = false;
+                    break;
+                }
+            }
+
+            if (canSatisfyAllParams)
+            {
+                try
+                {
+                    return (TTarget)ctor.Invoke(paramValues);
+                }
+                catch
+                {
+                    // If constructor invocation fails, try the next constructor
+                    continue;
+                }
+            }
+        }
+
+        // If we can't find a suitable constructor, throw an exception
+        throw new InvalidOperationException($"Cannot create an instance of {targetType.Name}. No suitable constructor found that can be satisfied with the source properties.");
+    }
+
+    /// <summary>
     /// Maps an object to another type without using a predefined mapping configuration.
     /// </summary>
     private static TTarget MapProperties<TSource, TTarget>(TSource source, TTarget target)
@@ -68,7 +182,10 @@ public static class ObjectMapper
 
         foreach (var sourceProp in sourceProperties)
         {
-            var targetProp = targetProperties.FirstOrDefault(p => p.Name == sourceProp.Name && p.CanWrite);
+            var targetProp = targetProperties.FirstOrDefault(p =>
+                string.Equals(p.Name, sourceProp.Name, StringComparison.OrdinalIgnoreCase) &&
+                p.CanWrite);
+
             if (targetProp == null)
                 continue;
 
@@ -96,8 +213,20 @@ public static class ObjectMapper
                 var nestedTargetValue = targetProp.GetValue(target);
                 if (nestedTargetValue == null)
                 {
-                    // Create an instance if null
-                    nestedTargetValue = Activator.CreateInstance(targetProp.PropertyType);
+                    // Create an instance if null, handling constructor parameters if needed
+                    try
+                    {
+                        var createInstanceMethod = typeof(ObjectMapper).GetMethod("CreateInstance",
+                            BindingFlags.NonPublic | BindingFlags.Static)
+                            .MakeGenericMethod(sourceProp.PropertyType, targetProp.PropertyType);
+
+                        nestedTargetValue = createInstanceMethod.Invoke(null, new[] { sourceValue });
+                    }
+                    catch
+                    {
+                        // If CreateInstance fails, try Activator as fallback
+                        nestedTargetValue = Activator.CreateInstance(targetProp.PropertyType);
+                    }
                 }
 
                 var nestedMappedValue = typeof(ObjectMapper)
@@ -153,10 +282,25 @@ public static class ObjectMapper
                 // Map complex types
                 else if (!IsSimpleType(sourceItemType))
                 {
-                    var targetItem = Activator.CreateInstance(targetElementType);
+                    // Create a new instance of target element type, handling constructor params if needed
+                    object targetItem;
+                    try
+                    {
+                        var createInstanceMethod = typeof(ObjectMapper).GetMethod("CreateInstance",
+                            BindingFlags.NonPublic | BindingFlags.Static);
+                        var genericMethod = createInstanceMethod.MakeGenericMethod(sourceItemType, targetElementType);
+                        targetItem = genericMethod.Invoke(null, new[] { sourceItem });
+                    }
+                    catch
+                    {
+                        // Fallback to Activator
+                        targetItem = Activator.CreateInstance(targetElementType);
+                    }
+
                     var mappedItem = typeof(ObjectMapper)
                         .GetMethod("Map", new[] { sourceItemType, targetElementType })
                         .Invoke(null, new[] { sourceItem, targetItem });
+
                     addMethod.Invoke(targetCollection, new[] { mappedItem });
                 }
             }
@@ -186,10 +330,25 @@ public static class ObjectMapper
                     // Map complex types
                     else if (!IsSimpleType(sourceItemType))
                     {
-                        var targetItem = Activator.CreateInstance(targetElementType);
+                        // Create a new instance of target element type, handling constructor params if needed
+                        object targetItem;
+                        try
+                        {
+                            var createInstanceMethod = typeof(ObjectMapper).GetMethod("CreateInstance",
+                                BindingFlags.NonPublic | BindingFlags.Static);
+                            var genericMethod = createInstanceMethod.MakeGenericMethod(sourceItemType, targetElementType);
+                            targetItem = genericMethod.Invoke(null, new[] { sourceItem });
+                        }
+                        catch
+                        {
+                            // Fallback to Activator
+                            targetItem = Activator.CreateInstance(targetElementType);
+                        }
+
                         var mappedItem = typeof(ObjectMapper)
                             .GetMethod("Map", new[] { sourceItemType, targetElementType })
                             .Invoke(null, new[] { sourceItem, targetItem });
+
                         addMethod.Invoke(targetCollection, new[] { mappedItem });
                     }
                 }
@@ -262,11 +421,11 @@ public static class ObjectMapper
     /// Mapping configuration for source and target types.
     /// </summary>
     public class MappingConfiguration<TSource, TTarget> : MappingConfiguration
-        where TTarget : new()
     {
         private readonly List<Action<TSource, TTarget>> _mappingActions = new List<Action<TSource, TTarget>>();
         private readonly Dictionary<string, LambdaExpression> _customMappings = new Dictionary<string, LambdaExpression>();
         private bool _ignoreUnmappedProperties = false;
+        private Dictionary<string, string> _constructorParameterMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Configures a custom mapping for a target property.
@@ -294,6 +453,27 @@ public static class ObjectMapper
                 var value = mappingFunction(source);
                 property.SetValue(target, value);
             });
+            return this;
+        }
+
+        /// <summary>
+        /// Maps a source property to a constructor parameter.
+        /// </summary>
+        public MappingConfiguration<TSource, TTarget> ForCtorParam(string paramName, string sourcePropertyName)
+        {
+            _constructorParameterMappings[paramName] = sourcePropertyName;
+            return this;
+        }
+
+        /// <summary>
+        /// Maps a source property to a constructor parameter using expressions.
+        /// </summary>
+        public MappingConfiguration<TSource, TTarget> ForCtorParam<TProperty>(
+            string paramName,
+            Expression<Func<TSource, TProperty>> sourceMember)
+        {
+            string memberName = GetMemberNameFromSource(sourceMember);
+            _constructorParameterMappings[paramName] = memberName;
             return this;
         }
 
@@ -348,7 +528,9 @@ public static class ObjectMapper
                 }
 
                 // Otherwise look for matching property in source
-                var sourceProp = sourceProperties.FirstOrDefault(p => p.Name == targetProp.Name);
+                var sourceProp = sourceProperties.FirstOrDefault(p =>
+                    string.Equals(p.Name, targetProp.Name, StringComparison.OrdinalIgnoreCase));
+
                 if (sourceProp != null)
                 {
                     var sourceValue = sourceProp.GetValue(typedSource);
@@ -375,8 +557,20 @@ public static class ObjectMapper
                         var nestedTargetValue = targetProp.GetValue(typedTarget);
                         if (nestedTargetValue == null)
                         {
-                            // Create an instance if null
-                            nestedTargetValue = Activator.CreateInstance(targetProp.PropertyType);
+                            // Create an instance if null, handling constructor parameters if needed
+                            try
+                            {
+                                var createInstanceMethod = typeof(ObjectMapper).GetMethod("CreateInstance",
+                                    BindingFlags.NonPublic | BindingFlags.Static)
+                                    .MakeGenericMethod(sourceProp.PropertyType, targetProp.PropertyType);
+
+                                nestedTargetValue = createInstanceMethod.Invoke(null, new[] { sourceValue });
+                            }
+                            catch
+                            {
+                                // If CreateInstance fails, try Activator as fallback
+                                nestedTargetValue = Activator.CreateInstance(targetProp.PropertyType);
+                            }
                         }
 
                         var nestedMappedValue = typeof(ObjectMapper)
@@ -418,11 +612,27 @@ public static class ObjectMapper
             return memberExp.Member.Name;
         }
 
+        private string GetMemberNameFromSource<TProperty>(Expression<Func<TSource, TProperty>> expression)
+        {
+            var memberExp = expression.Body as MemberExpression;
+            if (memberExp == null)
+            {
+                throw new ArgumentException("Expression must be a member expression");
+            }
+            return memberExp.Member.Name;
+        }
+
         private static object GetDefaultValue(Type type)
         {
             if (type.IsValueType)
                 return Activator.CreateInstance(type);
             return null;
+        }
+
+        // For use by the CreateInstance method
+        internal Dictionary<string, string> GetConstructorParameterMappings()
+        {
+            return _constructorParameterMappings;
         }
     }
 }

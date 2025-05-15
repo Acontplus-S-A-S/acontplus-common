@@ -101,12 +101,11 @@ public static class XmlValidator
     /// <summary>
     /// Limpia un XML para hacerlo compatible con SQL Server
     /// </summary>
-    public static string CleanXmlForSqlServer(string xml)
+    private static string CleanXmlForSqlServer(string xml)
     {
         // Si el XML está vacío o es nulo, retornarlo tal cual
         if (string.IsNullOrWhiteSpace(xml))
             return xml;
-
         try
         {
             // 1. Eliminar la declaración XML (<?xml version="1.0" encoding="UTF-8"?>)
@@ -115,10 +114,13 @@ public static class XmlValidator
             // 2. Eliminar caracteres BOM (Byte Order Mark) si existen
             xml = RemoveBomChars(xml);
 
-            // 3. Normalizar saltos de línea
+            // 3. Corregir ampersands no escapados (&) que no sean parte de entidades XML
+            xml = EscapeUnescapedAmpersands(xml);
+
+            // 4. Normalizar saltos de línea
             xml = NormalizeLineBreaks(xml);
 
-            // 4. Eliminar caracteres no válidos para XML
+            // 5. Eliminar caracteres no válidos para XML
             xml = RemoveInvalidXmlChars(xml);
 
             return xml;
@@ -129,6 +131,25 @@ public static class XmlValidator
             return RemoveXmlDeclaration(xml);
         }
     }
+
+    /// <summary>
+    /// Escapa los ampersands (&) que no sean parte de entidades XML válidas
+    /// </summary>
+    private static string EscapeUnescapedAmpersands(string xml)
+    {
+        // Patrón para encontrar ampersands no escapados
+        // Un ampersand es considerado no escapado si no es seguido por:
+        // 1. Una entidad XML predefinida (amp;, lt;, gt;, quot;, apos;)
+        // 2. Una referencia numérica (&#123; o &#xABC;)
+        // 3. El inicio de una referencia de entidad que termina con ;
+        return Regex.Replace(
+            xml,
+            @"&(?!(amp;|lt;|gt;|quot;|apos;|#[0-9]+;|#x[0-9a-fA-F]+;|\w+;))",
+            "&amp;",
+            RegexOptions.IgnoreCase
+        );
+    }
+
     /// <summary>
     /// Elimina caracteres BOM (Byte Order Mark) que pueden causar problemas de codificación
     /// </summary>
@@ -137,11 +158,9 @@ public static class XmlValidator
         // BOM para UTF-8: EF BB BF
         if (xml.StartsWith("\xEF\xBB\xBF"))
             xml = xml.Substring(3);
-
         // Otros BOM comunes
         if (xml.StartsWith("\xFE\xFF") || xml.StartsWith("\xFF\xFE"))
             xml = xml.Substring(2);
-
         return xml;
     }
 
@@ -166,10 +185,9 @@ public static class XmlValidator
     /// <summary>
     /// Método original para eliminar declaración XML
     /// </summary>
-    public static string RemoveXmlDeclaration(string xml)
+    private static string RemoveXmlDeclaration(string xml)
     {
         if (string.IsNullOrWhiteSpace(xml)) return xml;
-
         // Elimina cualquier declaración como <?xml version="1.0" encoding="UTF-8"?>
         return Regex.Replace(xml, @"<\?xml.*?\?>", "", RegexOptions.Singleline).TrimStart();
     }

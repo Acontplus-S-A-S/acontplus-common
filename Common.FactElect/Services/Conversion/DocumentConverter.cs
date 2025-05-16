@@ -6,8 +6,55 @@ public class DocumentConverter : IDocumentConverter
 {
     public string CreateHtml(ComprobanteElectronico data)
     {
-        var imagePath = Path.Combine(AppContext.BaseDirectory, "Resources", "Images", "logo-generic.png");
-        var base64Image = Convert.ToBase64String(File.ReadAllBytes(imagePath));
+        var assembly = typeof(DocumentConverter).Assembly;
+        byte[] imageBytes;
+        string resourceName = "Common.FactElect.Resources.Images.logo-generic.png";
+
+        using (var stream = assembly.GetManifestResourceStream(resourceName))
+        {
+            if (stream == null)
+            {
+                // Si no encontramos el recurso con el nombre exacto, buscaremos entre todos los recursos
+                var resourceNames = assembly.GetManifestResourceNames();
+                string matchingResource = null;
+
+                foreach (var name in resourceNames)
+                {
+                    if (name.EndsWith("logo-generic.png"))
+                    {
+                        matchingResource = name;
+                        break;
+                    }
+                }
+
+                if (matchingResource != null)
+                {
+                    using var foundStream = assembly.GetManifestResourceStream(matchingResource);
+                    using var ms = new MemoryStream();
+                    foundStream.CopyTo(ms);
+                    imageBytes = ms.ToArray();
+                }
+                else
+                {
+                    // Si no encontramos el recurso, proporcionamos información de diagnóstico
+                    var availableResources = string.Join(", ", resourceNames);
+                    throw new FileNotFoundException(
+                        $"No se pudo encontrar el recurso embebido 'logo-generic.png'. " +
+                        $"Recursos disponibles: {availableResources}");
+                }
+            }
+            else
+            {
+                // Leer el stream en un array de bytes
+                using var ms = new MemoryStream();
+                stream.CopyTo(ms);
+                imageBytes = ms.ToArray();
+            }
+        }
+
+        // Convertir la imagen a base64 para incluirla en el HTML
+        var base64Image = Convert.ToBase64String(imageBytes);
+
         var dt = (SriDocument)Convert.ToInt32(data.codDoc);
         var documentName = dt.DisplayName();
         var doc = @"

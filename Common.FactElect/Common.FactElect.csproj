@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.FactElect</PackageId>
-    <Version>0.1.14</Version>
+    <Version>0.1.15</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use facturación electronica SRI Ecuador</Description>
@@ -15,6 +15,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
+
   <ItemGroup>
     <None Remove="Schemas\comprobanteRetencion_V1.0.0.xsd" />
     <None Remove="Schemas\comprobanteRetencion_V2.0.0.xsd" />
@@ -25,18 +26,20 @@
     <None Remove="Schemas\NotaCredito_V1.0.0.xsd" />
     <None Remove="Schemas\NotaCredito_V1.1.0.xsd" />
   </ItemGroup>
+
   <ItemGroup>
+    <!-- Icono del paquete -->
     <EmbeddedResource Include="Resources\Images\icon.png">
       <PackagePath>\</PackagePath>
       <Pack>True</Pack>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+    <!-- Logo genérico como recurso embebido -->
     <EmbeddedResource Include="Resources\Images\logo-generic.png">
-      <PackagePath>\</PackagePath>
-      <Pack>True</Pack>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <LogicalName>Common.FactElect.Resources.Images.logo-generic.png</LogicalName>
     </EmbeddedResource>
+
+    <!-- Esquemas XSD como recursos embebidos -->
     <EmbeddedResource Include="Resources\Schemas\comprobanteRetencion_V1.0.0.xsd" />
     <EmbeddedResource Include="Resources\Schemas\comprobanteRetencion_V2.0.0.xsd" />
     <EmbeddedResource Include="Resources\Schemas\factura_V1.0.0.xsd" />
@@ -46,16 +49,17 @@
     <EmbeddedResource Include="Resources\Schemas\NotaCredito_V1.0.0.xsd" />
     <EmbeddedResource Include="Resources\Schemas\NotaCredito_V1.1.0.xsd" />
   </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Acontplus.Common.Barcode" />
     <PackageReference Include="Acontplus.Common.Core" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
   </ItemGroup>
+
   <ItemGroup>
     <None Update="README.md">
       <PackagePath>\</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>

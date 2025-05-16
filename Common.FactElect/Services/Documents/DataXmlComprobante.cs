@@ -153,11 +153,11 @@ public class DataXmlComprobante
     public void GetInfoAdicional(ComprobanteElectronico comp, XmlNode infoAdi)
     {
         var infoAdicionals = (from XmlNode item in infoAdi
-                select new InfoAdicional
-                {
-                    nombre = (item.Attributes?.GetNamedItem("nombre")!).Value,
-                    valor = item.InnerText
-                })
+                              select new InfoAdicional
+                              {
+                                  nombre = (item.Attributes?.GetNamedItem("nombre")!).Value,
+                                  valor = item.InnerText
+                              })
             .ToList();
 
         comp.CreateAdditionalInfo(infoAdicionals);
@@ -207,16 +207,16 @@ public class DataXmlComprobante
     private void GetTotalTaxes(string codDoc, object obj, XmlNode impuestos)
     {
         var totalImpuestos = (from XmlNode item in impuestos
-            select new TotalImpuesto
-            {
-                codigo = item.SelectSingleNode("codigo")?.InnerText,
-                codigoPorcentaje = item.SelectSingleNode("codigoPorcentaje")?.InnerText,
-                descuentoAdicional = item.SelectSingleNode("descuentoAdicional") == null
-                    ? "0.00"
-                    : item.SelectSingleNode("descuentoAdicional")?.InnerText,
-                baseImponible = item.SelectSingleNode("baseImponible")?.InnerText,
-                valor = item.SelectSingleNode("valor")?.InnerText
-            }).ToList();
+                              select new TotalImpuesto
+                              {
+                                  codigo = item.SelectSingleNode("codigo")?.InnerText,
+                                  codigoPorcentaje = item.SelectSingleNode("codigoPorcentaje")?.InnerText,
+                                  descuentoAdicional = item.SelectSingleNode("descuentoAdicional") == null
+                                      ? "0.00"
+                                      : item.SelectSingleNode("descuentoAdicional")?.InnerText,
+                                  baseImponible = item.SelectSingleNode("baseImponible")?.InnerText,
+                                  valor = item.SelectSingleNode("valor")?.InnerText
+                              }).ToList();
 
         switch (codDoc)
         {
@@ -234,15 +234,15 @@ public class DataXmlComprobante
     private void GetInvoicePayments(InfoFactura comp, XmlNode payments)
     {
         var pagos = (from XmlNode item in payments
-            select new Pago
-            {
-                formaPago = item.SelectSingleNode("formaPago")?.InnerText,
-                total = item.SelectSingleNode("total")?.InnerText,
-                plazo = item.SelectSingleNode("plazo") == null ? "" : item.SelectSingleNode("plazo")?.InnerText,
-                unidadTiempo = item.SelectSingleNode("unidadTiempo") == null
-                    ? ""
-                    : item.SelectSingleNode("unidadTiempo")?.InnerText
-            }).ToList();
+                     select new Pago
+                     {
+                         formaPago = item.SelectSingleNode("formaPago")?.InnerText,
+                         total = item.SelectSingleNode("total")?.InnerText,
+                         plazo = item.SelectSingleNode("plazo") == null ? "" : item.SelectSingleNode("plazo")?.InnerText,
+                         unidadTiempo = item.SelectSingleNode("unidadTiempo") == null
+                             ? ""
+                             : item.SelectSingleNode("unidadTiempo")?.InnerText
+                     }).ToList();
 
         comp.CreatePayments(pagos);
     }
@@ -281,16 +281,16 @@ public class DataXmlComprobante
                 ? ""
                 : item.SelectNodes("detallesAdicionales")?[0]?.OuterXml;
             impuestos.AddRange(from XmlElement taxes in item.SelectNodes("impuestos")
-                select new Impuesto
-                {
-                    idDetalle = idDetalle,
-                    codArticulo = detail.codigoPrincipal,
-                    codigo = taxes.GetElementsByTagName("codigo")[0]?.InnerText,
-                    codigoPorcentaje = taxes.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
-                    tarifa = taxes.GetElementsByTagName("tarifa")[0]?.InnerText,
-                    baseImponible = taxes.GetElementsByTagName("baseImponible")[0]?.InnerText,
-                    valor = taxes.GetElementsByTagName("valor")[0]?.InnerText
-                });
+                               select new Impuesto
+                               {
+                                   idDetalle = idDetalle,
+                                   codArticulo = detail.codigoPrincipal,
+                                   codigo = taxes.GetElementsByTagName("codigo")[0]?.InnerText,
+                                   codigoPorcentaje = taxes.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
+                                   tarifa = taxes.GetElementsByTagName("tarifa")[0]?.InnerText,
+                                   baseImponible = taxes.GetElementsByTagName("baseImponible")[0]?.InnerText,
+                                   valor = taxes.GetElementsByTagName("valor")[0]?.InnerText
+                               });
 
             detalles.Add(detail);
             idDetalle++;
@@ -414,14 +414,14 @@ public class DataXmlComprobante
     private void GetImpuestoDocSustento(DocSustento doc, XmlNode nodeImpuestos)
     {
         var impuestos = (from XmlElement item in nodeImpuestos
-        select new ImpuestoDocSustento
-        {
-            codImpuestoDocSustento = item.GetElementsByTagName("codImpuestoDocSustento")[0]?.InnerText,
-            codigoPorcentaje = item.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
-            baseImponible = item.GetElementsByTagName("baseImponible")[0]?.InnerText,
-            tarifa = item.GetElementsByTagName("tarifa")[0]?.InnerText,
-            valorImpuesto = item.GetElementsByTagName("valorImpuesto")[0]?.InnerText
-        }).ToList();
+                         select new ImpuestoDocSustento
+                         {
+                             codImpuestoDocSustento = item.GetElementsByTagName("codImpuestoDocSustento")[0]?.InnerText,
+                             codigoPorcentaje = item.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
+                             baseImponible = item.GetElementsByTagName("baseImponible")[0]?.InnerText,
+                             tarifa = item.GetElementsByTagName("tarifa")[0]?.InnerText,
+                             valorImpuesto = item.GetElementsByTagName("valorImpuesto")[0]?.InnerText
+                         }).ToList();
 
         doc.CreateTax(impuestos);
     }
@@ -489,14 +489,14 @@ public class DataXmlComprobante
     private void GetImpuestosReembolsos(ReembolsoDetalle reembolsoDetalles, XmlNode impuestosReembolso)
     {
         var impuestos = (from XmlElement item in impuestosReembolso
-            select new DetalleImpuesto
-            {
-                codigo = item.GetElementsByTagName("codigo")[0]?.InnerText,
-                codigoPorcentaje = item.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
-                tarifa = item.GetElementsByTagName("tarifa")[0]?.InnerText,
-                baseImponibleReembolso = item.GetElementsByTagName("baseImponibleReembolso")[0]?.InnerText,
-                impuestoReembolso = item.GetElementsByTagName("impuestoReembolso")[0]?.InnerText
-            }).ToList();
+                         select new DetalleImpuesto
+                         {
+                             codigo = item.GetElementsByTagName("codigo")[0]?.InnerText,
+                             codigoPorcentaje = item.GetElementsByTagName("codigoPorcentaje")[0]?.InnerText,
+                             tarifa = item.GetElementsByTagName("tarifa")[0]?.InnerText,
+                             baseImponibleReembolso = item.GetElementsByTagName("baseImponibleReembolso")[0]?.InnerText,
+                             impuestoReembolso = item.GetElementsByTagName("impuestoReembolso")[0]?.InnerText
+                         }).ToList();
 
         reembolsoDetalles.CreateTax(impuestos);
     }

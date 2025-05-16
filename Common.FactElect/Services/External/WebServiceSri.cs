@@ -40,48 +40,48 @@ public class WebServiceSri : IWebServiceSri
             switch (responseSri.Estado)
             {
                 case "AUTORIZADO":
-                {
-                    var codAutorizacion = doc.GetElementsByTagName("numeroAutorizacion");
-                    responseSri.CodigoAutorizacion = codAutorizacion[0]?.InnerText;
-                    var xFecha = doc.GetElementsByTagName("fechaAutorizacion");
-                    responseSri.FechaAutorizacion = xFecha[0]?.InnerText;
-                    responseSri.Message = "EL COMPROBANTE FUE AUTORIZADO CON ÉXITO";
-                    break;
-                }
-
-                case "EN PROCESO":
-                {
-                    responseSri.Message = "EL COMPROBANTE ESTA EN PROCESO";
-                    break;
-                }
-
-                default:
-                {
-                    var xmessage = doc.GetElementsByTagName("mensaje");
-                    if (xmessage.Count > 0)
                     {
-                        var nodos = ((XmlElement)xmessage[0])?.ChildNodes;
-                        if (nodos != null)
-                            foreach (XmlElement nodo in nodos)
-                                switch (nodo.Name)
-                                {
-                                    case "identificador":
-                                        responseSri.Identificador = nodo.InnerText;
-                                        break;
-                                    case "mensaje":
-                                        responseSri.Message = nodo.InnerText;
-                                        break;
-                                    case "informacionAdicional":
-                                        responseSri.InformacionAdicional = nodo.InnerText;
-                                        break;
-                                    case "tipo":
-                                        responseSri.Tipo = nodo.InnerText;
-                                        break;
-                                }
+                        var codAutorizacion = doc.GetElementsByTagName("numeroAutorizacion");
+                        responseSri.CodigoAutorizacion = codAutorizacion[0]?.InnerText;
+                        var xFecha = doc.GetElementsByTagName("fechaAutorizacion");
+                        responseSri.FechaAutorizacion = xFecha[0]?.InnerText;
+                        responseSri.Message = "EL COMPROBANTE FUE AUTORIZADO CON ÉXITO";
+                        break;
                     }
 
-                    break;
-                }
+                case "EN PROCESO":
+                    {
+                        responseSri.Message = "EL COMPROBANTE ESTA EN PROCESO";
+                        break;
+                    }
+
+                default:
+                    {
+                        var xmessage = doc.GetElementsByTagName("mensaje");
+                        if (xmessage.Count > 0)
+                        {
+                            var nodos = ((XmlElement)xmessage[0])?.ChildNodes;
+                            if (nodos != null)
+                                foreach (XmlElement nodo in nodos)
+                                    switch (nodo.Name)
+                                    {
+                                        case "identificador":
+                                            responseSri.Identificador = nodo.InnerText;
+                                            break;
+                                        case "mensaje":
+                                            responseSri.Message = nodo.InnerText;
+                                            break;
+                                        case "informacionAdicional":
+                                            responseSri.InformacionAdicional = nodo.InnerText;
+                                            break;
+                                        case "tipo":
+                                            responseSri.Tipo = nodo.InnerText;
+                                            break;
+                                    }
+                        }
+
+                        break;
+                    }
             }
         }
         catch (Exception ex)
@@ -163,43 +163,43 @@ public class WebServiceSri : IWebServiceSri
                     switch (xEstado[0]?.InnerText)
                     {
                         case "AUTORIZADO":
-                        {
-                            responseSri.Estado = xEstado[0].InnerText;
-                            responseSri.Message = "EL COMPROBANTE  YA FUE AUTORIZADO";
-                            var xNumAuto = doc.GetElementsByTagName("numeroAutorizacion");
-                            responseSri.CodigoAutorizacion = xNumAuto[0]?.InnerText;
-                            var xFecha = doc.GetElementsByTagName("fechaAutorizacion");
-                            responseSri.FechaAutorizacion = xFecha[0]?.InnerText;
-                            break;
-                        }
-                        default:
-                        {
-                            responseSri.Estado = xEstado[0]?.InnerText;
-                            var xmessage = doc.GetElementsByTagName("mensaje");
-                            if (xmessage.Count > 0)
                             {
-                                var nodos = ((XmlElement)xmessage[0])?.ChildNodes;
-                                if (nodos != null)
-                                    foreach (XmlElement nodo in nodos)
-                                        switch (nodo.Name)
-                                        {
-                                            case "identificador":
-                                                responseSri.Identificador = nodo.InnerText;
-                                                break;
-                                            case "mensaje":
-                                                responseSri.Message = nodo.InnerText;
-                                                break;
-                                            case "informacionAdicional":
-                                                responseSri.InformacionAdicional = nodo.InnerText;
-                                                break;
-                                            case "tipo":
-                                                responseSri.Tipo = nodo.InnerText;
-                                                break;
-                                        }
+                                responseSri.Estado = xEstado[0].InnerText;
+                                responseSri.Message = "EL COMPROBANTE  YA FUE AUTORIZADO";
+                                var xNumAuto = doc.GetElementsByTagName("numeroAutorizacion");
+                                responseSri.CodigoAutorizacion = xNumAuto[0]?.InnerText;
+                                var xFecha = doc.GetElementsByTagName("fechaAutorizacion");
+                                responseSri.FechaAutorizacion = xFecha[0]?.InnerText;
+                                break;
                             }
+                        default:
+                            {
+                                responseSri.Estado = xEstado[0]?.InnerText;
+                                var xmessage = doc.GetElementsByTagName("mensaje");
+                                if (xmessage.Count > 0)
+                                {
+                                    var nodos = ((XmlElement)xmessage[0])?.ChildNodes;
+                                    if (nodos != null)
+                                        foreach (XmlElement nodo in nodos)
+                                            switch (nodo.Name)
+                                            {
+                                                case "identificador":
+                                                    responseSri.Identificador = nodo.InnerText;
+                                                    break;
+                                                case "mensaje":
+                                                    responseSri.Message = nodo.InnerText;
+                                                    break;
+                                                case "informacionAdicional":
+                                                    responseSri.InformacionAdicional = nodo.InnerText;
+                                                    break;
+                                                case "tipo":
+                                                    responseSri.Tipo = nodo.InnerText;
+                                                    break;
+                                            }
+                                }
 
-                            break;
-                        }
+                                break;
+                            }
                     }
                 }
                 else

@@ -101,7 +101,7 @@ public static class XmlValidator
     /// <summary>
     /// Limpia un XML para hacerlo compatible con SQL Server
     /// </summary>
-    private static string CleanXmlForSqlServer(string xml)
+    public static string CleanXmlForSqlServer(string xml)
     {
         // Si el XML está vacío o es nulo, retornarlo tal cual
         if (string.IsNullOrWhiteSpace(xml))

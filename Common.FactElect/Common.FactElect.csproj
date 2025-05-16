@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.FactElect</PackageId>
-    <Version>0.1.13</Version>
+    <Version>0.1.14</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use facturación electronica SRI Ecuador</Description>
@@ -29,10 +29,13 @@
     <EmbeddedResource Include="Resources\Images\icon.png">
       <PackagePath>\</PackagePath>
       <Pack>True</Pack>
-    </EmbeddedResource>    
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\Images\logo-generic.png">
       <PackagePath>\</PackagePath>
       <Pack>True</Pack>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <LogicalName>Common.FactElect.Resources.Images.logo-generic.png</LogicalName>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\Schemas\comprobanteRetencion_V1.0.0.xsd" />
     <EmbeddedResource Include="Resources\Schemas\comprobanteRetencion_V2.0.0.xsd" />
@@ -54,8 +57,5 @@
       <Pack>true</Pack>
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\" />
   </ItemGroup>
 </Project>

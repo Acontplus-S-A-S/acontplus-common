@@ -1,5 +1,5 @@
-﻿using Common.Core.DTOs;
-using Common.Infrastructure.Data.Repository.Interfaces;
+﻿using Common.Infrastructure.Data.Repository.Interfaces;
+using Common.Infrastructure.Data.Repository.Models;
 using Common.TestApi.Data;
 using Common.TestApi.DTOs;
 using Common.TestApi.Entities;
@@ -45,8 +45,8 @@ namespace Common.TestApi.Services
                 TotalCount = pagedUsers.TotalCount
             };
         }
-       
- 
+
+
         public async Task<ApiResponse> UpdateAsync(int id, Usuario usuario)
         {
             var userFound = await context.Usuarios.FindAsync(id);

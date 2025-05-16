@@ -1,5 +1,5 @@
-﻿using Common.Core.DTOs;
-using Common.Infrastructure.Data.Repository.Implementations;
+﻿using Common.Infrastructure.Data.Repository.Implementations;
+using Common.Infrastructure.Data.Repository.Models;
 using Common.TestApi.Data;
 using Common.TestApi.Entities;
 using Common.TestApi.Repositories.Interfaces;
@@ -25,10 +25,10 @@ public class UserRepository : Repository<Usuario>, IUserRepository
         //                            u.Email.Contains(pagination.TextSearch));
         //}
 
-        if (pagination.UserId > 0)
-        {
-            query = query.Where(u => u.Id == pagination.UserId);
-        }
+        //if (pagination.UserId > 0)
+        //{
+        //    query = query.Where(u => u.Id == pagination.UserId);
+        //}
 
         // Example of sorting - you might want to make this more dynamic
         //query = query.OrderBy(u => u.LastName);

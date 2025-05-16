@@ -1,10 +1,9 @@
 ﻿using Common.Barcode.Models;
 using Common.Barcode.Utils;
-using Common.Infrastructure.Data.Repository.Implementations;
 
 namespace Common.TestApi.Controllers;
 
-public class BarcodeController (IUsuarioService usuarioService): BaseApiController
+public class BarcodeController(IUsuarioService usuarioService) : BaseApiController
 {
     [HttpGet]
     public async Task<IActionResult> Get(string text, bool includeLabel = false)

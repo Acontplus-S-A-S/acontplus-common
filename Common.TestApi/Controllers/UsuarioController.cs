@@ -1,4 +1,4 @@
-﻿using Common.Core.DTOs;
+﻿using Common.Infrastructure.Data.Repository.Models;
 using Common.TestApi.DTOs;
 using Common.TestApi.Entities;
 

@@ -29,11 +29,8 @@
 
   <ItemGroup>
     <!-- Icono del paquete -->
-    <EmbeddedResource Include="Resources\Images\icon.png">
-      <PackagePath>\</PackagePath>
-      <Pack>True</Pack>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
+    <None Include="Resources\Images\icon.png" Pack="true" PackagePath="\" />
+    
     <!-- Logo genérico como recurso embebido -->
     <EmbeddedResource Include="Resources\Images\logo-generic.png">
       <LogicalName>Common.FactElect.Resources.Images.logo-generic.png</LogicalName>

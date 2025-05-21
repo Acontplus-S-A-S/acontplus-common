@@ -5,7 +5,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.FactElect</PackageId>
-    <Version>0.1.16</Version>
+    <Version>0.1.17</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to use facturación electronica SRI Ecuador</Description>
@@ -51,7 +51,6 @@
     <PackageReference Include="Acontplus.Common.Barcode" />
     <PackageReference Include="Acontplus.Common.Core" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" />
   </ItemGroup>
 
   <ItemGroup>

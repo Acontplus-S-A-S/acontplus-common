@@ -114,22 +114,137 @@ public static class XmlValidator
             // 2. Eliminar caracteres BOM (Byte Order Mark) si existen
             xml = RemoveBomChars(xml);
 
-            // 3. Corregir ampersands no escapados (&) que no sean parte de entidades XML
+            // 3. Limpiar etiquetas HTML que pueden estar mezcladas con XML
+            xml = CleanHtmlTags(xml);
+
+            // 4. Corregir ampersands no escapados (&) que no sean parte de entidades XML
             xml = EscapeUnescapedAmpersands(xml);
 
-            // 4. Normalizar saltos de línea
+            // 5. Normalizar saltos de línea
             xml = NormalizeLineBreaks(xml);
 
-            // 5. Eliminar caracteres no válidos para XML
+            // 6. Eliminar caracteres no válidos para XML
             xml = RemoveInvalidXmlChars(xml);
 
             return xml;
         }
         catch (Exception ex)
         {
+            //Log.Error(ex, "Error limpiando XML");
             // En caso de error, al menos eliminar la declaración XML
             return RemoveXmlDeclaration(xml);
         }
+    }
+
+    /// <summary>
+    /// Limpia etiquetas HTML que pueden estar mezcladas con XML
+    /// </summary>
+    private static string CleanHtmlTags(string xml)
+    {
+        if (string.IsNullOrWhiteSpace(xml))
+            return xml;
+
+        // 1. Convertir entidades HTML comunes a sus equivalentes XML
+        xml = ConvertHtmlEntitiesToXml(xml);
+
+        // 2. Eliminar o convertir etiquetas HTML comunes que pueden causar problemas
+        xml = RemoveOrConvertHtmlTags(xml);
+
+        // 3. Limpiar atributos HTML que no son válidos en XML
+        xml = CleanHtmlAttributes(xml);
+
+        return xml;
+    }
+
+    /// <summary>
+    /// Convierte entidades HTML a sus equivalentes XML válidos
+    /// </summary>
+    private static string ConvertHtmlEntitiesToXml(string xml)
+    {
+        // Mapeo de entidades HTML comunes a XML
+        var htmlToXmlEntities = new Dictionary<string, string>
+    {
+        { "&nbsp;", "&#160;" },      // Espacio no separable
+        { "&copy;", "&#169;" },      // Copyright
+        { "&reg;", "&#174;" },       // Registered
+        { "&trade;", "&#8482;" },    // Trademark
+        { "&hellip;", "&#8230;" },   // Ellipsis
+        { "&mdash;", "&#8212;" },    // Em dash
+        { "&ndash;", "&#8211;" },    // En dash
+        { "&lsquo;", "&#8216;" },    // Left single quote
+        { "&rsquo;", "&#8217;" },    // Right single quote
+        { "&ldquo;", "&#8220;" },    // Left double quote
+        { "&rdquo;", "&#8221;" },    // Right double quote
+        { "&euro;", "&#8364;" },     // Euro symbol
+        { "&pound;", "&#163;" },     // Pound symbol
+        { "&yen;", "&#165;" },       // Yen symbol
+        { "&cent;", "&#162;" },      // Cent symbol
+    };
+
+        foreach (var entity in htmlToXmlEntities)
+        {
+            xml = xml.Replace(entity.Key, entity.Value);
+        }
+
+        return xml;
+    }
+
+    /// <summary>
+    /// Elimina o convierte etiquetas HTML problemáticas
+    /// </summary>
+    private static string RemoveOrConvertHtmlTags(string xml)
+    {
+        // Etiquetas HTML que se pueden convertir a texto plano o eliminar
+        var tagsToRemove = new[]
+        {
+        "br", "BR",           // Salto de línea
+        "hr", "HR",           // Línea horizontal
+        "img", "IMG",         // Imágenes
+        "script", "SCRIPT",   // Scripts
+        "style", "STYLE",     // Estilos
+        "meta", "META",       // Metadatos
+        "link", "LINK",       // Enlaces externos
+    };
+
+        // Eliminar etiquetas auto-cerradas problemáticas
+        foreach (var tag in tagsToRemove)
+        {
+            // Etiquetas auto-cerradas: <br/>, <hr/>, <img.../>, etc.
+            xml = Regex.Replace(xml, $@"<{tag}[^>]*?/>", "", RegexOptions.IgnoreCase);
+            // Etiquetas simples: <br>, <hr>, etc.
+            xml = Regex.Replace(xml, $@"<{tag}[^>]*?>", "", RegexOptions.IgnoreCase);
+        }
+
+        // Eliminar contenido completo de etiquetas script y style
+        xml = Regex.Replace(xml, @"<script[^>]*?>.*?</script>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+        xml = Regex.Replace(xml, @"<style[^>]*?>.*?</style>", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+
+        // Convertir <br> y </br> a saltos de línea si están dentro de contenido XML
+        xml = Regex.Replace(xml, @"</?br[^>]*?>", "\n", RegexOptions.IgnoreCase);
+
+        return xml;
+    }
+
+    /// <summary>
+    /// Limpia atributos HTML que pueden no ser válidos en XML
+    /// </summary>
+    private static string CleanHtmlAttributes(string xml)
+    {
+        // Atributos HTML comunes que pueden causar problemas en XML
+        var problematicAttributes = new[]
+        {
+        "onclick", "onload", "onmouseover", "onmouseout", "onfocus", "onblur",
+        "class", "id", "style", "href", "src", "alt", "title"
+    };
+
+        foreach (var attr in problematicAttributes)
+        {
+            // Eliminar atributos problemáticos de cualquier etiqueta
+            xml = Regex.Replace(xml, $@"\s+{attr}\s*=\s*[""'][^""']*[""']", "", RegexOptions.IgnoreCase);
+            xml = Regex.Replace(xml, $@"\s+{attr}\s*=\s*[^>\s]+", "", RegexOptions.IgnoreCase);
+        }
+
+        return xml;
     }
 
     /// <summary>
@@ -158,9 +273,11 @@ public static class XmlValidator
         // BOM para UTF-8: EF BB BF
         if (xml.StartsWith("\xEF\xBB\xBF"))
             xml = xml.Substring(3);
+
         // Otros BOM comunes
         if (xml.StartsWith("\xFE\xFF") || xml.StartsWith("\xFF\xFE"))
             xml = xml.Substring(2);
+
         return xml;
     }
 
@@ -190,5 +307,23 @@ public static class XmlValidator
         if (string.IsNullOrWhiteSpace(xml)) return xml;
         // Elimina cualquier declaración como <?xml version="1.0" encoding="UTF-8"?>
         return Regex.Replace(xml, @"<\?xml.*?\?>", "", RegexOptions.Singleline).TrimStart();
+    }
+
+    /// <summary>
+    /// Método alternativo más agresivo para casos extremos donde hay mucho HTML mezclado
+    /// </summary>
+    private static string AggressiveHtmlClean(string xml)
+    {
+        if (string.IsNullOrWhiteSpace(xml))
+            return xml;
+
+        // Eliminar TODOS los tags HTML conocidos manteniendo solo el contenido
+        xml = Regex.Replace(xml, @"</?(?:div|span|p|h[1-6]|ul|ol|li|table|tr|td|th|thead|tbody|tfoot|strong|b|em|i|u|small|big)[^>]*?>", "", RegexOptions.IgnoreCase);
+
+        // Si después de limpiar queda muy poco contenido, es probable que fuera principalmente HTML
+        if (xml.Trim().Length < 10)
+            return string.Empty;
+
+        return xml;
     }
 }

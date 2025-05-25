@@ -129,7 +129,7 @@ namespace Common.Reports.Services
                     {
                         paramValue = item.Field<bool>("isCompressed")
                             ? FileExtensions.GetBase64FromByte(
-                                CompressionUtils.DecompressDeflate((byte[])item["paramValue"]))
+                                CompressionUtils.DecompressGZip((byte[])item["paramValue"]))
                             : FileExtensions.GetBase64FromByte((byte[])item["paramValue"]);
                         lr.SetParameters(new ReportParameter(item["paramName"].ToString(), paramValue));
                     }

@@ -1,4 +1,4 @@
-﻿using Common.Core.Data;
+﻿using Common.Data;
 using Common.Infrastructure.Data.Repository.Implementations;
 using Common.Infrastructure.Data.Repository.Interfaces;
 using Test.Api;

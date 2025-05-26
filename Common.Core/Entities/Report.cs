@@ -1,9 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Common.Core.Entities;
 
-[Table("Report", Schema = "Config")]
 public class Report : BaseEntity
 {
     [Required][MaxLength(10)] public string Code { get; set; } //Code of report

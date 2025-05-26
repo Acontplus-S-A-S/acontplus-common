@@ -1,9 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Common.Core.Entities;
 
-[Table("ErrorLog", Schema = "Common")]
 public class ErrorLog : BaseEntity
 {
     public Guid Token { get; set; }

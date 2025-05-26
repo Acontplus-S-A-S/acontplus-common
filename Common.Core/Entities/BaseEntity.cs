@@ -17,6 +17,6 @@ public class BaseEntity
     public int? DeletedByUserId { get; set; }
     public int? UserId { get; set; } // Deprecated field, use CreatedByUserId instead
     public bool FromMobile { get; set; } = false;
-    [Timestamp]
-    public byte[] RowVersion { get; set; }
+    //[Timestamp]
+    //public byte[] RowVersion { get; set; } // Use in your entity if you need concurrency control
 }

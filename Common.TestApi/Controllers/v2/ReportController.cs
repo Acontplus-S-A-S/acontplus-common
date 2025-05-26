@@ -1,4 +1,6 @@
-﻿namespace Common.TestApi.Controllers.v2;
+﻿using Common.Utilities.Services;
+
+namespace Common.TestApi.Controllers.v2;
 
 [ApiVersion("2.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
@@ -53,6 +55,6 @@ public class ReportController(
 
         if (response == null) throw new Exception("Error in RDLC generation");
 
-        reportFile.Create(response.FileContents, response.ContentType, response.FileDownloadName);
+        FileModelBuilder.Create(response.FileContents, response.ContentType, response.FileDownloadName);
     }
 }

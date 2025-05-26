@@ -1,4 +1,4 @@
-﻿using Common.Core.Security.Interfaces;
+﻿using Common.Utilities.Security.Interfaces;
 
 namespace Common.TestApi.Controllers;
 

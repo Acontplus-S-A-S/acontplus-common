@@ -25,12 +25,14 @@
     <ProjectReference Include="..\Common.ApiDocumentation\Common.ApiDocumentation.csproj" />
     <ProjectReference Include="..\Common.Barcode\Common.Barcode.csproj" />
     <ProjectReference Include="..\Common.Core\Common.Core.csproj" />
+    <ProjectReference Include="..\Common.Data\Common.Data.csproj" />
     <ProjectReference Include="..\Common.FactElect\Common.FactElect.csproj" />
     <ProjectReference Include="..\Common.Infrastructure\Common.Infrastructure.csproj" />
     <ProjectReference Include="..\Common.Logging\Common.Logging.csproj" />
     <ProjectReference Include="..\Common.Notifications\Common.Notifications.csproj" />
     <ProjectReference Include="..\Common.Reports\Common.Reports.csproj" />
     <ProjectReference Include="..\Common.Services\Common.Services.csproj" />
+    <ProjectReference Include="..\Common.Utilities\Common.Utilities.csproj" />
   </ItemGroup>
 
 </Project>

@@ -16,14 +16,6 @@ A comprehensive .NET utility library providing common functionality for enterpri
 
 ### Utility Components
 
-#### Data Processing
-
-- **Data Conversion** - Type conversion and data manipulation utilities
-- **Data Table Mapping** - Database to object mapping utilities
-- **Data Validation** - Input validation and verification tools
-- **Date Utilities** - Date/time manipulation and formatting
-- **SQL Parameter Handling** - Safe SQL parameter construction
-
 #### File Operations
 
 - **Compression Utils** - File compression and decompression

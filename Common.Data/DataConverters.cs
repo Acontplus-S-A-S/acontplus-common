@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using System.Xml;
 
 
-namespace Common.Core.Data;
+namespace Common.Data;
 
 /// <summary>
 /// Data Converters

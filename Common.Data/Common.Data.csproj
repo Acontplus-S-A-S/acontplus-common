@@ -1,15 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>disable</Nullable>
+    <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>Acontplus.Common.Core</PackageId>
-    <Version>1.4.0</Version>
+    <PackageId>Acontplus.Common.Data</PackageId>
+    <Version>0.1.0</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
-    <Description>Basic and fundamental components that all projects need.</Description>
-    <PackageTags>entities;enums;models;utils</PackageTags>
+    <Description>Utilities for data conversion and manipulation for general use.</Description>
+    <PackageTags>data;converters;mappers</PackageTags>
     <RepositoryUrl>https://github.com/Acontplus-S-A-S/acontplus-common</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -19,11 +20,11 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="Resources\Images\icon.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
+
 </Project>

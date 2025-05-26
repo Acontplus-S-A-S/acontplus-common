@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Data;
+﻿namespace Common.Data;
 
 using System;
 using System.Collections;
@@ -20,7 +20,7 @@ public static class ObjectMapper
     public static MappingConfiguration<TSource, TTarget> CreateMap<TSource, TTarget>()
     {
         var config = new MappingConfiguration<TSource, TTarget>();
-        string key = GetMappingKey(typeof(TSource), typeof(TTarget));
+        var key = GetMappingKey(typeof(TSource), typeof(TTarget));
         _mappingConfigurations[key] = config;
         return config;
     }
@@ -33,10 +33,10 @@ public static class ObjectMapper
         if (source == null)
             return default;
 
-        Type targetType = typeof(TTarget);
+        var targetType = typeof(TTarget);
 
         // Create a new instance, handling required constructor parameters if needed
-        TTarget target = CreateInstance<TSource, TTarget>(source);
+        var target = CreateInstance<TSource, TTarget>(source);
 
         return Map(source, target);
     }
@@ -50,7 +50,7 @@ public static class ObjectMapper
             return target;
 
         // Check if we have a configuration for this mapping
-        string key = GetMappingKey(typeof(TSource), typeof(TTarget));
+        var key = GetMappingKey(typeof(TSource), typeof(TTarget));
         if (_mappingConfigurations.TryGetValue(key, out var configuration))
         {
             return (TTarget)configuration.Map(source, target);
@@ -65,8 +65,8 @@ public static class ObjectMapper
     /// </summary>
     private static TTarget CreateInstance<TSource, TTarget>(TSource source)
     {
-        Type targetType = typeof(TTarget);
-        Type sourceType = typeof(TSource);
+        var targetType = typeof(TTarget);
+        var sourceType = typeof(TSource);
 
         // If the type has a parameterless constructor, use it
         var parameterlessCtor = targetType.GetConstructor(Type.EmptyTypes);
@@ -83,9 +83,9 @@ public static class ObjectMapper
         {
             var parameters = ctor.GetParameters();
             var paramValues = new object[parameters.Length];
-            bool canSatisfyAllParams = true;
+            var canSatisfyAllParams = true;
 
-            for (int i = 0; i < parameters.Length; i++)
+            for (var i = 0; i < parameters.Length; i++)
             {
                 var param = parameters[i];
                 var sourceProp = sourceType.GetProperty(param.Name,
@@ -434,7 +434,7 @@ public static class ObjectMapper
             Expression<Func<TTarget, TProperty>> destinationMember,
             Expression<Func<TSource, TProperty>> sourceMember)
         {
-            string memberName = GetMemberName(destinationMember);
+            var memberName = GetMemberName(destinationMember);
             _customMappings[memberName] = sourceMember;
             return this;
         }
@@ -472,7 +472,7 @@ public static class ObjectMapper
             string paramName,
             Expression<Func<TSource, TProperty>> sourceMember)
         {
-            string memberName = GetMemberNameFromSource(sourceMember);
+            var memberName = GetMemberNameFromSource(sourceMember);
             _constructorParameterMappings[paramName] = memberName;
             return this;
         }
@@ -483,7 +483,7 @@ public static class ObjectMapper
         public MappingConfiguration<TSource, TTarget> Ignore<TProperty>(
             Expression<Func<TTarget, TProperty>> destinationMember)
         {
-            string memberName = GetMemberName(destinationMember);
+            var memberName = GetMemberName(destinationMember);
             _customMappings[memberName] = null; // null indicates ignore
             return this;
         }

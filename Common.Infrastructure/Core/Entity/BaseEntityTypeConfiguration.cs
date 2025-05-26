@@ -9,5 +9,6 @@ public class BaseEntityTypeConfiguration<TEntity> : IEntityTypeConfiguration<TEn
     {
         builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
         builder.Property(x => x.Enabled).HasDefaultValue(true);
+        builder.Property(x => x.IsActive).HasDefaultValue(true);
     }
 }

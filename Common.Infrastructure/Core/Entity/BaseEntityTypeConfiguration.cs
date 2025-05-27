@@ -18,6 +18,8 @@ public class BaseEntityTypeConfiguration<TEntity> : IEntityTypeConfiguration<TEn
         // Configure default values for Enabled and IsActive
         builder.Property(x => x.Enabled).HasDefaultValue(true); // Deprecated field, use IsActive instead
         builder.Property(x => x.IsActive).HasDefaultValue(true);
+        builder.Property(x => x.FromMobile).HasDefaultValue(false);
+        builder.Property(x => x.IsDeleted).HasDefaultValue(false);
     }
 
     private string GetDatabaseProvider(EntityTypeBuilder<TEntity> builder)

@@ -4,7 +4,7 @@ public class BaseEntity
 {
     public int Id { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-    public int CreatedByUserId { get; set; }
+    public int? CreatedByUserId { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public int? UpdatedByUserId { get; set; }
     public bool Enabled { get; set; } = true; // Deprecated field, use IsActive instead

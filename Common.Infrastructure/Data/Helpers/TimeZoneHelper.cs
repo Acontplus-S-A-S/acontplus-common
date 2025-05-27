@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Core.Helpers;
+﻿namespace Common.Infrastructure.Data.Helpers;
 
 public static class TimeZoneHelper
 {

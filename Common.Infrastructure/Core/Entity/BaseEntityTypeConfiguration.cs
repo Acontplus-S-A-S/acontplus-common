@@ -16,7 +16,7 @@ public class BaseEntityTypeConfiguration<TEntity> : IEntityTypeConfiguration<TEn
         ConfigureCreatedAtDefault(builder, dbProvider);
 
         // Configure default values for Enabled and IsActive
-        builder.Property(x => x.Enabled).HasDefaultValue(true);
+        builder.Property(x => x.Enabled).HasDefaultValue(true); // Deprecated field, use IsActive instead
         builder.Property(x => x.IsActive).HasDefaultValue(true);
     }
 
@@ -54,26 +54,21 @@ public class BaseEntityTypeConfiguration<TEntity> : IEntityTypeConfiguration<TEn
         switch (dbProvider)
         {
             case "Microsoft.EntityFrameworkCore.SqlServer":
-                builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETDATE()");
+                builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
                 break;
-
             case "Microsoft.EntityFrameworkCore.Sqlite":
                 builder.Property(x => x.CreatedAt).HasDefaultValueSql("datetime('now')");
                 break;
-
             case "Npgsql.EntityFrameworkCore.PostgreSQL":
                 builder.Property(x => x.CreatedAt).HasDefaultValueSql("NOW()");
                 break;
-
             case "Pomelo.EntityFrameworkCore.MySql":
             case "MySql.EntityFrameworkCore":
-                builder.Property(x => x.CreatedAt).HasDefaultValueSql("NOW()");
+                builder.Property(x => x.CreatedAt).HasDefaultValueSql("UTC_TIMESTAMP()");
                 break;
-
             case "Oracle.EntityFrameworkCore":
-                builder.Property(x => x.CreatedAt).HasDefaultValueSql("SYSDATE");
+                builder.Property(x => x.CreatedAt).HasDefaultValueSql("SYS_EXTRACT_UTC(SYSTIMESTAMP)");
                 break;
-
             default:
                 builder.Property(x => x.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
                 break;

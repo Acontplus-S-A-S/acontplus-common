@@ -19,18 +19,18 @@ namespace Common.TestApi.Data.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Username = table.Column<string>(type: "varchar(max)", unicode: false, nullable: false),
                     Email = table.Column<string>(type: "varchar(max)", unicode: false, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETDATE()"),
-                    CreatedByUserId = table.Column<int>(type: "int", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
+                    CreatedByUserId = table.Column<int>(type: "int", nullable: true),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     UpdatedByUserId = table.Column<int>(type: "int", nullable: true),
                     Enabled = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
                     IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    Deleted = table.Column<bool>(type: "bit", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    Deleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     DeletedByUserId = table.Column<int>(type: "int", nullable: true),
                     UserId = table.Column<int>(type: "int", nullable: true),
-                    FromMobile = table.Column<bool>(type: "bit", nullable: false)
+                    FromMobile = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
                 {

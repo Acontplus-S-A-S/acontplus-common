@@ -20,6 +20,7 @@ public class BaseEntityTypeConfiguration<TEntity> : IEntityTypeConfiguration<TEn
         builder.Property(x => x.IsActive).HasDefaultValue(true);
         builder.Property(x => x.FromMobile).HasDefaultValue(false);
         builder.Property(x => x.IsDeleted).HasDefaultValue(false);
+        builder.Property(x => x.Deleted).HasDefaultValue(false); // Deprecated field, use IsDeleted instead
     }
 
     private string GetDatabaseProvider(EntityTypeBuilder<TEntity> builder)

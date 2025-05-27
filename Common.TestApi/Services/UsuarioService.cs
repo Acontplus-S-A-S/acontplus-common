@@ -13,6 +13,7 @@ namespace Common.TestApi.Services
         Task<int> CreateAsync();
         Task<PagedResult<UsuarioDto>> GetPaginatedUsersAsync(PaginationDto pagination);
         Task<ApiResponse> UpdateAsync(int id, Usuario usuario);
+        Task<ApiResponse> DeleteAsync(int id);
     }
     public class UsuarioService(TestContext context, IUserRepository userRepository, IAdoRepository adoRepository) : IUsuarioService
     {
@@ -26,6 +27,20 @@ namespace Common.TestApi.Services
         public async Task<int> CreateAsync()
         {
             return await adoRepository.ExecuteNonQueryAsync("INSERT INTO Test.WorkerTest(Content) VALUES ('Inserting')", useStoredProcedure: false);
+        }
+
+        public async Task<ApiResponse> DeleteAsync(int id)
+        {
+            var userFound = await context.Usuarios.FindAsync(id);
+            if (userFound == null)
+            {
+                return new ApiResponse { Code = "0", Message = "Error" };
+            }
+            userFound.MarkAsDeleted(); // Assuming MarkAsDeleted is a method that sets IsDeleted to true and updates DeletedAt
+            context.Update(userFound);
+            await context.SaveChangesAsync();
+            //return new ApiResponse { Code = "1", Message = "Sucess", Payload = usuario };
+            return ApiResponse.Success(payload: userFound);
         }
 
         public async Task<PagedResult<UsuarioDto>> GetPaginatedUsersAsync(PaginationDto paginationDto)

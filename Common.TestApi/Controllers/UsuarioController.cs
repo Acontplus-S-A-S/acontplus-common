@@ -24,6 +24,12 @@ namespace Common.TestApi.Controllers
 
             return Ok(await usuarioService.UpdateAsync(id, usuario));
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Put(int id)
+        {
+ 
+            return Ok(await usuarioService.DeleteAsync(id));
+        }
 
         [HttpGet]
         public async Task<ActionResult<ApiResponse<PagedResult<UsuarioDto>>>> GetUsers([FromQuery] PaginationDto pagination)

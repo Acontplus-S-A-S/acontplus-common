@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Common.Core.Entities;
+﻿namespace Common.Core.Entities;
 
 public class BaseEntity
 {
@@ -19,4 +17,33 @@ public class BaseEntity
     public bool FromMobile { get; set; } = false;
     //[Timestamp]
     //public byte[] RowVersion { get; set; } // Use in your entity if you need concurrency control
+
+    // Convenience methods for soft delete
+    public void MarkAsDeleted(int? deletedByUserId = null)
+    {
+        IsDeleted = true;
+        Deleted = true; // Maintain compatibility
+        DeletedByUserId = deletedByUserId;
+        // DeletedAt will be set automatically in SaveChanges
+    }
+
+    public void RestoreFromDeleted()
+    {
+        IsDeleted = false;
+        Deleted = false; // Maintain compatibility
+        DeletedAt = null;
+        DeletedByUserId = null;
+    }
+
+    public void Deactivate()
+    {
+        IsActive = false;
+        Enabled = false; // Maintain compatibility
+    }
+
+    public void Activate()
+    {
+        IsActive = true;
+        Enabled = true; // Maintain compatibility
+    }
 }

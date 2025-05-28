@@ -1,39 +1,27 @@
 # Common.Core
 
-A comprehensive .NET utility library providing common functionality for enterprise applications.
+A comprehensive .NET utility library providing foundational components and common functionality for enterprise applications.
 
 ## Features
 
 ### Core Components
+- **Base Entity System** - Foundational entity structures with common properties
+- **Base DTO System** - Base classes for data transfer objects
 
-- **Base Entity System** - Common entity structures and interfaces
-- **Error Logging** - Standardized error logging mechanisms
-- **API Communication** - Request/Response models for API integration
-- **AWS Integration** - AWS credentials management
-- **S3 Operations** - S3 object handling and custom response processing
-- **Email Handling** - Email processing utilities
-- **File Management** - File handling and model processing
+### Utilities
+- **Enum Extensions** - Helpful extension methods for working with enums
+- **Nullable Extensions** - Extension methods for nullable types
 
-### Utility Components
+### Validation
+- **Data Validations** - Common validation logic
+- **XML Validation** - XML validation utilities
+- **Extreme Validations** - Specialized validation scenarios
 
-#### File Operations
+### Logging
+- **Error Logging** - Basic error logging infrastructure
 
-- **Compression Utils** - File compression and decompression
-- **File Extensions** - File type handling and management
-- **MIME Type Mapping** - File type detection and MIME type handling
-
-#### Security
-
-- **Encryption** - Data encryption/decryption utilities
-- **External Validations** - Third-party validation integrations
-
-#### Misc Utilities
-
-- **Barcode Generation** - Barcode creation and processing
-- **Custom Logging** - Enhanced logging capabilities
-- **Enum Extensions** - Enhanced enum functionality
-- **Picture Helper** - Image processing utilities
-- **Text Handlers** - Text manipulation and processing
+### Reporting
+- **Report Infrastructure** - Base reporting components
 
 ## Installation
 
@@ -43,95 +31,62 @@ dotnet add package Acontplus.Common.Core
 
 ## Usage Examples
 
-### Base Entity Usage
-
+### Base Entity
 ```csharp
-public class MyEntity : BaseEntity
+public class Product : BaseEntity
 {
-    // Your entity properties
+    public string Name { get; set; }
+    public decimal Price { get; set; }
 }
 ```
 
-[//]: # (### Error Logging)
+### Enum Extensions
+```csharp
+public enum Status { Active, Inactive }
 
-[//]: # (```csharp)
+// Get display name or description
+var displayName = Status.Active.GetDisplayName();
 
-[//]: # (public void MyMethod&#40;&#41;)
+// Parse from string
+var status = "Active".ToEnum<Status>();
+```
 
-[//]: # ({)
+### Data Validation
+```csharp
+var validator = new DataValidations();
+if (!validator.IsValidEmail("test@example.com"))
+{
+    // Handle invalid email
+}
+```
 
-[//]: # (    try)
+## Documentation
 
-[//]: # (    {)
-
-[//]: # (        // Your code)
-
-[//]: # (    })
-
-[//]: # (    catch &#40;Exception ex&#41;)
-
-[//]: # (    {)
-
-[//]: # (        ErrorLog.LogException&#40;ex&#41;;)
-
-[//]: # (    })
-
-[//]: # (})
-
-[//]: # (```)
-
-[//]: # ()
-
-[//]: # (### AWS S3 Operations)
-
-[//]: # (```csharp)
-
-[//]: # (var credentials = new AwsCredentials)
-
-[//]: # ({)
-
-[//]: # (    AccessKey = "your-access-key",)
-
-[//]: # (    SecretKey = "your-secret-key")
-
-[//]: # (};)
-
-[//]: # ()
-
-[//]: # (// S3 operations)
-
-[//]: # (```)
-
-[//]: # ()
-
-[//]: # (### Data Validation)
-
-[//]: # (```csharp)
-
-[//]: # (if &#40;DataValidation.IsValid&#40;myData&#41;&#41;)
-
-[//]: # ({)
-
-[//]: # (    // Process valid data)
-
-[//]: # (})
-
-[//]: # (```)
-
-## Dependencies
-
-- .NET Standard 2.0+
-- AWS SDK for .NET (for AWS features)
-- Additional dependencies can be found in the Dependencies folder
+Full API documentation is available at [https://github.com/Acontplus-S-A-S/acontplus-common/wiki]
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+We welcome contributions! Please follow these steps:
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
 
-## License
-
-[MIT License]
+See our [contribution guidelines](https://github.com/Acontplus-S-A-S/acontplus-common/blob/main/CONTRIBUTING.md) for more details.
 
 ## Support
 
-For support, please [https://github.com/Acontplus-S-A-S/acontplus-common]
+For issues or questions:
+- Open an issue on [GitHub](https://github.com/Acontplus-S-A-S/acontplus-common/issues)
+- Email support@acontplus.com
+
+## License
+
+MIT License. See [LICENSE](https://github.com/Acontplus-S-A-S/acontplus-common/blob/main/LICENSE) for full details.
+
+## Author
+
+[Ivan Paz](https://linktr.ee/iferpaz7)
+
+## Company
+
+[Acontplus S.A.S.](https://acontplus.com.ec)

@@ -19,6 +19,10 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 [MIT License]
 
-## Support
+## Author
 
-For support, please [https://github.com/Acontplus-S-A-S/acontplus-common]
+[Ivan Paz](https://linktr.ee/iferpaz7)
+
+## Company
+
+[Acontplus S.A.S.](https://acontplus.com.ec)

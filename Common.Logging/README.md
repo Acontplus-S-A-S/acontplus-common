@@ -71,11 +71,10 @@ Contributions to improve this library are welcome. To report bugs or suggestions
 ## License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Contact
-If you have any questions or need support, please feel free to contact us.
+## Author
 
-- **Author:** Ivan Paz
-- **Company:** Acontplus S.A.S.
-- **Email:** ifer343@gmail.com
+[Ivan Paz](https://linktr.ee/iferpaz7)
 
----
+## Company
+
+[Acontplus S.A.S.](https://acontplus.com.ec)

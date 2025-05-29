@@ -3,28 +3,28 @@
 namespace Common.Core.Abstractions;
 
 /// <summary>
-/// Generic repository interface that defines common operations for data access
+/// Generic repository interface defining common data access operations
 /// </summary>
-/// <typeparam name="T">Entity type that will be managed by the repository</typeparam>
-public interface IRepository<T> where T : class
+/// <typeparam name="T">Entity type</typeparam>
+public interface IRepository<T> : IDisposable where T : class
 {
     #region Query Methods
 
     /// <summary>
-    /// Gets an entity by its identifier
+    /// Gets an entity by its primary key
     /// </summary>
-    /// <param name="id">Entity identifier</param>
+    /// <param name="id">Primary key value</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The entity if exists, null otherwise</returns>
+    /// <returns>The entity if found, otherwise null</returns>
     Task<T> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets the first entity that matches the specified condition
+    /// Gets the first entity that matches the predicate
     /// </summary>
-    /// <param name="predicate">Condition expression</param>
-    /// <param name="includeProperties">Related properties to include</param>
+    /// <param name="predicate">Filter condition</param>
+    /// <param name="includeProperties">Navigation properties to include</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>The first entity that matches the condition</returns>
+    /// <returns>The first matching entity or null</returns>
     Task<T> GetFirstOrDefaultAsync(
         Expression<Func<T, bool>> predicate,
         string[] includeProperties = null,
@@ -33,29 +33,29 @@ public interface IRepository<T> where T : class
     /// <summary>
     /// Gets all entities
     /// </summary>
-    /// <param name="includeProperties">Related properties to include</param>
+    /// <param name="includeProperties">Navigation properties to include</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>List of all entities</returns>
+    /// <returns>All entities</returns>
     Task<IEnumerable<T>> GetAllAsync(
         string[] includeProperties = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets entities that match the specified condition
+    /// Finds entities that match the predicate
     /// </summary>
-    /// <param name="predicate">Condition expression</param>
-    /// <param name="includeProperties">Related properties to include</param>
+    /// <param name="predicate">Filter condition</param>
+    /// <param name="includeProperties">Navigation properties to include</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>List of entities that match the condition</returns>
+    /// <returns>Matching entities</returns>
     Task<IEnumerable<T>> FindAsync(
         Expression<Func<T, bool>> predicate,
         string[] includeProperties = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets entities in a paged manner
+    /// Gets a paged result of entities
     /// </summary>
-    /// <param name="pagination">Object with pagination information</param>
+    /// <param name="pagination">Pagination parameters</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paged result</returns>
     Task<PagedResult<T>> GetPagedAsync(
@@ -63,11 +63,11 @@ public interface IRepository<T> where T : class
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets entities in a paged manner applying a filter
+    /// Gets a paged result of entities that match the predicate
     /// </summary>
-    /// <param name="pagination">Object with pagination information</param>
-    /// <param name="predicate">Condition expression</param>
-    /// <param name="includeProperties">Related properties to include</param>
+    /// <param name="pagination">Pagination parameters</param>
+    /// <param name="predicate">Filter condition</param>
+    /// <param name="includeProperties">Navigation properties to include</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Paged result</returns>
     Task<PagedResult<T>> GetPagedAsync(
@@ -77,21 +77,21 @@ public interface IRepository<T> where T : class
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Checks if any entity matches the specified condition
+    /// Checks if any entity matches the predicate
     /// </summary>
-    /// <param name="predicate">Condition expression</param>
+    /// <param name="predicate">Filter condition</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>True if at least one entity exists, false otherwise</returns>
+    /// <returns>True if any match exists</returns>
     Task<bool> ExistsAsync(
         Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Counts the number of entities that match the specified condition
+    /// Counts entities that match the predicate
     /// </summary>
-    /// <param name="predicate">Condition expression</param>
+    /// <param name="predicate">Filter condition</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Number of entities</returns>
+    /// <returns>Count of matching entities</returns>
     Task<int> CountAsync(
         Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default);
@@ -105,58 +105,82 @@ public interface IRepository<T> where T : class
     /// </summary>
     /// <param name="entity">Entity to add</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Asynchronous task</returns>
-    Task AddAsync(T entity, CancellationToken cancellationToken = default);
+    /// <returns>The added entity</returns>
+    Task<T> AddAsync(T entity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a range of entities
+    /// Adds multiple entities
     /// </summary>
     /// <param name="entities">Entities to add</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Asynchronous task</returns>
-    Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
+    /// <returns>The added entities</returns>
+    Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Updates an existing entity
     /// </summary>
     /// <param name="entity">Entity to update</param>
-    /// <returns>Asynchronous task</returns>
-    Task UpdateAsync(T entity);
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The updated entity</returns>
+    Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Updates a range of entities
+    /// Updates multiple entities
     /// </summary>
     /// <param name="entities">Entities to update</param>
-    /// <returns>Asynchronous task</returns>
-    Task UpdateRangeAsync(IEnumerable<T> entities);
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>The updated entities</returns>
+    Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Deletes an entity
     /// </summary>
     /// <param name="entity">Entity to delete</param>
-    /// <returns>Asynchronous task</returns>
-    Task DeleteAsync(T entity);
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes an entity by its identifier
+    /// Deletes an entity by its primary key
     /// </summary>
-    /// <param name="id">Entity identifier</param>
-    /// <returns>Asynchronous task</returns>
-    Task DeleteByIdAsync(object id);
+    /// <param name="id">Primary key value</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task DeleteByIdAsync(object id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes a range of entities
+    /// Deletes multiple entities
     /// </summary>
     /// <param name="entities">Entities to delete</param>
-    /// <returns>Asynchronous task</returns>
-    Task DeleteRangeAsync(IEnumerable<T> entities);
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task DeleteRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Deletes entities that match the specified condition
+    /// Deletes entities that match the predicate
     /// </summary>
-    /// <param name="predicate">Condition expression</param>
-    /// <returns>Asynchronous task</returns>
-    Task DeleteAsync(Expression<Func<T, bool>> predicate);
+    /// <param name="predicate">Filter condition</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task DeleteAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Performs a bulk delete operation
+    /// </summary>
+    /// <param name="predicate">Filter condition</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Number of deleted records</returns>
+    Task<int> BulkDeleteAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Performs a bulk update operation
+    /// </summary>
+    /// <param name="predicate">Filter condition</param>
+    /// <param name="propertyExpression">Property to update</param>
+    /// <param name="newValue">New value for the property</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Number of updated records</returns>
+    Task<int> BulkUpdateAsync<TProperty>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TProperty>> propertyExpression,
+        TProperty newValue,
+        CancellationToken cancellationToken = default);
 
     #endregion
 }

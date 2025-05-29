@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Common.TestApi.Repositories.Implementations;
 
-public class UserRepository : Repository<Usuario>, IUserRepository
+public class UserRepository : BaseRepository<Usuario>, IUserRepository
 {
     public UserRepository(TestContext context) : base(context)
     {

@@ -6,7 +6,7 @@ namespace Common.Infrastructure.Repository.Implementations;
 /// Generic repository implementation that provides common data access operations
 /// </summary>
 /// <typeparam name="T">Entity type that will be managed by the repository</typeparam>
-public class Repository<T> : IRepository<T> where T : class
+public class BaseRepository<T> : IRepository<T> where T : class
 {
     protected readonly DbContext _context;
     protected readonly DbSet<T> _dbSet;
@@ -15,7 +15,7 @@ public class Repository<T> : IRepository<T> where T : class
     /// Constructor that initializes the repository with a database context
     /// </summary>
     /// <param name="context">Database context</param>
-    public Repository(DbContext context)
+    public BaseRepository(DbContext context)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _dbSet = context.Set<T>();

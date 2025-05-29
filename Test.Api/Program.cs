@@ -1,6 +1,6 @@
-﻿using Common.Data;
-using Common.Infrastructure.Data.Repository.Implementations;
-using Common.Infrastructure.Data.Repository.Interfaces;
+﻿using Common.Core.Abstractions;
+using Common.Data;
+using Common.Infrastructure.Repository.Implementations;
 using Test.Api;
 using Test.Api.Services;
 

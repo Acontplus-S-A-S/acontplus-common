@@ -24,8 +24,7 @@ builder.Services.AddOpenApi();
 
 string[] nameSpaces =
 [
-    "Common.Infrastructure.Data.Repository.Implementations",
-    "Common.Infrastructure.Repositories",
+    "Common.Infrastructure.Repository.Implementations",
     "Common.Reports.Services",
     "Common.TestApi.Services",
     "Common.TestApi.Repositories.Implementations",

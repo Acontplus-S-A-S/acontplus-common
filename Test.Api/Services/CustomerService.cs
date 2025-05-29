@@ -1,6 +1,5 @@
 ﻿using System.Data;
-using Common.Infrastructure.Data.Repository.Interfaces;
-
+using Common.Core.Abstractions;
 namespace Test.Api.Services;
 
 public interface ICustomerService

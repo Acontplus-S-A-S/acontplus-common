@@ -13,8 +13,8 @@ POST {{Common.TestApi_HostAddress}}/api/usuario
 Content-Type: application/json
 
 {
-  "username": "ivan",
-  "email": "ifer343@gmail.com"
+  "username": "jose",
+  "email": "jose@gmail.com"
 }
 
 ###

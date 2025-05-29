@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace Common.Infrastructure.Data.Repository.Implementations;
+namespace Common.Infrastructure.Repository.Implementations;
 
 /// <summary>
 /// Generic repository implementation that provides common data access operations
@@ -24,15 +24,15 @@ public class Repository<T> : IRepository<T> where T : class
     #region Query Methods Implementation
 
     /// <inheritdoc />
-    public virtual async Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default)
+    public virtual async Task<T> GetByIdAsync(object id, CancellationToken cancellationToken = default)
     {
         return await _dbSet.FindAsync(new[] { id }, cancellationToken);
     }
 
     /// <inheritdoc />
-    public virtual async Task<T?> GetFirstOrDefaultAsync(
+    public virtual async Task<T> GetFirstOrDefaultAsync(
         Expression<Func<T, bool>> predicate,
-        string[]? includeProperties = null,
+        string[] includeProperties = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<T> query = _dbSet;
@@ -48,7 +48,7 @@ public class Repository<T> : IRepository<T> where T : class
 
     /// <inheritdoc />
     public virtual async Task<IEnumerable<T>> GetAllAsync(
-        string[]? includeProperties = null,
+        string[] includeProperties = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<T> query = _dbSet;
@@ -65,7 +65,7 @@ public class Repository<T> : IRepository<T> where T : class
     /// <inheritdoc />
     public virtual async Task<IEnumerable<T>> FindAsync(
         Expression<Func<T, bool>> predicate,
-        string[]? includeProperties = null,
+        string[] includeProperties = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<T> query = _dbSet;
@@ -115,7 +115,7 @@ public class Repository<T> : IRepository<T> where T : class
     public virtual async Task<PagedResult<T>> GetPagedAsync(
         PaginationDto pagination,
         Expression<Func<T, bool>> predicate,
-        string[]? includeProperties = null,
+        string[] includeProperties = null,
         CancellationToken cancellationToken = default)
     {
         IQueryable<T> query = _dbSet;
@@ -164,7 +164,7 @@ public class Repository<T> : IRepository<T> where T : class
 
     /// <inheritdoc />
     public virtual async Task<int> CountAsync(
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default)
     {
         return predicate == null
@@ -250,7 +250,7 @@ public class Repository<T> : IRepository<T> where T : class
     /// <param name="sortBy">Property name to sort by</param>
     /// <param name="sortDirection">Sort direction (asc or desc)</param>
     /// <returns>Sorted query</returns>
-    protected virtual IQueryable<T> ApplySorting(IQueryable<T> query, string sortBy, string? sortDirection)
+    protected virtual IQueryable<T> ApplySorting(IQueryable<T> query, string sortBy, string sortDirection)
     {
         // This is a basic implementation that assumes sortBy is a valid property name
         // In a production environment, you would want to add more validation and error handling

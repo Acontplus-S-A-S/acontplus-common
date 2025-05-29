@@ -1,4 +1,6 @@
-﻿namespace Common.Infrastructure.Data.Repository.Implementations;
+﻿using Common.Infrastructure.Mapping;
+
+namespace Common.Infrastructure.Repository.Implementations;
 
 public class AdoRepository(
     IConfiguration configuration,

@@ -1,5 +1,4 @@
-﻿using Common.Infrastructure.Data.Repository.Models;
-using Common.TestApi.DTOs;
+﻿using Common.TestApi.DTOs;
 using Common.TestApi.Entities;
 
 namespace Common.TestApi.Controllers
@@ -27,7 +26,7 @@ namespace Common.TestApi.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Put(int id)
         {
- 
+
             return Ok(await usuarioService.DeleteAsync(id));
         }
 

@@ -1,10 +1,9 @@
 ﻿global using System.Collections.Concurrent;
 global using System.Data;
-global using Common.Core.Entities;
-global using Common.Infrastructure.Data.Mapping;
+global using Common.Core.Abstractions;
+global using Common.Core.Base;
+global using Common.Core.Models;
 global using Common.Infrastructure.Data.Parameters;
-global using Common.Infrastructure.Data.Repository.Interfaces;
-global using Common.Infrastructure.Data.Repository.Models;
 global using Microsoft.Data.SqlClient;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.Extensions.Configuration;

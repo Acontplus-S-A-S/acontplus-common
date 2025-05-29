@@ -1,4 +1,4 @@
-﻿using Common.Infrastructure.Core.Entity;
+﻿using Common.Infrastructure.Entity;
 
 namespace Common.Infrastructure.Data.Extensions;
 

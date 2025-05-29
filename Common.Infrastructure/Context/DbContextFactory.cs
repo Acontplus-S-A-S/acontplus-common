@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Core.Context;
+﻿namespace Common.Infrastructure.Context;
 
 public class DbContextFactory(IDictionary<string, BaseContext> context)
 {

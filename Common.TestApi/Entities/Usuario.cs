@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
-using Common.Core.Entities;
+using Common.Core.Base;
 
 namespace Common.TestApi.Entities
 {

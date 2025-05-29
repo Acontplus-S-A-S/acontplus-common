@@ -1,4 +1,4 @@
-﻿using Common.Infrastructure.Data.Repository.Interfaces;
+﻿using Common.Core.Abstractions;
 
 namespace Common.TestApi.Services;
 

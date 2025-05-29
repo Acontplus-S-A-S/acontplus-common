@@ -1,5 +1,4 @@
-﻿using Common.Infrastructure.Data.Repository.Implementations;
-using Common.Infrastructure.Data.Repository.Models;
+﻿using Common.Infrastructure.Repository.Implementations;
 using Common.TestApi.Data;
 using Common.TestApi.Entities;
 using Common.TestApi.Repositories.Interfaces;

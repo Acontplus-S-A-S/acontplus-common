@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
 
-namespace Common.Infrastructure.Core.Context;
+namespace Common.Infrastructure.Context;
 
 public class SqlServerModelBuilderOptions
 {
@@ -130,7 +130,7 @@ public class BaseContext(DbContextOptions options) : DbContext(options)
             {
                 builder.Entity(entityType.Name)
                     .Property<DateTime>(property.Name)
-                    .HasConversion<DateTime>(
+                    .HasConversion(
                         v => DateTime.SpecifyKind(v, DateTimeKind.Utc),
                         v => DateTime.SpecifyKind(v, DateTimeKind.Utc)
                     );
@@ -143,8 +143,8 @@ public class BaseContext(DbContextOptions options) : DbContext(options)
                 builder.Entity(entityType.Name)
                     .Property<DateTime?>(property.Name)
                     .HasConversion<DateTime?>(
-                        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null,
-                        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null
+                        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : null,
+                        v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : null
                     );
             }
         }

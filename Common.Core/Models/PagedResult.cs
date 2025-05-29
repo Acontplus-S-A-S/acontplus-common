@@ -9,7 +9,7 @@ public class PagedResult<T> where T : class
     /// <summary>
     /// Items in the current page
     /// </summary>
-    public IEnumerable<T> Items { get; set; } = new List<T>();
+    public IEnumerable<T> Items { get; set; } = [];
 
     /// <summary>
     /// Current page number (1-based)
@@ -40,4 +40,27 @@ public class PagedResult<T> where T : class
     /// Flag indicating if there is a next page
     /// </summary>
     public bool HasNextPage => PageIndex < TotalPages;
+
+    /// <summary>
+    /// Default constructor
+    /// </summary>
+    public PagedResult()
+    {
+    }
+
+    /// <summary>
+    /// Constructor with parameters
+    /// </summary>
+    /// <param name="items">Items in the current page</param>
+    /// <param name="pageIndex">Current page number (1-based)</param>
+    /// <param name="pageSize">Size of a page</param>
+    /// <param name="totalCount">Total count of items across all pages</param>
+    public PagedResult(IEnumerable<T> items, int pageIndex, int pageSize, int totalCount)
+    {
+        Items = items ?? [];
+        PageIndex = pageIndex;
+        PageSize = pageSize;
+        TotalCount = totalCount;
+        TotalPages = pageSize > 0 ? (int)Math.Ceiling((double)totalCount / pageSize) : 0;
+    }
 }

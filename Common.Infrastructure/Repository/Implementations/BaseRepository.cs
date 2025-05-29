@@ -391,15 +391,53 @@ public class BaseRepository<T> : IRepository<T> where T : class
         TProperty newValue,
         CancellationToken cancellationToken = default)
     {
-        using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(BulkUpdateAsync)}");
+        // using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(BulkUpdateAsync)}"); // Uncomment if DiagnosticConfig is available
         try
         {
             ArgumentNullException.ThrowIfNull(predicate);
             ArgumentNullException.ThrowIfNull(propertyExpression);
 
+            // Construct the parameter for the SetPropertyCalls<T> lambda
+            var setPropertyCallsParameter = Expression.Parameter(typeof(SetPropertyCalls<T>), "s");
+
+            // Get the SetProperty method that accepts an Expression<Func<TSource, TProperty>> and TProperty
+            // We need to be specific about the method to avoid ambiguity.
+            // Look for SetProperty<TProperty>(Expression<Func<TSource, TProperty>> propertyExpression, TProperty value)
+            var setPropertyMethod = typeof(SetPropertyCalls<T>)
+                .GetMethods()
+                .Where(m => m.Name == nameof(SetPropertyCalls<T>.SetProperty) && m.IsGenericMethod)
+                .Select(m => m.MakeGenericMethod(typeof(TProperty)))
+                .Where(m =>
+                {
+                    var parameters = m.GetParameters();
+                    return parameters.Length == 2 &&
+                           parameters[0].ParameterType == typeof(Expression<Func<T, TProperty>>) &&
+                           parameters[1].ParameterType == typeof(TProperty);
+                })
+                .FirstOrDefault();
+
+            if (setPropertyMethod == null)
+            {
+                throw new InvalidOperationException($"Could not find the expected SetProperty method on {typeof(SetPropertyCalls<T>).Name}.");
+            }
+
+            // Create the method call expression for SetProperty
+            var setPropertyCall = Expression.Call(
+                setPropertyCallsParameter, // instance on which to call the method (the 's' parameter)
+                setPropertyMethod,        // the SetProperty method info
+                propertyExpression,       // the first argument: Expression<Func<T, TProperty>>
+                Expression.Constant(newValue, typeof(TProperty)) // the second argument: TProperty newValue
+            );
+
+            // Create the lambda expression for ExecuteUpdateAsync: s => s.SetProperty(propertyExpression, newValue)
+            var executeUpdateLambda = Expression.Lambda<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>>(
+                setPropertyCall,
+                setPropertyCallsParameter
+            );
+
             return await _dbSet
                 .Where(predicate)
-                .ExecuteUpdateAsync(setters => setters.SetProperty(propertyExpression, newValue), cancellationToken)
+                .ExecuteUpdateAsync(executeUpdateLambda, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (Exception ex)

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Common.Core.Entities;
+namespace Common.Core.Base;
 
 public class Report : BaseEntity
 {

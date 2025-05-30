@@ -22,7 +22,7 @@ public static class SimpleEntityRegistration
     /// <param name="entityTypes">An array of entity types to register.</param>
     public static void RegisterEntities(
         ModelBuilder modelBuilder,
-        Type? dbContextType, // NEW PARAMETER: Allows reflection on DbContext for DbSet names
+        Type? dbContextType,
         Dictionary<Type, (string? schema, string? table)>? nameMap,
         Dictionary<Type, Type>? customConfigurations,
         params Type[] entityTypes)
@@ -42,25 +42,42 @@ public static class SimpleEntityRegistration
             string? determinedTableName = null;
             string? determinedSchemaName = null;
 
+            // Flags to track if table/schema names were explicitly provided by the user
+            bool isTableNameExplicitlyProvided = false;
+            bool isSchemaNameExplicitlyProvided = false;
+
             // 1. Prioritize nameMap for both table and schema
             if (nameMap != null && nameMap.TryGetValue(entityType, out var mapConfig))
             {
-                determinedTableName = mapConfig.table;
-                determinedSchemaName = mapConfig.schema;
-            }
-
-            // 2. If not set by nameMap, check [Table] attribute
-            if (determinedTableName == null || determinedSchemaName == null) // Check if either is still null
-            {
-                var tableAttribute = entityType.GetCustomAttribute<TableAttribute>();
-                if (tableAttribute != null)
+                if (mapConfig.table != null)
                 {
-                    if (determinedTableName == null) determinedTableName = tableAttribute.Name;
-                    if (determinedSchemaName == null) determinedSchemaName = tableAttribute.Schema;
+                    determinedTableName = mapConfig.table;
+                    isTableNameExplicitlyProvided = true;
+                }
+                if (mapConfig.schema != null)
+                {
+                    determinedSchemaName = mapConfig.schema;
+                    isSchemaNameExplicitlyProvided = true;
                 }
             }
 
-            // 3. If table name is still null, try to get it from DbSet property name, then fallback to class name
+            // 2. If not set by nameMap, check [Table] attribute
+            var tableAttribute = entityType.GetCustomAttribute<TableAttribute>();
+            if (tableAttribute != null)
+            {
+                if (!isTableNameExplicitlyProvided && tableAttribute.Name != null)
+                {
+                    determinedTableName = tableAttribute.Name;
+                    isTableNameExplicitlyProvided = true; // Mark as explicitly provided by attribute
+                }
+                if (!isSchemaNameExplicitlyProvided && tableAttribute.Schema != null)
+                {
+                    determinedSchemaName = tableAttribute.Schema;
+                    isSchemaNameExplicitlyProvided = true; // Mark as explicitly provided by attribute
+                }
+            }
+
+            // 3. If table name is still null (meaning it's convention-based), try to get it from DbSet property name, then fallback to class name
             if (determinedTableName == null)
             {
                 if (dbContextType != null && typeof(DbContext).IsAssignableFrom(dbContextType))
@@ -83,15 +100,22 @@ public static class SimpleEntityRegistration
                 }
             }
 
-            // Apply the determined name and schema if either a schema was determined,
-            // or if a table name was explicitly set in nameMap (even if schema is null).
-            // This ensures ToTable is only called when necessary and with valid parameters.
-            if (determinedSchemaName != null || (nameMap != null && nameMap.ContainsKey(entityType) && nameMap[entityType].table != null))
+            // Apply the determined name and schema based on explicit intent
+            if (isTableNameExplicitlyProvided)
             {
-                // Ensure determinedTableName is not null before calling ToTable, as ToTable(null, schema) is invalid.
-                // The logic above ensures determinedTableName is always non-null if we reach this point and need to call ToTable.
+                // If the table name was explicitly provided (from nameMap or [Table] attribute),
+                // then use ToTable to set both the name and schema.
                 entityBuilder.ToTable(determinedTableName!, determinedSchemaName);
             }
+            else if (isSchemaNameExplicitlyProvided)
+            {
+                // If only the schema was explicitly provided (and table name is convention-based),
+                // set the schema using Metadata, which allows EF Core's naming conventions
+                // (like snake_case) to still apply to the table name.
+                entityBuilder.Metadata.SetSchema(determinedSchemaName);
+            }
+            // If neither table nor schema was explicitly provided, do nothing here.
+            // EF Core's default conventions (including any global naming conventions) will apply to both.
 
 
             // 4. Apply the BaseEntityTypeConfiguration for common properties/conventions

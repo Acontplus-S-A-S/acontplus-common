@@ -3,7 +3,7 @@ using Common.Core.Base;
 
 namespace Common.TestApi.Entities
 {
-    //[Table("usuarios", Schema = "seguridad")]
+    //[Table("usuario", Schema = "seguridad")]
     public class Usuario : BaseEntity
     {
         public required string Username { get; set; }

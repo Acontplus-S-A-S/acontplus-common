@@ -49,7 +49,8 @@ builder.Services.AddSwaggerDocumentation();
 builder.Services.AddVersioningAndSwagger();
 
 builder.Services.AddDbContextPool<TestContext>(options =>
-            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")).UseSnakeCaseNamingConvention());
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+            .UseSnakeCaseNamingConvention());
 
 var app = builder.Build();
 

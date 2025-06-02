@@ -15,12 +15,5 @@ public class LoggingOptions
     public string S3SecretKey { get; set; }
     public bool EnableDatabaseLogging { get; set; } = false;
     public string DatabaseConnectionString { get; set; }
-    public LogEventLevel MinimumLogLevel { get; set; } = LogEventLevel.Information;
-    public LoggingLevelSwitch LevelSwitch { get; set; } = new LoggingLevelSwitch(LogEventLevel.Information);
     public string TimeZoneId { get; set; } = "UTC"; // Default to UTC
-
-    public void UpdateLogLevel(LogEventLevel logEventLevel)
-    {
-        LevelSwitch.MinimumLevel = logEventLevel;
-    }
 }

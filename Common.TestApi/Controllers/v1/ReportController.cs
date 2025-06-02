@@ -15,7 +15,7 @@ public class ReportController(
     public async Task<IActionResult> Get()
     {
         var cantidad = Convert.ToInt32(configuration.GetSection("cantidad").Value);
-        var dt = await emailService.GetAsync(cantidad);
+        var dt = await emailService.GetAsync(1);
         var dataRow = dt.Rows[0];
 
         var mainParams = JsonConvert.DeserializeObject<Notification>(dataRow.Field<string>("params"));

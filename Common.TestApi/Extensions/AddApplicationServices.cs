@@ -9,11 +9,11 @@ public static class ApplicationServicesExtensions
     IConfiguration configuration)
     {
 
-        var serviceProvider = services.BuildServiceProvider();
-        var loggingOptions = serviceProvider.GetService<LoggingOptions>();
+        //var serviceProvider = services.BuildServiceProvider();
+        //var loggingOptions = serviceProvider.GetService<LoggingOptions>();
 
-        // Dynamically update the log level
-        loggingOptions.UpdateLogLevel(LogEventLevel.Debug);
+        //// Dynamically update the log level
+        //loggingOptions.UpdateLogLevel(LogEventLevel.Debug);
         return services;
     }
 }

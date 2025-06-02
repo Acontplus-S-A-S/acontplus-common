@@ -16,7 +16,7 @@ public class BarcodeController(IUsuarioService usuarioService) : BaseApiControll
         };
         var barcode = BarcodeGen.Create(barcodeConfig);
 
-        var response = await usuarioService.CreateAsync();
+        //var response = await usuarioService.CreateAsync();
 
         return File(barcode, "image/png", "ci.png");
     }

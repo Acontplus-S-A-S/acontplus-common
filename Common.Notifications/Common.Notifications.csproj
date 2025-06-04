@@ -6,7 +6,7 @@
     <Nullable>disable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>Acontplus.Common.Notifications</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.2.0</Version>
     <Authors>Ivan Paz</Authors>
     <Company>Acontplus S.A.S.</Company>
     <Description>Lib to send notifications</Description>
@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="Acontplus.Common.Utilities" />
+    <PackageReference Include="AWSSDK.SimpleEmailV2" />
     <PackageReference Include="MailKit" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Newtonsoft.Json" />

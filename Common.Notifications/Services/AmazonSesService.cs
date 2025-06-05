@@ -314,6 +314,7 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         return request;
     }
 
+    // Modificar el método BuildSimpleEmailContentAsync
     private async Task<EmailContent> BuildSimpleEmailContentAsync(EmailModel email, CancellationToken ct)
     {
         var emailContent = new EmailContent
@@ -327,7 +328,8 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
 
         string emailBody = email.Body;
 
-        if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
+        // Cambiar la condición: procesar template cuando IsHtml es true Y hay template
+        if (email.IsHtml && !string.IsNullOrEmpty(email.Template))
         {
             emailBody = await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false);
         }
@@ -341,13 +343,14 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         return emailContent;
     }
 
+    // También modificar BuildRawEmailContentWithAttachmentsAsync
     private async Task<EmailContent> BuildRawEmailContentWithAttachmentsAsync(EmailModel email, CancellationToken ct)
     {
         var message = new StringBuilder();
         var boundary = $"----=_NextPart_{Guid.NewGuid():N}";
         var alternativeBoundary = $"----=_alt_{Guid.NewGuid():N}";
 
-        // Headers
+        // Headers (mantener igual)
         message.AppendLine($"From: {FormatEmailAddress(email.SenderName, email.SenderEmail)}");
 
         var toAddresses = ParseAndValidateRecipients(email.RecipientEmail, "To");
@@ -386,16 +389,17 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         message.AppendLine("Content-Transfer-Encoding: quoted-printable");
         message.AppendLine();
 
-        var bodyContent = email.IsHtml
-            ? email.Body
-            : await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false);
+        // Cambiar la condición aquí también
+        var bodyContent = email.IsHtml && !string.IsNullOrEmpty(email.Template)
+            ? await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false)
+            : email.Body;
 
         message.AppendLine(bodyContent);
         message.AppendLine();
 
         message.AppendLine($"--{alternativeBoundary}--");
 
-        // Attachments
+        // Attachments (resto igual)
         if (email.Files?.Count > 0)
         {
             foreach (var file in email.Files)
@@ -428,7 +432,6 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         };
     }
-
     private async Task<string> ProcessTemplateAsync(
         string templateName,
         string jsonData,

@@ -467,11 +467,25 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             var logoBytes = await File.ReadAllBytesAsync(logoPath, ct).ConfigureAwait(false);
             var logoBase64 = Convert.ToBase64String(logoBytes);
             var logoMimeType = GetMimeType(logoPath);
-            templateData["Logo"] = $"data:{logoMimeType};base64,{logoBase64}";
+            var logoDataUri = $"data:{logoMimeType};base64,{logoBase64}";
+
+            // Agregar múltiples formas de referenciar el logo en el template
+            templateData["Logo"] = logoDataUri;
+            templateData["logo"] = logoDataUri;
+            templateData["img-logo"] = logoDataUri;
+            templateData["ImgLogo"] = logoDataUri;
+
+            _logger.LogDebug("Logo processed successfully: {LogoPath} -> {MimeType}", logoPath, logoMimeType);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to process logo '{Logo}'", logo);
+
+            // Agregar placeholders vacíos para evitar errores en el template
+            templateData["Logo"] = "";
+            templateData["logo"] = "";
+            templateData["img-logo"] = "";
+            templateData["ImgLogo"] = "";
         }
     }
 
@@ -634,13 +648,25 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
 
     private static string ProcessTemplate(string template, IDictionary<string, object> data)
     {
+        // Primero hacer reemplazos directos para sintaxis [key]
+        string processedTemplate = template;
+        foreach (var kvp in data)
+        {
+            var placeholder = $"[{kvp.Key}]";
+            if (processedTemplate.Contains(placeholder))
+            {
+                processedTemplate = processedTemplate.Replace(placeholder, kvp.Value?.ToString() ?? "");
+            }
+        }
+
+        // Luego procesar con Scriban para sintaxis {{ key }}
         var scriptObject = new ScriptObject();
         foreach (var prop in data)
         {
             scriptObject.Add(LowerFirstCharacter(prop.Key), prop.Value);
         }
 
-        var templateObj = Template.Parse(template);
+        var templateObj = Template.Parse(processedTemplate);
         return templateObj.Render(scriptObject);
     }
 

@@ -329,7 +329,7 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         string emailBody = email.Body;
 
         // Cambiar la condición: procesar template cuando IsHtml es true Y hay template
-        if (email.IsHtml && !string.IsNullOrEmpty(email.Template))
+        if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
         {
             emailBody = await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false);
         }
@@ -390,7 +390,7 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         message.AppendLine();
 
         // Cambiar la condición aquí también
-        var bodyContent = email.IsHtml && !string.IsNullOrEmpty(email.Template)
+        var bodyContent = !email.IsHtml && !string.IsNullOrEmpty(email.Template)
             ? await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false)
             : email.Body;
 

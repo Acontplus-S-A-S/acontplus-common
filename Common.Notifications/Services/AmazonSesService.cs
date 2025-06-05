@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using Amazon.Runtime;
 using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
@@ -19,12 +20,18 @@ using Template = Scriban.Template;
 
 namespace Common.Notifications.Services;
 
-public class AmazonSesService : IMailKitService, IDisposable
+public sealed class AmazonSesService : IMailKitService, IDisposable
 {
     private const int MaxSesBulkRecipients = 50;
     private const int DefaultMaxSendRate = 14; // SES default rate limit per region
     private const int DefaultBatchSize = 50;
     private const int DefaultBatchDelayMs = 100;
+
+    // Email validation regex - more comprehensive
+    private static readonly Regex EmailValidationRegex = new(
+        @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+        RegexOptions.Compiled | RegexOptions.IgnoreCase,
+        TimeSpan.FromMilliseconds(100));
 
     private readonly IConfiguration _configuration;
     private readonly ILogger<AmazonSesService> _logger;
@@ -92,7 +99,7 @@ public class AmazonSesService : IMailKitService, IDisposable
 
     public async Task<bool> SendAsync(EmailModel email, CancellationToken ct = default)
     {
-        if (email == null) throw new ArgumentNullException(nameof(email));
+        ArgumentNullException.ThrowIfNull(email);
 
         using var activity = StartActivity("SendEmail");
         activity?.AddTag("recipient.count", 1);
@@ -124,7 +131,7 @@ public class AmazonSesService : IMailKitService, IDisposable
 
     public async Task<bool> SendBulkAsync(IEnumerable<EmailModel> emails, CancellationToken ct = default)
     {
-        if (emails == null) throw new ArgumentNullException(nameof(emails));
+        ArgumentNullException.ThrowIfNull(emails);
 
         var emailList = emails.ToList();
         if (emailList.Count == 0) return true;
@@ -180,10 +187,8 @@ public class AmazonSesService : IMailKitService, IDisposable
         IEnumerable<BulkEmailDestination> destinations,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrEmpty(templateName))
-            throw new ArgumentNullException(nameof(templateName));
-        if (destinations == null)
-            throw new ArgumentNullException(nameof(destinations));
+        ArgumentException.ThrowIfNullOrEmpty(templateName);
+        ArgumentNullException.ThrowIfNull(destinations);
 
         if (string.IsNullOrEmpty(_defaultFromEmail))
         {
@@ -216,7 +221,6 @@ public class AmazonSesService : IMailKitService, IDisposable
             {
                 await EnforceRateLimitAsync(ct).ConfigureAwait(false);
 
-                // Correct SES V2 bulk email request structure
                 var request = new SendBulkEmailRequest
                 {
                     FromEmailAddress = _defaultFromEmail,
@@ -232,9 +236,9 @@ public class AmazonSesService : IMailKitService, IDisposable
                     {
                         Destination = new Destination
                         {
-                            ToAddresses = dest.Destination.ToAddresses,
-                            CcAddresses = dest.Destination.CcAddresses ?? new List<string>(),
-                            BccAddresses = dest.Destination.BccAddresses ?? new List<string>()
+                            ToAddresses = dest.Destination.ToAddresses ?? [],
+                            CcAddresses = dest.Destination.CcAddresses ?? [],
+                            BccAddresses = dest.Destination.BccAddresses ?? []
                         },
                         ReplacementEmailContent = new ReplacementEmailContent
                         {
@@ -245,6 +249,7 @@ public class AmazonSesService : IMailKitService, IDisposable
                         }
                     }).ToList()
                 };
+
                 var response = await _bulkRetryPolicy.ExecuteAsync(
                     () => _sesClient.SendBulkEmailAsync(request, ct)).ConfigureAwait(false);
 
@@ -278,23 +283,28 @@ public class AmazonSesService : IMailKitService, IDisposable
 
     private async Task<SendEmailRequest> BuildSendEmailRequestAsync(EmailModel email, CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(email.SenderEmail))
-            throw new ArgumentException("Sender email cannot be empty", nameof(email.SenderEmail));
-
-        if (string.IsNullOrEmpty(email.RecipientEmail))
-            throw new ArgumentException("Recipient email cannot be empty", nameof(email.RecipientEmail));
+        ArgumentException.ThrowIfNullOrEmpty(email.SenderEmail, nameof(email.SenderEmail));
+        ArgumentException.ThrowIfNullOrEmpty(email.RecipientEmail, nameof(email.RecipientEmail));
 
         var request = new SendEmailRequest
         {
             FromEmailAddress = FormatEmailAddress(email.SenderName, email.SenderEmail),
-            Destination = new Destination()
+            Destination = new Destination
+            {
+                ToAddresses = [],
+                CcAddresses = [],
+                BccAddresses = []
+            }
         };
 
-        ParseRecipients(email.RecipientEmail, request.Destination.ToAddresses);
+        // Parse and validate recipients
+        var toAddresses = ParseAndValidateRecipients(email.RecipientEmail, "To");
+        request.Destination.ToAddresses.AddRange(toAddresses);
 
         if (!string.IsNullOrEmpty(email.Cc))
         {
-            ParseRecipients(email.Cc, request.Destination.CcAddresses);
+            var ccAddresses = ParseAndValidateRecipients(email.Cc, "Cc");
+            request.Destination.CcAddresses.AddRange(ccAddresses);
         }
 
         request.Content = email.Files?.Count > 0
@@ -339,11 +349,17 @@ public class AmazonSesService : IMailKitService, IDisposable
 
         // Headers
         message.AppendLine($"From: {FormatEmailAddress(email.SenderName, email.SenderEmail)}");
-        message.AppendLine($"To: {string.Join(", ", ParseRecipients(email.RecipientEmail))}");
+
+        var toAddresses = ParseAndValidateRecipients(email.RecipientEmail, "To");
+        message.AppendLine($"To: {string.Join(", ", toAddresses)}");
 
         if (!string.IsNullOrEmpty(email.Cc))
         {
-            message.AppendLine($"Cc: {string.Join(", ", ParseRecipients(email.Cc))}");
+            var ccAddresses = ParseAndValidateRecipients(email.Cc, "Cc");
+            if (ccAddresses.Count > 0)
+            {
+                message.AppendLine($"Cc: {string.Join(", ", ccAddresses)}");
+            }
         }
 
         message.AppendLine($"Subject: {email.Subject}");
@@ -384,7 +400,7 @@ public class AmazonSesService : IMailKitService, IDisposable
         {
             foreach (var file in email.Files)
             {
-                if (file.Content == null || file.Content.Length == 0)
+                if (file.Content is null or { Length: 0 })
                 {
                     _logger.LogWarning("Skipping empty attachment '{FileName}'", file.FileName);
                     continue;
@@ -518,14 +534,13 @@ public class AmazonSesService : IMailKitService, IDisposable
             .Or<HttpRequestException>()
             .Or<TaskCanceledException>()
             .WaitAndRetryAsync(
-                sleepDurations: new[]
-                {
+                sleepDurations: [
                     TimeSpan.FromSeconds(1),
                     TimeSpan.FromSeconds(2),
                     TimeSpan.FromSeconds(4),
                     TimeSpan.FromSeconds(8),
                     TimeSpan.FromSeconds(16)
-                },
+                ],
                 onRetryAsync: (exception, delay, retryCount, _) =>
                 {
                     _logger.LogWarning(exception,
@@ -543,12 +558,11 @@ public class AmazonSesService : IMailKitService, IDisposable
             .Or<HttpRequestException>()
             .Or<TaskCanceledException>()
             .WaitAndRetryAsync(
-                sleepDurations: new[]
-                {
+                sleepDurations: [
                     TimeSpan.FromSeconds(2),
                     TimeSpan.FromSeconds(4),
                     TimeSpan.FromSeconds(8)
-                },
+                ],
                 onRetryAsync: (exception, delay, retryCount, _) =>
                 {
                     _logger.LogWarning(exception,
@@ -570,17 +584,52 @@ public class AmazonSesService : IMailKitService, IDisposable
         return string.IsNullOrEmpty(name) ? email : $"{name} <{email}>";
     }
 
-    private static List<string> ParseRecipients(string recipients)
+    private static List<string> ParseAndValidateRecipients(string recipients, string type = "Recipient")
     {
-        return recipients.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries)
-                        .Select(r => r.Trim())
-                        .Where(r => !string.IsNullOrEmpty(r))
-                        .ToList();
+        if (string.IsNullOrWhiteSpace(recipients))
+        {
+            throw new ArgumentException($"{type} recipients cannot be null or empty", nameof(recipients));
+        }
+
+        var parsed = recipients.Split([',', ';', '|'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                              .Where(r => !string.IsNullOrWhiteSpace(r))
+                              .ToList();
+
+        if (parsed.Count == 0)
+        {
+            throw new ArgumentException($"No valid {type.ToLower()} recipients found", nameof(recipients));
+        }
+
+        // Validate email addresses
+        var validEmails = new List<string>();
+        foreach (var email in parsed)
+        {
+            if (IsValidEmail(email))
+            {
+                validEmails.Add(email);
+            }
+            else
+            {
+                throw new ArgumentException($"Invalid email address format: {email}");
+            }
+        }
+
+        return validEmails;
     }
 
-    private static void ParseRecipients(string recipients, List<string> recipientList)
+    private static bool IsValidEmail(string email)
     {
-        recipientList.AddRange(ParseRecipients(recipients));
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        try
+        {
+            return EmailValidationRegex.IsMatch(email);
+        }
+        catch (RegexMatchTimeoutException)
+        {
+            return false;
+        }
     }
 
     private static string ProcessTemplate(string template, IDictionary<string, object> data)
@@ -599,7 +648,7 @@ public class AmazonSesService : IMailKitService, IDisposable
     {
         if (string.IsNullOrEmpty(value)) return value;
         return value.Length > 1
-            ? char.ToLowerInvariant(value[0]) + value.Substring(1)
+            ? char.ToLowerInvariant(value[0]) + value[1..]
             : char.ToLowerInvariant(value[0]).ToString();
     }
 
@@ -607,23 +656,21 @@ public class AmazonSesService : IMailKitService, IDisposable
     {
         var extension = Path.GetExtension(fileName.AsSpan());
 
-        if (extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
-            extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase))
-            return MediaTypeNames.Image.Jpeg;
-
-        if (extension.Equals(".png", StringComparison.OrdinalIgnoreCase))
-            return MediaTypeNames.Image.Png;
-
-        if (extension.Equals(".gif", StringComparison.OrdinalIgnoreCase))
-            return MediaTypeNames.Image.Gif;
-
-        if (extension.Equals(".pdf", StringComparison.OrdinalIgnoreCase))
-            return MediaTypeNames.Application.Pdf;
-
-        if (extension.Equals(".txt", StringComparison.OrdinalIgnoreCase))
-            return MediaTypeNames.Text.Plain;
-
-        return MediaTypeNames.Application.Octet;
+        return extension switch
+        {
+            var ext when ext.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                        ext.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Image.Jpeg,
+            var ext when ext.Equals(".png", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Image.Png,
+            var ext when ext.Equals(".gif", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Image.Gif,
+            var ext when ext.Equals(".pdf", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Application.Pdf,
+            var ext when ext.Equals(".txt", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Text.Plain,
+            var ext when ext.Equals(".html", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Text.Html,
+            var ext when ext.Equals(".xml", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Text.Xml,
+            var ext when ext.Equals(".csv", StringComparison.OrdinalIgnoreCase) => "text/csv",
+            var ext when ext.Equals(".zip", StringComparison.OrdinalIgnoreCase) => MediaTypeNames.Application.Zip,
+            var ext when ext.Equals(".json", StringComparison.OrdinalIgnoreCase) => "application/json",
+            _ => MediaTypeNames.Application.Octet
+        };
     }
 
     private static void AppendBase64Content(StringBuilder sb, string base64Content)
@@ -636,8 +683,7 @@ public class AmazonSesService : IMailKitService, IDisposable
         }
     }
 
-    private static List<List<T>> BatchEmails<T>(List<T> source, int size)
-    where T : class
+    private static List<List<T>> BatchEmails<T>(List<T> source, int size) where T : class
     {
         var batches = new List<List<T>>();
         for (int i = 0; i < source.Count; i += size)
@@ -647,9 +693,7 @@ public class AmazonSesService : IMailKitService, IDisposable
         return batches;
     }
 
-    private static List<List<BulkEmailDestination>> BatchDestinations(
-        List<BulkEmailDestination> source,
-        int size)
+    private static List<List<BulkEmailDestination>> BatchDestinations(List<BulkEmailDestination> source, int size)
     {
         var batches = new List<List<BulkEmailDestination>>();
         for (int i = 0; i < source.Count; i += size)
@@ -695,9 +739,10 @@ public class AmazonSesService : IMailKitService, IDisposable
         _rateLimitSemaphore?.Dispose();
         GC.SuppressFinalize(this);
     }
-    public class BulkEmailDestination
+
+    public sealed class BulkEmailDestination
     {
-        public Destination Destination { get; set; } = new Destination();
+        public Destination Destination { get; set; } = new();
         public string? ReplacementTemplateData { get; set; }
     }
 }

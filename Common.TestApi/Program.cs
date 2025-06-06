@@ -3,6 +3,8 @@ using Common.ApiDocumentation;
 using Common.FactElect.Interfaces.Services;
 using Common.FactElect.Services.External;
 using Common.Logging;
+using Common.Notifications.Abstractions;
+using Common.Notifications.Services;
 using Common.Services.Middleware;
 using Common.TestApi.Data;
 using Common.TestApi.Extensions;
@@ -65,6 +67,7 @@ try
 
         builder.Services.AddTransient<IWebServiceSri, WebServiceSri>();
         builder.Services.AddTransient<ICustomerService, CustomerService>();
+        builder.Services.AddTransient<IMailKitService, AmazonSesService>();
         builder.Services.AddDataProtection();
         builder.Services.AddSwaggerDocumentation();
         builder.Services.AddVersioningAndSwagger();

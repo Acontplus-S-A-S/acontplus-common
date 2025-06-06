@@ -12,8 +12,8 @@ public sealed class NotificacionService(IAdoRepository repository) : IEmailServi
 {
     public async Task<DataTable> GetAsync(int cantidad)
     {
-        return await repository.GetDataTableAsync("App.Notificacion_Serv_Get",
-            new Dictionary<string, object> { { "cantidad", cantidad } });
+        return await repository.GetDataTableAsync("Common.EmailQueue_Serv_Get",
+            new Dictionary<string, object> { { "quantity", cantidad } });
     }
 
     public async Task<int> UpdateAsync(int id, string estado, string msgError)

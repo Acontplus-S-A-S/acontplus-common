@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Dynamic;
 using System.Net;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
@@ -451,7 +452,7 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
     }
     private async Task<(string HtmlContent, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
     string templateName,
-    object templateData,
+    string jsonData, // Mantenemos el JSON como string
     string logo,
     CancellationToken ct)
     {
@@ -459,34 +460,46 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         var templatePath = Path.Combine(_templatesPath, templateName);
         var templateContent = await File.ReadAllTextAsync(templatePath, ct);
 
-        // 2. Procesar logo
-        var attachments = new Dictionary<string, object>();
-        var contentId = $"logo_{Guid.NewGuid():N}";
-
-        // 3. Agregar referencia al template
+        // 2. Procesar datos dinámicos
+        var templateData = JsonConvert.DeserializeObject<ExpandoObject>(jsonData) ?? new ExpandoObject();
         var scriptObject = new ScriptObject();
-        scriptObject.Import(templateData);
-        scriptObject["imgLogo"] = $"cid:{contentId}"; // <-- Esto alimenta {{imgLogo}}
 
-        // 4. Crear adjunto
-        var logoPath = Path.Combine(_mediaImagesPath, "Logos", logo);
-        if (File.Exists(logoPath))
+        // 3. Importar dinámicamente (solución para ExpandoObject)
+        foreach (var property in (IDictionary<string, object>)templateData)
         {
-            attachments[contentId] = new
-            {
-                ContentId = contentId,
-                Data = await File.ReadAllBytesAsync(logoPath, ct),
-                ContentType = GetMimeType(logoPath)
-            };
+            scriptObject[property.Key] = property.Value;
         }
 
-        // 5. Renderizar template
+        // 4. Procesar logo (si existe)
+        var attachments = new Dictionary<string, object>();
+        if (!string.IsNullOrEmpty(logo))
+        {
+            var contentId = $"logo_{Guid.NewGuid():N}";
+            scriptObject["imgLogo"] = $"cid:{contentId}";
+
+            var logoPath = Path.Combine(_mediaImagesPath, "Logos", logo);
+            if (File.Exists(logoPath))
+            {
+                attachments[contentId] = new
+                {
+                    ContentId = contentId,
+                    Data = await File.ReadAllBytesAsync(logoPath, ct),
+                    ContentType = GetMimeType(logoPath)
+                };
+            }
+        }
+
+        // 5. Renderizar plantilla
         var context = new TemplateContext();
         context.PushGlobal(scriptObject);
         var template = Template.Parse(templateContent);
-        var htmlContent = template.Render(context);
 
-        return (htmlContent, attachments);
+        if (template.HasErrors)
+        {
+            throw new InvalidOperationException($"Template errors: {string.Join(", ", template.Messages)}");
+        }
+
+        return (template.Render(context), attachments);
     }
 
 

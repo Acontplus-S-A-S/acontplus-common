@@ -15,6 +15,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Polly;
 using Polly.Retry;
+using Scriban;
 using Scriban.Runtime;
 using Template = Scriban.Template;
 
@@ -308,14 +309,16 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         }
 
         request.Content = email.Files?.Count > 0
-            ? await BuildRawEmailContentWithAttachmentsAsync(email, ct).ConfigureAwait(false)
-            : await BuildSimpleEmailContentAsync(email, ct).ConfigureAwait(false);
+             ? await BuildRawEmailContentWithAttachmentsAsync(email, ct).ConfigureAwait(false)
+             : (await BuildSimpleEmailContentAsync(email, ct).ConfigureAwait(false)).Content;
 
         return request;
     }
 
     // Modificar el método BuildSimpleEmailContentAsync
-    private async Task<EmailContent> BuildSimpleEmailContentAsync(EmailModel email, CancellationToken ct)
+    private async Task<(EmailContent Content, Dictionary<string, object> Attachments)> BuildSimpleEmailContentAsync(
+        EmailModel email,
+        CancellationToken ct)
     {
         var emailContent = new EmailContent
         {
@@ -326,13 +329,9 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         };
 
-        string emailBody = email.Body;
-
-        // Cambiar la condición: procesar template cuando IsHtml es true Y hay template
-        if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
-        {
-            emailBody = await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false);
-        }
+        (string emailBody, var attachments) = !email.IsHtml && !string.IsNullOrEmpty(email.Template)
+            ? await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct)
+            : (email.Body, new Dictionary<string, object>());
 
         emailContent.Simple.Body.Html = new Content
         {
@@ -340,9 +339,8 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             Charset = "UTF-8"
         };
 
-        return emailContent;
+        return (emailContent, attachments);
     }
-
     // También modificar BuildRawEmailContentWithAttachmentsAsync
     private async Task<EmailContent> BuildRawEmailContentWithAttachmentsAsync(EmailModel email, CancellationToken ct)
     {
@@ -390,9 +388,13 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         message.AppendLine();
 
         // Cambiar la condición aquí también
-        var bodyContent = !email.IsHtml && !string.IsNullOrEmpty(email.Template)
-            ? await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false)
-            : email.Body;
+        //var bodyContent = !email.IsHtml && !string.IsNullOrEmpty(email.Template)
+        //    ? await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false)
+        //    : email.Body;
+
+        (string bodyContent, var attachments) = !email.IsHtml && !string.IsNullOrEmpty(email.Template)
+       ? await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct)
+       : (email.Body, new Dictionary<string, object>());
 
         message.AppendLine(bodyContent);
         message.AppendLine();
@@ -422,6 +424,21 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         }
 
+        foreach (var attachment in attachments.Values)
+        {
+            dynamic att = attachment;
+            message.AppendLine($"--{boundary}");
+            message.AppendLine($"Content-Type: {att.ContentType}; name=\"{att.FileName}\"");
+            message.AppendLine("Content-Transfer-Encoding: base64");
+            message.AppendLine($"Content-ID: <{att.ContentId}>");
+            message.AppendLine($"Content-Disposition: inline; filename=\"{att.FileName}\"");
+            message.AppendLine();
+
+            var base64Content = Convert.ToBase64String((byte[])att.Data);
+            AppendBase64Content(message, base64Content);
+            message.AppendLine();
+        }
+
         message.AppendLine($"--{boundary}--");
 
         return new EmailContent
@@ -432,66 +449,77 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         };
     }
-    private async Task<string> ProcessTemplateAsync(
-        string templateName,
-        string jsonData,
-        string? logo,
-        CancellationToken ct)
+    private async Task<(string Content, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
+    string templateName,
+    string jsonData,
+    string? logo,
+    CancellationToken ct)
     {
         var templatePath = Path.Combine(_templatesPath, templateName);
         if (!File.Exists(templatePath))
-        {
             throw new FileNotFoundException($"Template file not found: {templatePath}");
-        }
 
-        var templateContent = await File.ReadAllTextAsync(templatePath, ct).ConfigureAwait(false);
+        var templateContent = await File.ReadAllTextAsync(templatePath, ct);
         var templateData = string.IsNullOrEmpty(jsonData)
             ? new Dictionary<string, object>()
             : JsonConvert.DeserializeObject<IDictionary<string, object>>(jsonData) ?? new Dictionary<string, object>();
 
-        // Process logo if provided
+        var attachments = new Dictionary<string, object>();
+
         if (!string.IsNullOrEmpty(logo))
         {
-            await ProcessLogoInTemplate(templateData, logo, ct).ConfigureAwait(false);
+            var logoAttachments = await ProcessLogoInTemplate(templateData, logo, ct);
+            foreach (var attachment in logoAttachments)
+            {
+                attachments[attachment.Key] = attachment.Value;
+            }
         }
 
-        return ProcessTemplate(templateContent, templateData);
+        var processedContent = ProcessTemplate(templateContent, templateData);
+        return (processedContent, attachments);
     }
 
-    private async Task ProcessLogoInTemplate(IDictionary<string, object> templateData, string logo, CancellationToken ct)
+
+    private async Task<Dictionary<string, object>> ProcessLogoInTemplate(
+        IDictionary<string, object> templateData,
+        string logo,
+        CancellationToken ct)
     {
-        if (string.IsNullOrEmpty(_mediaImagesPath)) return;
+        var attachments = new Dictionary<string, object>();
+
+        if (string.IsNullOrEmpty(_mediaImagesPath))
+            return attachments;
 
         var logoPath = Path.Combine(_mediaImagesPath, "Logos", logo);
-        if (!File.Exists(logoPath)) return;
+        if (!File.Exists(logoPath))
+            return attachments;
 
         try
         {
-            var logoBytes = await File.ReadAllBytesAsync(logoPath, ct).ConfigureAwait(false);
-            var logoBase64 = Convert.ToBase64String(logoBytes);
-            var logoMimeType = GetMimeType(logoPath);
-            var logoDataUri = $"data:{logoMimeType};base64,{logoBase64}";
+            var contentId = $"logo_{Guid.NewGuid():N}";
+            templateData["imgLogo"] = $"cid:{contentId}";
 
-            // Agregar múltiples formas de referenciar el logo en el template
-            templateData["Logo"] = logoDataUri;
-            templateData["logo"] = logoDataUri;
-            templateData["img-logo"] = logoDataUri;
-            templateData["ImgLogo"] = logoDataUri;
+            var logoBytes = await File.ReadAllBytesAsync(logoPath, ct);
+            var mimeType = GetMimeType(logoPath);
 
-            _logger.LogDebug("Logo processed successfully: {LogoPath} -> {MimeType}", logoPath, logoMimeType);
+            attachments[contentId] = new
+            {
+                ContentId = contentId,
+                Data = logoBytes,
+                ContentType = mimeType,
+                FileName = Path.GetFileName(logoPath)
+            };
+
+            _logger.LogDebug("Logo processed with CID: {ContentId}", contentId);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to process logo '{Logo}'", logo);
-
-            // Agregar placeholders vacíos para evitar errores en el template
-            templateData["Logo"] = "";
-            templateData["logo"] = "";
-            templateData["img-logo"] = "";
-            templateData["ImgLogo"] = "";
+            templateData["imgLogo"] = "";
         }
-    }
 
+        return attachments;
+    }
     private async Task EnforceRateLimitAsync(CancellationToken ct)
     {
         await _rateLimitSemaphore.WaitAsync(ct).ConfigureAwait(false);
@@ -651,26 +679,41 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
 
     private static string ProcessTemplate(string template, IDictionary<string, object> data)
     {
-        // Primero hacer reemplazos directos para sintaxis [key]
-        string processedTemplate = template;
-        foreach (var kvp in data)
-        {
-            var placeholder = $"[{kvp.Key}]";
-            if (processedTemplate.Contains(placeholder))
-            {
-                processedTemplate = processedTemplate.Replace(placeholder, kvp.Value?.ToString() ?? "");
-            }
-        }
+        if (string.IsNullOrWhiteSpace(template))
+            return string.Empty;
 
-        // Luego procesar con Scriban para sintaxis {{ key }}
+        // Create a Scriban script object to hold all the data variables
         var scriptObject = new ScriptObject();
+
         foreach (var prop in data)
         {
-            scriptObject.Add(LowerFirstCharacter(prop.Key), prop.Value);
+            // Use LowerFirstCharacter to match typical template naming conventions like {{imgLogo}}
+            var key = LowerFirstCharacter(prop.Key);
+            scriptObject[key] = prop.Value;
         }
 
-        var templateObj = Template.Parse(processedTemplate);
-        return templateObj.Render(scriptObject);
+        // Create the rendering context
+        var context = new TemplateContext
+        {
+            EnableRelaxedMemberAccess = true, // Allows access to members even if they're not public properties
+            MemberRenamer = member => member.Name, // Keep member names as-is (no renaming)
+            StrictVariables = false // Avoid errors for missing variables in the template
+        };
+
+        context.PushGlobal(scriptObject);
+
+        // Parse the template with Scriban
+        var templateObj = Template.Parse(template);
+
+        if (templateObj.HasErrors)
+        {
+            // If the template has syntax errors, throw a clear exception
+            var errors = string.Join("\n", templateObj.Messages.Select(m => m.Message));
+            throw new InvalidOperationException($"Template parse errors:\n{errors}");
+        }
+
+        // Render the template with the provided data
+        return templateObj.Render(context);
     }
 
     private static string LowerFirstCharacter(string value)

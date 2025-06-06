@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Dynamic;
 using System.Net;
 using System.Net.Mime;
 using System.Runtime.CompilerServices;
@@ -16,7 +15,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Polly;
 using Polly.Retry;
-using PreMailer.Net;
 using Scriban;
 using Scriban.Runtime;
 using Template = Scriban.Template;
@@ -286,188 +284,37 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
 
     private async Task<SendEmailRequest> BuildSendEmailRequestAsync(EmailModel email, CancellationToken ct)
     {
+        ArgumentException.ThrowIfNullOrEmpty(email.SenderEmail, nameof(email.SenderEmail));
+        ArgumentException.ThrowIfNullOrEmpty(email.RecipientEmail, nameof(email.RecipientEmail));
+
         var request = new SendEmailRequest
         {
             FromEmailAddress = FormatEmailAddress(email.SenderName, email.SenderEmail),
             Destination = new Destination
             {
-                ToAddresses = ParseAndValidateRecipients(email.RecipientEmail, "To"),
-                CcAddresses = !string.IsNullOrEmpty(email.Cc)
-                    ? ParseAndValidateRecipients(email.Cc, "Cc")
-                    : new List<string>(),
-                BccAddresses = new List<string>()
+                ToAddresses = [],
+                CcAddresses = [],
+                BccAddresses = []
             }
         };
 
-        if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
-        {
-            var (htmlContent, attachments) = await ProcessTemplateAsync(
-                email.Template,
-                email.Body,
-                email.Logo,
-                ct);
+        // Parse and validate recipients
+        var toAddresses = ParseAndValidateRecipients(email.RecipientEmail, "To");
+        request.Destination.ToAddresses.AddRange(toAddresses);
 
-            request.Content = new EmailContent
-            {
-                Raw = new RawMessage
-                {
-                    Data = new MemoryStream(Encoding.UTF8.GetBytes(
-                        await BuildCompleteMimeMessage(
-                            htmlContent,
-                            attachments,
-                            email.Subject,
-                            email.Files)))
-                }
-            };
-        }
-        else if (email.Files?.Count > 0)
+        if (!string.IsNullOrEmpty(email.Cc))
         {
-            request.Content = await BuildCompleteMimeContentAsync(email, ct);
+            var ccAddresses = ParseAndValidateRecipients(email.Cc, "Cc");
+            request.Destination.CcAddresses.AddRange(ccAddresses);
         }
-        else
-        {
-            request.Content = new EmailContent
-            {
-                Simple = new Message
-                {
-                    Subject = new Content { Data = email.Subject, Charset = "UTF-8" },
-                    Body = new Body
-                    {
-                        Html = new Content
-                        {
-                            Data = EnsureInlineStyles(email.Body),
-                            Charset = "UTF-8"
-                        }
-                    }
-                }
-            };
-        }
+
+        request.Content = email.Files?.Count > 0
+             ? await BuildRawEmailContentWithAttachmentsAsync(email, ct).ConfigureAwait(false)
+             : (await BuildSimpleEmailContentAsync(email, ct).ConfigureAwait(false)).Content;
 
         return request;
     }
-    private async Task<string> BuildCompleteMimeMessage(
-        string htmlBody,
-        Dictionary<string, object> inlineAttachments,
-        string subject,
-        List<FileModel>? files = null)
-    {
-        var message = new StringBuilder();
-        var mainBoundary = $"----=_NextPart_{Guid.NewGuid():N}";
-        var altBoundary = $"----=_alt_{Guid.NewGuid():N}";
 
-        // Headers principales
-        message.AppendLine("MIME-Version: 1.0");
-        message.AppendLine($"Subject: {subject}");
-        message.AppendLine($"Content-Type: multipart/mixed; boundary=\"{mainBoundary}\"");
-        message.AppendLine();
-
-        // Parte alternativa (texto + HTML)
-        message.AppendLine($"--{mainBoundary}");
-        message.AppendLine($"Content-Type: multipart/alternative; boundary=\"{altBoundary}\"");
-        message.AppendLine();
-
-        // Texto plano
-        message.AppendLine($"--{altBoundary}");
-        message.AppendLine("Content-Type: text/plain; charset=UTF-8");
-        message.AppendLine("Content-Transfer-Encoding: quoted-printable");
-        message.AppendLine();
-        message.AppendLine(StripHtmlTags(htmlBody));
-        message.AppendLine();
-
-        // HTML con estilos inline
-        message.AppendLine($"--{altBoundary}");
-        message.AppendLine("Content-Type: text/html; charset=UTF-8");
-        message.AppendLine("Content-Transfer-Encoding: quoted-printable");
-        message.AppendLine();
-        message.AppendLine(EnsureInlineStyles(htmlBody));
-        message.AppendLine();
-
-        message.AppendLine($"--{altBoundary}--");
-
-        // Adjuntos inline (logos)
-        foreach (var attachment in inlineAttachments.Values)
-        {
-            dynamic att = attachment;
-            message.AppendLine($"--{mainBoundary}");
-            message.AppendLine($"Content-Type: {att.ContentType}");
-            message.AppendLine("Content-Transfer-Encoding: base64");
-            message.AppendLine($"Content-ID: <{att.ContentId}>");
-            message.AppendLine("Content-Disposition: inline");
-            message.AppendLine();
-            message.AppendLine(Convert.ToBase64String((byte[])att.Data));
-            message.AppendLine();
-        }
-
-        // Adjuntos regulares (files)
-        if (files?.Count > 0)
-        {
-            foreach (var file in files)
-            {
-                if (file.Content is null or { Length: 0 }) continue;
-
-                message.AppendLine($"--{mainBoundary}");
-                message.AppendLine($"Content-Type: {GetMimeType(file.FileName)}");
-                message.AppendLine("Content-Transfer-Encoding: base64");
-                message.AppendLine($"Content-Disposition: attachment; filename=\"{file.FileName}\"");
-                message.AppendLine();
-                message.AppendLine(Convert.ToBase64String(file.Content));
-                message.AppendLine();
-            }
-        }
-
-        message.AppendLine($"--{mainBoundary}--");
-
-        return message.ToString();
-    }
-
-    private async Task<EmailContent> BuildCompleteMimeContentAsync(EmailModel email, CancellationToken ct)
-    {
-        string htmlBody;
-        Dictionary<string, object> attachments = new();
-
-        if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
-        {
-            var result = await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct);
-            htmlBody = result.HtmlContent;
-            attachments = result.Attachments;
-        }
-        else
-        {
-            htmlBody = email.Body;
-        }
-
-        return new EmailContent
-        {
-            Raw = new RawMessage
-            {
-                Data = new MemoryStream(Encoding.UTF8.GetBytes(
-                    await BuildCompleteMimeMessage(
-                        htmlBody,
-                        attachments,
-                        email.Subject,
-                        email.Files)))
-            }
-        };
-    }
-
-    private string EnsureInlineStyles(string html)
-    {
-        try
-        {
-            var premailer = new PreMailer.Net.PreMailer(html);
-            return premailer.MoveCssInline().Html;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Failed to inline CSS styles");
-            return html;
-        }
-    }
-
-    private string StripHtmlTags(string html)
-    {
-        return Regex.Replace(html, "<[^>]*>", " ");
-    }
     // Modificar el método BuildSimpleEmailContentAsync
     private async Task<(EmailContent Content, Dictionary<string, object> Attachments)> BuildSimpleEmailContentAsync(
         EmailModel email,
@@ -577,101 +424,59 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         }
 
+        foreach (var attachment in attachments.Values)
+        {
+            dynamic att = attachment;
+            message.AppendLine($"--{boundary}");
+            message.AppendLine($"Content-Type: {att.ContentType}; name=\"{att.FileName}\"");
+            message.AppendLine("Content-Transfer-Encoding: base64");
+            message.AppendLine($"Content-ID: <{att.ContentId}>");
+            message.AppendLine($"Content-Disposition: inline; filename=\"{att.FileName}\"");
+            message.AppendLine();
+
+            var base64Content = Convert.ToBase64String((byte[])att.Data);
+            AppendBase64Content(message, base64Content);
+            message.AppendLine();
+        }
+
         message.AppendLine($"--{boundary}--");
 
         return new EmailContent
         {
             Raw = new RawMessage
             {
-                Data = new MemoryStream(Encoding.UTF8.GetBytes(
-                     BuildEmailWithAttachments(bodyContent, attachments)))
+                Data = new MemoryStream(Encoding.UTF8.GetBytes(message.ToString()))
             }
         };
     }
-
-    // Método para construir el email con adjuntos
-    private string BuildEmailWithAttachments(
-        string htmlBody,
-        Dictionary<string, object> attachments)
-    {
-        var message = new StringBuilder();
-        var boundary = $"----=_NextPart_{Guid.NewGuid():N}";
-
-        // Cabeceras y cuerpo HTML
-        message.AppendLine($"Content-Type: multipart/related; boundary=\"{boundary}\"");
-        message.AppendLine();
-        message.AppendLine($"--{boundary}");
-        message.AppendLine("Content-Type: text/html; charset=UTF-8");
-        message.AppendLine();
-        message.AppendLine(htmlBody);
-
-        // Adjuntos (incluyendo el logo)
-        foreach (var attachment in attachments.Values)
-        {
-            dynamic att = attachment;
-            message.AppendLine($"--{boundary}");
-            message.AppendLine($"Content-Type: {att.ContentType}");
-            message.AppendLine("Content-Transfer-Encoding: base64");
-            message.AppendLine($"Content-ID: <{att.ContentId}>");
-            message.AppendLine();
-            message.AppendLine(Convert.ToBase64String((byte[])att.Data));
-        }
-
-        message.AppendLine($"--{boundary}--");
-        return message.ToString();
-    }
-    private async Task<(string HtmlContent, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
-        string templateName,
-        string jsonData,
-        string? logo,
-        CancellationToken ct)
+    private async Task<(string Content, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
+    string templateName,
+    string jsonData,
+    string? logo,
+    CancellationToken ct)
     {
         var templatePath = Path.Combine(_templatesPath, templateName);
+        if (!File.Exists(templatePath))
+            throw new FileNotFoundException($"Template file not found: {templatePath}");
+
         var templateContent = await File.ReadAllTextAsync(templatePath, ct);
-
-        var templateData = JsonConvert.DeserializeObject<ExpandoObject>(jsonData) ?? new ExpandoObject();
-        var scriptObject = new ScriptObject();
-
-        foreach (var property in (IDictionary<string, object>)templateData)
-        {
-            scriptObject[property.Key] = property.Value;
-        }
+        var templateData = string.IsNullOrEmpty(jsonData)
+            ? new Dictionary<string, object>()
+            : JsonConvert.DeserializeObject<IDictionary<string, object>>(jsonData) ?? new Dictionary<string, object>();
 
         var attachments = new Dictionary<string, object>();
+
         if (!string.IsNullOrEmpty(logo))
         {
-            var contentId = $"logo_{Guid.NewGuid():N}";
-            scriptObject["imgLogo"] = $"cid:{contentId}";
-
-            var logoPath = Path.Combine(_mediaImagesPath, "Logos", logo);
-            if (File.Exists(logoPath))
+            var logoAttachments = await ProcessLogoInTemplate(templateData, logo, ct);
+            foreach (var attachment in logoAttachments)
             {
-                attachments[contentId] = new
-                {
-                    ContentId = contentId,
-                    Data = await File.ReadAllBytesAsync(logoPath, ct),
-                    ContentType = GetMimeType(logoPath),
-                    FileName = Path.GetFileName(logoPath)
-                };
+                attachments[attachment.Key] = attachment.Value;
             }
         }
 
-        var context = new TemplateContext
-        {
-            EnableRelaxedMemberAccess = true,
-            MemberRenamer = member => member.Name,
-            StrictVariables = false
-        };
-
-        context.PushGlobal(scriptObject);
-        var template = Template.Parse(templateContent);
-
-        if (template.HasErrors)
-        {
-            throw new InvalidOperationException($"Template errors: {string.Join(", ", template.Messages)}");
-        }
-
-        return (template.Render(context), attachments);
+        var processedContent = ProcessTemplate(templateContent, templateData);
+        return (processedContent, attachments);
     }
 
 

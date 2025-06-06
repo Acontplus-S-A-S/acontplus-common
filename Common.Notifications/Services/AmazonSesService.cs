@@ -16,6 +16,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Polly;
 using Polly.Retry;
+using PreMailer.Net;
 using Scriban;
 using Scriban.Runtime;
 using Template = Scriban.Template;
@@ -298,34 +299,33 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         };
 
-        // Process content based on whether it's a template or regular email
         if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
         {
-            // Process template with dynamic JSON data and logo
             var (htmlContent, attachments) = await ProcessTemplateAsync(
                 email.Template,
-                email.Body, // Your JSON string
+                email.Body,
                 email.Logo,
                 ct);
 
-            // Construct MIME message with attachments
             request.Content = new EmailContent
             {
                 Raw = new RawMessage
                 {
                     Data = new MemoryStream(Encoding.UTF8.GetBytes(
-                        await BuildMimeMessageWithAttachments(htmlContent, attachments)))
+                        await BuildCompleteMimeMessage(
+                            htmlContent,
+                            attachments,
+                            email.Subject,
+                            email.Files)))
                 }
             };
         }
         else if (email.Files?.Count > 0)
         {
-            // Handle regular emails with file attachments
-            request.Content = await BuildRawEmailContentWithAttachmentsAsync(email, ct);
+            request.Content = await BuildCompleteMimeContentAsync(email, ct);
         }
         else
         {
-            // Simple email without attachments
             request.Content = new EmailContent
             {
                 Simple = new Message
@@ -335,7 +335,7 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
                     {
                         Html = new Content
                         {
-                            Data = email.Body,
+                            Data = EnsureInlineStyles(email.Body),
                             Charset = "UTF-8"
                         }
                     }
@@ -345,42 +345,128 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
 
         return request;
     }
-
-    private async Task<string> BuildMimeMessageWithAttachments(
+    private async Task<string> BuildCompleteMimeMessage(
         string htmlBody,
-        Dictionary<string, object> attachments)
+        Dictionary<string, object> inlineAttachments,
+        string subject,
+        List<FileModel>? files = null)
     {
         var message = new StringBuilder();
-        var boundary = $"----=_NextPart_{Guid.NewGuid():N}";
-        var alternativeBoundary = $"----=_alt_{Guid.NewGuid():N}";
+        var mainBoundary = $"----=_NextPart_{Guid.NewGuid():N}";
+        var altBoundary = $"----=_alt_{Guid.NewGuid():N}";
 
-        // Headers
+        // Headers principales
         message.AppendLine("MIME-Version: 1.0");
-        message.AppendLine($"Content-Type: multipart/related; boundary=\"{boundary}\"");
+        message.AppendLine($"Subject: {subject}");
+        message.AppendLine($"Content-Type: multipart/mixed; boundary=\"{mainBoundary}\"");
         message.AppendLine();
 
-        // HTML Part
-        message.AppendLine($"--{boundary}");
+        // Parte alternativa (texto + HTML)
+        message.AppendLine($"--{mainBoundary}");
+        message.AppendLine($"Content-Type: multipart/alternative; boundary=\"{altBoundary}\"");
+        message.AppendLine();
+
+        // Texto plano
+        message.AppendLine($"--{altBoundary}");
+        message.AppendLine("Content-Type: text/plain; charset=UTF-8");
+        message.AppendLine("Content-Transfer-Encoding: quoted-printable");
+        message.AppendLine();
+        message.AppendLine(StripHtmlTags(htmlBody));
+        message.AppendLine();
+
+        // HTML con estilos inline
+        message.AppendLine($"--{altBoundary}");
         message.AppendLine("Content-Type: text/html; charset=UTF-8");
         message.AppendLine("Content-Transfer-Encoding: quoted-printable");
         message.AppendLine();
-        message.AppendLine(htmlBody);
+        message.AppendLine(EnsureInlineStyles(htmlBody));
+        message.AppendLine();
 
-        // Attachments (including inline images)
-        foreach (var attachment in attachments.Values)
+        message.AppendLine($"--{altBoundary}--");
+
+        // Adjuntos inline (logos)
+        foreach (var attachment in inlineAttachments.Values)
         {
             dynamic att = attachment;
-            message.AppendLine($"--{boundary}");
+            message.AppendLine($"--{mainBoundary}");
             message.AppendLine($"Content-Type: {att.ContentType}");
             message.AppendLine("Content-Transfer-Encoding: base64");
             message.AppendLine($"Content-ID: <{att.ContentId}>");
             message.AppendLine("Content-Disposition: inline");
             message.AppendLine();
             message.AppendLine(Convert.ToBase64String((byte[])att.Data));
+            message.AppendLine();
         }
 
-        message.AppendLine($"--{boundary}--");
+        // Adjuntos regulares (files)
+        if (files?.Count > 0)
+        {
+            foreach (var file in files)
+            {
+                if (file.Content is null or { Length: 0 }) continue;
+
+                message.AppendLine($"--{mainBoundary}");
+                message.AppendLine($"Content-Type: {GetMimeType(file.FileName)}");
+                message.AppendLine("Content-Transfer-Encoding: base64");
+                message.AppendLine($"Content-Disposition: attachment; filename=\"{file.FileName}\"");
+                message.AppendLine();
+                message.AppendLine(Convert.ToBase64String(file.Content));
+                message.AppendLine();
+            }
+        }
+
+        message.AppendLine($"--{mainBoundary}--");
+
         return message.ToString();
+    }
+
+    private async Task<EmailContent> BuildCompleteMimeContentAsync(EmailModel email, CancellationToken ct)
+    {
+        string htmlBody;
+        Dictionary<string, object> attachments = new();
+
+        if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
+        {
+            var result = await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct);
+            htmlBody = result.HtmlContent;
+            attachments = result.Attachments;
+        }
+        else
+        {
+            htmlBody = email.Body;
+        }
+
+        return new EmailContent
+        {
+            Raw = new RawMessage
+            {
+                Data = new MemoryStream(Encoding.UTF8.GetBytes(
+                    await BuildCompleteMimeMessage(
+                        htmlBody,
+                        attachments,
+                        email.Subject,
+                        email.Files)))
+            }
+        };
+    }
+
+    private string EnsureInlineStyles(string html)
+    {
+        try
+        {
+            var premailer = new PreMailer.Net.PreMailer(html);
+            return premailer.MoveCssInline().Html;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to inline CSS styles");
+            return html;
+        }
+    }
+
+    private string StripHtmlTags(string html)
+    {
+        return Regex.Replace(html, "<[^>]*>", " ");
     }
     // Modificar el método BuildSimpleEmailContentAsync
     private async Task<(EmailContent Content, Dictionary<string, object> Attachments)> BuildSimpleEmailContentAsync(
@@ -535,26 +621,22 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         return message.ToString();
     }
     private async Task<(string HtmlContent, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
-    string templateName,
-    string jsonData, // Mantenemos el JSON como string
-    string logo,
-    CancellationToken ct)
+        string templateName,
+        string jsonData,
+        string? logo,
+        CancellationToken ct)
     {
-        // 1. Cargar plantilla
         var templatePath = Path.Combine(_templatesPath, templateName);
         var templateContent = await File.ReadAllTextAsync(templatePath, ct);
 
-        // 2. Procesar datos dinámicos
         var templateData = JsonConvert.DeserializeObject<ExpandoObject>(jsonData) ?? new ExpandoObject();
         var scriptObject = new ScriptObject();
 
-        // 3. Importar dinámicamente (solución para ExpandoObject)
         foreach (var property in (IDictionary<string, object>)templateData)
         {
             scriptObject[property.Key] = property.Value;
         }
 
-        // 4. Procesar logo (si existe)
         var attachments = new Dictionary<string, object>();
         if (!string.IsNullOrEmpty(logo))
         {
@@ -568,13 +650,19 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
                 {
                     ContentId = contentId,
                     Data = await File.ReadAllBytesAsync(logoPath, ct),
-                    ContentType = GetMimeType(logoPath)
+                    ContentType = GetMimeType(logoPath),
+                    FileName = Path.GetFileName(logoPath)
                 };
             }
         }
 
-        // 5. Renderizar plantilla
-        var context = new TemplateContext();
+        var context = new TemplateContext
+        {
+            EnableRelaxedMemberAccess = true,
+            MemberRenamer = member => member.Name,
+            StrictVariables = false
+        };
+
         context.PushGlobal(scriptObject);
         var template = Template.Parse(templateContent);
 

@@ -285,37 +285,103 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
 
     private async Task<SendEmailRequest> BuildSendEmailRequestAsync(EmailModel email, CancellationToken ct)
     {
-        ArgumentException.ThrowIfNullOrEmpty(email.SenderEmail, nameof(email.SenderEmail));
-        ArgumentException.ThrowIfNullOrEmpty(email.RecipientEmail, nameof(email.RecipientEmail));
-
         var request = new SendEmailRequest
         {
             FromEmailAddress = FormatEmailAddress(email.SenderName, email.SenderEmail),
             Destination = new Destination
             {
-                ToAddresses = [],
-                CcAddresses = [],
-                BccAddresses = []
+                ToAddresses = ParseAndValidateRecipients(email.RecipientEmail, "To"),
+                CcAddresses = !string.IsNullOrEmpty(email.Cc)
+                    ? ParseAndValidateRecipients(email.Cc, "Cc")
+                    : new List<string>(),
+                BccAddresses = new List<string>()
             }
         };
 
-        // Parse and validate recipients
-        var toAddresses = ParseAndValidateRecipients(email.RecipientEmail, "To");
-        request.Destination.ToAddresses.AddRange(toAddresses);
-
-        if (!string.IsNullOrEmpty(email.Cc))
+        // Process content based on whether it's a template or regular email
+        if (!email.IsHtml && !string.IsNullOrEmpty(email.Template))
         {
-            var ccAddresses = ParseAndValidateRecipients(email.Cc, "Cc");
-            request.Destination.CcAddresses.AddRange(ccAddresses);
-        }
+            // Process template with dynamic JSON data and logo
+            var (htmlContent, attachments) = await ProcessTemplateAsync(
+                email.Template,
+                email.Body, // Your JSON string
+                email.Logo,
+                ct);
 
-        request.Content = email.Files?.Count > 0
-             ? await BuildRawEmailContentWithAttachmentsAsync(email, ct).ConfigureAwait(false)
-             : (await BuildSimpleEmailContentAsync(email, ct).ConfigureAwait(false)).Content;
+            // Construct MIME message with attachments
+            request.Content = new EmailContent
+            {
+                Raw = new RawMessage
+                {
+                    Data = new MemoryStream(Encoding.UTF8.GetBytes(
+                        await BuildMimeMessageWithAttachments(htmlContent, attachments)))
+                }
+            };
+        }
+        else if (email.Files?.Count > 0)
+        {
+            // Handle regular emails with file attachments
+            request.Content = await BuildRawEmailContentWithAttachmentsAsync(email, ct);
+        }
+        else
+        {
+            // Simple email without attachments
+            request.Content = new EmailContent
+            {
+                Simple = new Message
+                {
+                    Subject = new Content { Data = email.Subject, Charset = "UTF-8" },
+                    Body = new Body
+                    {
+                        Html = new Content
+                        {
+                            Data = email.Body,
+                            Charset = "UTF-8"
+                        }
+                    }
+                }
+            };
+        }
 
         return request;
     }
 
+    private async Task<string> BuildMimeMessageWithAttachments(
+        string htmlBody,
+        Dictionary<string, object> attachments)
+    {
+        var message = new StringBuilder();
+        var boundary = $"----=_NextPart_{Guid.NewGuid():N}";
+        var alternativeBoundary = $"----=_alt_{Guid.NewGuid():N}";
+
+        // Headers
+        message.AppendLine("MIME-Version: 1.0");
+        message.AppendLine($"Content-Type: multipart/related; boundary=\"{boundary}\"");
+        message.AppendLine();
+
+        // HTML Part
+        message.AppendLine($"--{boundary}");
+        message.AppendLine("Content-Type: text/html; charset=UTF-8");
+        message.AppendLine("Content-Transfer-Encoding: quoted-printable");
+        message.AppendLine();
+        message.AppendLine(htmlBody);
+
+        // Attachments (including inline images)
+        foreach (var attachment in attachments.Values)
+        {
+            dynamic att = attachment;
+            message.AppendLine($"--{boundary}");
+            message.AppendLine($"Content-Type: {att.ContentType}");
+            message.AppendLine("Content-Transfer-Encoding: base64");
+            message.AppendLine($"Content-ID: <{att.ContentId}>");
+            message.AppendLine("Content-Disposition: inline");
+            message.AppendLine();
+            message.AppendLine(Convert.ToBase64String((byte[])att.Data));
+        }
+
+        message.AppendLine($"--{boundary}--");
+        return message.ToString();
+    }
     // Modificar el método BuildSimpleEmailContentAsync
     private async Task<(EmailContent Content, Dictionary<string, object> Attachments)> BuildSimpleEmailContentAsync(
         EmailModel email,
@@ -425,30 +491,48 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         }
 
-        foreach (var attachment in attachments.Values)
-        {
-            dynamic att = attachment;
-            message.AppendLine($"--{boundary}");
-            message.AppendLine($"Content-Type: {att.ContentType}; name=\"{att.FileName}\"");
-            message.AppendLine("Content-Transfer-Encoding: base64");
-            message.AppendLine($"Content-ID: <{att.ContentId}>");
-            message.AppendLine($"Content-Disposition: inline; filename=\"{att.FileName}\"");
-            message.AppendLine();
-
-            var base64Content = Convert.ToBase64String((byte[])att.Data);
-            AppendBase64Content(message, base64Content);
-            message.AppendLine();
-        }
-
         message.AppendLine($"--{boundary}--");
 
         return new EmailContent
         {
             Raw = new RawMessage
             {
-                Data = new MemoryStream(Encoding.UTF8.GetBytes(message.ToString()))
+                Data = new MemoryStream(Encoding.UTF8.GetBytes(
+                     BuildEmailWithAttachments(bodyContent, attachments)))
             }
         };
+    }
+
+    // Método para construir el email con adjuntos
+    private string BuildEmailWithAttachments(
+        string htmlBody,
+        Dictionary<string, object> attachments)
+    {
+        var message = new StringBuilder();
+        var boundary = $"----=_NextPart_{Guid.NewGuid():N}";
+
+        // Cabeceras y cuerpo HTML
+        message.AppendLine($"Content-Type: multipart/related; boundary=\"{boundary}\"");
+        message.AppendLine();
+        message.AppendLine($"--{boundary}");
+        message.AppendLine("Content-Type: text/html; charset=UTF-8");
+        message.AppendLine();
+        message.AppendLine(htmlBody);
+
+        // Adjuntos (incluyendo el logo)
+        foreach (var attachment in attachments.Values)
+        {
+            dynamic att = attachment;
+            message.AppendLine($"--{boundary}");
+            message.AppendLine($"Content-Type: {att.ContentType}");
+            message.AppendLine("Content-Transfer-Encoding: base64");
+            message.AppendLine($"Content-ID: <{att.ContentId}>");
+            message.AppendLine();
+            message.AppendLine(Convert.ToBase64String((byte[])att.Data));
+        }
+
+        message.AppendLine($"--{boundary}--");
+        return message.ToString();
     }
     private async Task<(string HtmlContent, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
     string templateName,

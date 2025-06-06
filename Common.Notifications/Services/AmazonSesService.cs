@@ -383,10 +383,9 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
         message.AppendLine(WebUtility.HtmlDecode(email.Body));
         message.AppendLine();
 
-        // HTML part
         message.AppendLine($"--{alternativeBoundary}");
         message.AppendLine("Content-Type: text/html; charset=UTF-8");
-        message.AppendLine("Content-Transfer-Encoding: quoted-printable");
+        message.AppendLine("Content-Transfer-Encoding: base64");
         message.AppendLine();
 
         // Cambiar la condición aquí también
@@ -394,7 +393,9 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             ? await ProcessTemplateAsync(email.Template, email.Body, email.Logo, ct).ConfigureAwait(false)
             : email.Body;
 
-        message.AppendLine(bodyContent);
+        var htmlBytes = Encoding.UTF8.GetBytes(bodyContent);
+        var htmlBase64 = Convert.ToBase64String(htmlBytes);
+        AppendBase64Content(message, htmlBase64);
         message.AppendLine();
 
         message.AppendLine($"--{alternativeBoundary}--");

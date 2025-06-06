@@ -449,34 +449,44 @@ public sealed class AmazonSesService : IMailKitService, IDisposable
             }
         };
     }
-    private async Task<(string Content, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
+    private async Task<(string HtmlContent, Dictionary<string, object> Attachments)> ProcessTemplateAsync(
     string templateName,
-    string jsonData,
-    string? logo,
+    object templateData,
+    string logo,
     CancellationToken ct)
     {
+        // 1. Cargar plantilla
         var templatePath = Path.Combine(_templatesPath, templateName);
-        if (!File.Exists(templatePath))
-            throw new FileNotFoundException($"Template file not found: {templatePath}");
-
         var templateContent = await File.ReadAllTextAsync(templatePath, ct);
-        var templateData = string.IsNullOrEmpty(jsonData)
-            ? new Dictionary<string, object>()
-            : JsonConvert.DeserializeObject<IDictionary<string, object>>(jsonData) ?? new Dictionary<string, object>();
 
+        // 2. Procesar logo
         var attachments = new Dictionary<string, object>();
+        var contentId = $"logo_{Guid.NewGuid():N}";
 
-        if (!string.IsNullOrEmpty(logo))
+        // 3. Agregar referencia al template
+        var scriptObject = new ScriptObject();
+        scriptObject.Import(templateData);
+        scriptObject["imgLogo"] = $"cid:{contentId}"; // <-- Esto alimenta {{imgLogo}}
+
+        // 4. Crear adjunto
+        var logoPath = Path.Combine(_mediaImagesPath, "Logos", logo);
+        if (File.Exists(logoPath))
         {
-            var logoAttachments = await ProcessLogoInTemplate(templateData, logo, ct);
-            foreach (var attachment in logoAttachments)
+            attachments[contentId] = new
             {
-                attachments[attachment.Key] = attachment.Value;
-            }
+                ContentId = contentId,
+                Data = await File.ReadAllBytesAsync(logoPath, ct),
+                ContentType = GetMimeType(logoPath)
+            };
         }
 
-        var processedContent = ProcessTemplate(templateContent, templateData);
-        return (processedContent, attachments);
+        // 5. Renderizar template
+        var context = new TemplateContext();
+        context.PushGlobal(scriptObject);
+        var template = Template.Parse(templateContent);
+        var htmlContent = template.Render(context);
+
+        return (htmlContent, attachments);
     }
 
 

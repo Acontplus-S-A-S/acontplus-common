@@ -1,6 +1,8 @@
 ﻿using System;
 using Common.ApiDocumentation;
 using Common.FactElect.Interfaces.Services;
+using Common.FactElect.Models.Documents;
+using Common.FactElect.Services.Documents;
 using Common.FactElect.Services.External;
 using Common.Logging;
 using Common.Notifications.Abstractions;
@@ -15,8 +17,8 @@ using Serilog;
 // 1. Optional: Create a bootstrap logger for early startup issues
 //    This captures logs from WebApplication.CreateBuilder() itself.
 Log.Logger = new LoggerConfiguration()
-           .WriteTo.Console()
-           .CreateBootstrapLogger();
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
 
 try
 {
@@ -65,6 +67,7 @@ try
             .WithTransientLifetime()
         );
 
+        builder.Services.AddScoped<IAtsXmlService, AtsXmlService>();
         builder.Services.AddTransient<IWebServiceSri, WebServiceSri>();
         builder.Services.AddTransient<ICustomerService, CustomerService>();
         builder.Services.AddTransient<IMailKitService, AmazonSesService>();
@@ -81,6 +84,7 @@ try
         // Re-throw or exit to ensure the host aborts, but now you have the log
         throw;
     }
+
     // --- End new try-catch block ---
     var app = builder.Build();
 
@@ -106,8 +110,124 @@ try
 
     app.MapControllers();
 
-    app.Run();
+    app.MapGet("/generateats", async (IAtsXmlService atsXmlService) =>
+    {
+        // In a real application, you'd get this data from a database or another service
+        // For demonstration, let's create some dummy data
+        var atsData = new AtsData
+        {
+            Header = new AtsHeader
+            {
+                TipoIdInformante = "01",
+                IdInformante = "1234567890001",
+                RazonSocial = "EXAMPLE S.A.",
+                Anio = "2023",
+                Mes = "12",
+                NumEstabRuc = "001",
+                TotalVentas = "1000.00",
+                CodigoOperativo = "IVA"
+            },
+            Purchases = new List<Purchase>
+            {
+                new Purchase
+                {
+                    CodSustento = "01",
+                    TpIdProv = "04",
+                    IdProv = "1234567890",
+                    TipoComprobante = "01",
+                    ParteRel = "NO",
+                    FechaRegistro = "01/12/2023",
+                    Establecimiento = "001",
+                    PuntoEmision = "001",
+                    Secuencial = "000000001",
+                    FechaEmision = "01/12/2023",
+                    Autorizacion = "1234567890123456789012345678901234567890123",
+                    BaseNoGraIva = "0.00",
+                    BaseImponible = "100.00",
+                    BaseImpGrav = "0.00",
+                    BaseImpExe = "0.00",
+                    MontoIce = "0.00",
+                    MontoIva = "12.00",
+                    ValRetBien10 = "0.00",
+                    ValRetServ20 = "0.00",
+                    ValorRetBienes = "0.00",
+                    ValRetServ50 = "0.00",
+                    ValorRetServicios = "0.00",
+                    ValRetServ100 = "0.00",
+                    TotbasesImpReemb = "0.00",
+                    PagoLocExt = "01",
+                    FormaPago = "01",
+                    NroDocumento = "000000001" // Important for linking
+                }
+            },
+            WithholdingTaxes = new List<WithholdingTax>
+            {
+                new WithholdingTax
+                {
+                    NroDocumento = "000000001",
+                    ClaveAcceso = "1234567890123456789012345678901234567890123",
+                    CodRetAir = "303",
+                    BaseImpAir = "100.00",
+                    PorcentajeAir = "1.00",
+                    ValRetAir = "1.00"
+                }
+            },
+            Sales = new List<Sale>
+            {
+                new Sale
+                {
+                    TpIdCliente = "04",
+                    IdCliente = "1234567890",
+                    TipoComprobante = "18",
+                    TipoEmision = "F",
+                    NumeroComprobantes = "1",
+                    BaseNoGraIva = "0.00",
+                    BaseImponible = "100.00",
+                    BaseImpGrav = "0.00",
+                    MontoIva = "12.00",
+                    MontoIce = "0.00",
+                    ValorRetIva = "0.00",
+                    ValorRetRenta = "0.00",
+                    FormaPago = "01"
+                }
+            },
+            EstablishmentSales = new List<EstablishmentSale>
+            {
+                new EstablishmentSale
+                {
+                    CodEstab = "001",
+                    VentasEstab = "1000.00",
+                    IvaComp = "12.00"
+                }
+            },
+            CanceledDocuments = new List<CanceledDocument>
+            {
+                new CanceledDocument
+                {
+                    TipoComprobante = "01",
+                    Establecimiento = "001",
+                    PuntoEmision = "001",
+                    SecuencialInicio = "000000002",
+                    SecuencialFin = "000000002",
+                    Autorizacion = "1234567890123456789012345678901234567890123"
+                }
+            }
+        };
 
+        try
+        {
+            var xmlBytes = await atsXmlService.CreateAtsXmlAsync(atsData);
+            return Results.Bytes(xmlBytes, "application/xml", "ats.xml");
+        }
+        catch (Exception ex)
+        {
+            // Log the exception (use ILogger for enterprise apps)
+            Console.WriteLine($"Error generating XML: {ex.Message}");
+            return Results.Problem("Error generating ATS XML", statusCode: 500);
+        }
+    });
+
+   await app.RunAsync();
 }
 catch (Exception ex)
 {

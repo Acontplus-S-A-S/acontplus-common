@@ -1,5 +1,9 @@
 ﻿global using System.Data;
 global using System.Text;
+global using System.Xml;
+global using Common.Core.Models;
+global using Common.Utilities.IO;
+global using Common.Utilities.Security.Helpers;
 global using Common.Utilities.Security.Interfaces;
 global using Microsoft.AspNetCore.DataProtection;
 global using Microsoft.Extensions.Configuration;

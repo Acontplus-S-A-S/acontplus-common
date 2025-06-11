@@ -256,7 +256,7 @@ public class AtsXml
             if (dtRetenciones.Select(string.Format("nroDocumento='{0}'", dr["nroDocumento"])).Count() > 0)
             {
                 xtr.WriteStartElement("air"); //start air
-                NodeRetenciones(xtr, dr["nroDocumento"].ToString(), dtRetenciones);
+                NodeRetenciones(xtr, dr, dtRetenciones);
                 xtr.WriteEndElement(); //end air
             }
 
@@ -315,10 +315,11 @@ public class AtsXml
         xtr.WriteEndElement(); //end compras
     }
 
-    public void NodeRetenciones(XmlTextWriter xtr, string nroDoc, DataTable dt)
+    public void NodeRetenciones(XmlTextWriter xtr, DataRow drPurchases, DataTable dt)
     {
         foreach (DataRow dr in dt.Rows)
-            if (nroDoc == dr["nroDocumento"].ToString())
+            if (drPurchases["nroDocumento"].ToString() == dr["nroDocumento"].ToString() &&
+                drPurchases["autorizacion"].ToString() == dr["claveAcceso"].ToString())
             {
                 xtr.WriteStartElement("detalleAir"); //start detalleAir
 

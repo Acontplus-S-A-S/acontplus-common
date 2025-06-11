@@ -8,10 +8,14 @@
 
   <ItemGroup>
     <None Remove="Templates\Login_History.html" />
+    <None Remove="Templates\ReporteGenerado.html" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Templates\Login_History.html">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Templates\ReporteGenerado.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

@@ -63,7 +63,7 @@ public class BaseEntityTypeConfiguration<TEntity> : IEntityTypeConfiguration<TEn
                 builder.Property(x => x.CreatedAt).HasDefaultValueSql("NOW()");
                 break;
             case "Microsoft.EntityFrameworkCore.SqlServer":
-                builder.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+                builder.Property(x => x.CreatedAt).HasDefaultValueSql("SYSUTCDATETIME()");
                 break;
             case "Microsoft.EntityFrameworkCore.Sqlite":
                 builder.Property(x => x.CreatedAt).HasDefaultValueSql("datetime('now')");

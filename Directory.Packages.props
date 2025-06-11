@@ -7,15 +7,15 @@
     <PackageVersion Include="Acontplus.Common.Barcode" Version="0.1.6" />
     <PackageVersion Include="Acontplus.Common.Core" Version="1.5.7" />
     <PackageVersion Include="Acontplus.Common.Data" Version="0.1.0" />
-    <PackageVersion Include="Acontplus.Common.Infrastructure" Version="1.4.3" />
-    <PackageVersion Include="Acontplus.Common.Services" Version="1.0.8" />
+    <PackageVersion Include="Acontplus.Common.Infrastructure" Version="1.4.4" />
+    <PackageVersion Include="Acontplus.Common.Services" Version="1.0.9" />
     <PackageVersion Include="Acontplus.Common.Utilities" Version="0.3.2" />
     <PackageVersion Include="Asp.Versioning.Mvc" Version="8.1.0" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="8.1.0" />
     <PackageVersion Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
-    <PackageVersion Include="AWSSDK.Core" Version="4.0.0.8" />
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.1.4" />
-    <PackageVersion Include="AWSSDK.SimpleEmailV2" Version="4.0.0.6" />
+    <PackageVersion Include="AWSSDK.Core" Version="4.0.0.9" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.1.5" />
+    <PackageVersion Include="AWSSDK.SimpleEmailV2" Version="4.0.0.7" />
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageVersion Include="EFCore.NamingConventions" Version="9.0.0" />
     <PackageVersion Include="FastMember" Version="1.5.0" />
@@ -26,12 +26,12 @@
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6" />
     <PackageVersion Include="Microsoft.Data.SqlClient" Version="6.0.2" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.6" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.5">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.6" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.5">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.6">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageVersion>

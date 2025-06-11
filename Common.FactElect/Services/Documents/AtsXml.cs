@@ -4,15 +4,15 @@ public class AtsXml
 {
     public bool Create(ref DataSet ds, ref byte[] xmlSales)
     {
-        var dtHeader = ds.Tables[0];
-        var dtShopping = ds.Tables[1];
-        var dtSales = ds.Tables[2];
-        var dtCanceled = ds.Tables[3];
-        var dtRetenciones = ds.Tables[4];
-        var dtVentasEstab = ds.Tables[5];
+        var headerDt = ds.Tables["header"];
+        var purchasesDt = ds.Tables["purchases"];
+        var salesDt = ds.Tables["sales"];
+        var creditNotesDt = ds.Tables["credit_notes"];
+        var withHoldingTaxesDt = ds.Tables["with_holding_taxes"];
+        var establishmentSalesDt = ds.Tables["establishment_sales"];
 
-        var atsMS = new MemoryStream();
-        TextWriter tw = new StreamWriter(atsMS);
+        var atsMs = new MemoryStream();
+        TextWriter tw = new StreamWriter(atsMs);
         var xtr = new XmlTextWriter(tw);
         xtr.WriteStartDocument(true);
         xtr.Formatting = Formatting.Indented;
@@ -21,83 +21,62 @@ public class AtsXml
         xtr.WriteStartElement("iva");
 
         xtr.WriteStartElement("TipoIDInformante");
-        xtr.WriteString(dtHeader.Rows[0]["TipoIdInformante"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["TipoIdInformante"].ToString());
         xtr.WriteEndElement();
 
         xtr.WriteStartElement("IdInformante");
-        xtr.WriteString(dtHeader.Rows[0]["IdInformante"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["IdInformante"].ToString());
         xtr.WriteEndElement();
 
         xtr.WriteStartElement("razonSocial");
-        xtr.WriteString(dtHeader.Rows[0]["razonSocial"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["razonSocial"].ToString());
         xtr.WriteEndElement();
 
         xtr.WriteStartElement("Anio");
-        xtr.WriteString(dtHeader.Rows[0]["anio"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["anio"].ToString());
         xtr.WriteEndElement();
 
         xtr.WriteStartElement("Mes");
-        xtr.WriteString(dtHeader.Rows[0]["mes"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["mes"].ToString());
         xtr.WriteEndElement();
 
         xtr.WriteStartElement("numEstabRuc");
-        xtr.WriteString(dtHeader.Rows[0]["numEstabRuc"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["numEstabRuc"].ToString());
         xtr.WriteEndElement();
 
         xtr.WriteStartElement("totalVentas");
-        xtr.WriteString(dtHeader.Rows[0]["totalVentas"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["totalVentas"].ToString());
         xtr.WriteEndElement();
 
         xtr.WriteStartElement("codigoOperativo");
-        xtr.WriteString(dtHeader.Rows[0]["codigoOperativo"].ToString());
+        xtr.WriteString(headerDt?.Rows[0]["codigoOperativo"].ToString());
         xtr.WriteEndElement();
 
         //Compras
-        if (dtShopping.Rows.Count > 0 && dtShopping.Columns.Contains("codSustento"))
-            NodeShopping(xtr, dtShopping, dtRetenciones);
+        if (purchasesDt is { Rows.Count: > 0 } && purchasesDt.Columns.Contains("codSustento"))
+            PurchaseNode(xtr, purchasesDt, withHoldingTaxesDt);
 
         //Ventas
-        if (dtSales.Rows.Count > 0)
+        if (salesDt is { Rows.Count: > 0 })
         {
-            NodeSales(xtr, dtSales);
-
-            NodeVentasEstab(xtr, dtVentasEstab);
-
-            //xtr.WriteStartElement("ventasEstablecimiento"); //start ventasEstablecimiento
-
-            //xtr.WriteStartElement("ventaEst"); //start ventaEst
-
-            //xtr.WriteStartElement("codEstab");
-            //xtr.WriteString(dtHeader.Rows[0]["codEstab"].ToString());
-            //xtr.WriteEndElement();
-
-            //xtr.WriteStartElement("ventasEstab");
-            //xtr.WriteString(dtHeader.Rows[0]["totalVentas"].ToString());
-            //xtr.WriteEndElement();
-
-            //xtr.WriteStartElement("ivaComp");
-            //xtr.WriteString(dtHeader.Rows[0]["ivaComp"].ToString());
-            //xtr.WriteEndElement();
-
-            //xtr.WriteEndElement(); //end ventaEst
-
-            //xtr.WriteEndElement(); //end ventasEstablecimiento
+            SalesNode(xtr, salesDt);
+            EstablishmentSalesNode(xtr, establishmentSalesDt);
         }
 
         //Anulados
-        if (dtCanceled.Rows.Count > 0) NodeCanceledDocs(xtr, dtCanceled);
+        if (creditNotesDt is { Rows.Count: > 0 }) CanceledDocsNode(xtr, creditNotesDt);
 
         xtr.WriteEndElement();
         xtr.WriteEndDocument();
         xtr.Close();
 
-        xmlSales = atsMS.ToArray();
+        xmlSales = atsMs.ToArray();
         xtr.Close();
-        atsMS.Close();
+        atsMs.Close();
         return true;
     }
 
-    public void NodeShopping(XmlTextWriter xtr, DataTable dt, DataTable dtRetenciones)
+    private void PurchaseNode(XmlTextWriter xtr, DataTable dt, DataTable withHoldingTaxesDt)
     {
         xtr.WriteStartElement("compras"); //start compras
 
@@ -253,10 +232,10 @@ public class AtsXml
                 xtr.WriteEndElement(); //end formasDePago
             }
 
-            if (dtRetenciones.Select(string.Format("nroDocumento='{0}'", dr["nroDocumento"])).Count() > 0)
+            if (withHoldingTaxesDt.Select($"nroDocumento='{dr["nroDocumento"]}'").Length != 0)
             {
                 xtr.WriteStartElement("air"); //start air
-                NodeRetenciones(xtr, dr, dtRetenciones);
+                WithHoldingTaxesNode(xtr, dr, withHoldingTaxesDt);
                 xtr.WriteEndElement(); //end air
             }
 
@@ -315,7 +294,7 @@ public class AtsXml
         xtr.WriteEndElement(); //end compras
     }
 
-    public void NodeRetenciones(XmlTextWriter xtr, DataRow drPurchases, DataTable dt)
+    private void WithHoldingTaxesNode(XmlTextWriter xtr, DataRow drPurchases, DataTable dt)
     {
         foreach (DataRow dr in dt.Rows)
             if (drPurchases["nroDocumento"].ToString() == dr["nroDocumento"].ToString() &&
@@ -343,7 +322,7 @@ public class AtsXml
             }
     }
 
-    public void NodeSales(XmlTextWriter xtr, DataTable dt)
+    private void SalesNode(XmlTextWriter xtr, DataTable dt)
     {
         xtr.WriteStartElement("ventas"); //start ventas
 
@@ -452,7 +431,7 @@ public class AtsXml
         xtr.WriteEndElement(); // end ventas
     }
 
-    public void NodeVentasEstab(XmlTextWriter xtr, DataTable dt)
+    private void EstablishmentSalesNode(XmlTextWriter xtr, DataTable dt)
     {
         xtr.WriteStartElement("ventasEstablecimiento"); //start ventas
         foreach (DataRow dr in dt.Rows)
@@ -479,7 +458,7 @@ public class AtsXml
         xtr.WriteEndElement(); // end ventas
     }
 
-    public void NodeCanceledDocs(XmlTextWriter xtr, DataTable dt)
+    private void CanceledDocsNode(XmlTextWriter xtr, DataTable dt)
     {
         xtr.WriteStartElement("anulados"); //start anulados
 

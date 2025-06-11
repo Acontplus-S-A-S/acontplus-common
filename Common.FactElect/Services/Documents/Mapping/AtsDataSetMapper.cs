@@ -27,7 +27,7 @@ public class AtsDataSetMapper
         };
     }
 
-    private AtsHeader MapHeader(DataTable? dt)
+    private static AtsHeader MapHeader(DataTable? dt)
     {
         if (dt == null || dt.Rows.Count == 0)
         {
@@ -53,13 +53,11 @@ public class AtsDataSetMapper
     {
         if (dt == null || dt.Rows.Count == 0)
         {
-            return Enumerable.Empty<Purchase>();
+            return [];
         }
 
-        var purchases = new List<Purchase>();
-        foreach (DataRow dr in dt.Rows)
-        {
-            purchases.Add(new Purchase
+        return (from DataRow dr in dt.Rows
+            select new Purchase
             {
                 CodSustento = dr["codSustento"].ToString() ?? string.Empty,
                 TpIdProv = dr["tpIdProv"].ToString() ?? string.Empty,
@@ -103,23 +101,18 @@ public class AtsDataSetMapper
                 AutRetencion1 = GetColumnValueOrDefault(dr, "autRetencion1"),
                 FechaEmiRet1 = GetColumnValueOrDefault(dr, "fechaEmiRet1"),
                 NroDocumento = dr["nroDocumento"].ToString() ?? string.Empty // Essential for linking
-            });
-        }
-
-        return purchases;
+            }).ToList();
     }
 
     private IEnumerable<WithholdingTax> MapWithholdingTaxes(DataTable? dt)
     {
         if (dt == null || dt.Rows.Count == 0)
         {
-            return Enumerable.Empty<WithholdingTax>();
+            return [];
         }
 
-        var withholdingTaxes = new List<WithholdingTax>();
-        foreach (DataRow dr in dt.Rows)
-        {
-            withholdingTaxes.Add(new WithholdingTax
+        return (from DataRow dr in dt.Rows
+            select new WithholdingTax
             {
                 CodRetAir = dr["codRetAir"].ToString() ?? string.Empty,
                 BaseImpAir = dr["baseImpAir"].ToString() ?? string.Empty,
@@ -128,23 +121,18 @@ public class AtsDataSetMapper
                 NroDocumento = dr["nroDocumento"].ToString() ?? string.Empty, // Essential for linking
                 ClaveAcceso =
                     dr["claveAcceso"].ToString() ?? string.Empty // Essential for linking (original Autorizacion)
-            });
-        }
-
-        return withholdingTaxes;
+            }).ToList();
     }
 
     private IEnumerable<Sale> MapSales(DataTable? dt)
     {
         if (dt == null || dt.Rows.Count == 0)
         {
-            return Enumerable.Empty<Sale>();
+            return [];
         }
 
-        var sales = new List<Sale>();
-        foreach (DataRow dr in dt.Rows)
-        {
-            sales.Add(new Sale
+        return (from DataRow dr in dt.Rows
+            select new Sale
             {
                 TpIdCliente = dr["tpIdCliente"].ToString() ?? string.Empty,
                 IdCliente = dr["idCliente"].ToString() ?? string.Empty,
@@ -164,10 +152,7 @@ public class AtsDataSetMapper
                 ValorRetIva = dr["valorRetIva"].ToString() ?? string.Empty,
                 ValorRetRenta = dr["valorRetRenta"].ToString() ?? string.Empty,
                 FormaPago = dr["formaPago"].ToString() ?? string.Empty
-            });
-        }
-
-        return sales;
+            }).ToList();
     }
 
     private IEnumerable<EstablishmentSale> MapEstablishmentSales(DataTable? dt)
@@ -177,31 +162,24 @@ public class AtsDataSetMapper
             return Enumerable.Empty<EstablishmentSale>();
         }
 
-        var establishmentSales = new List<EstablishmentSale>();
-        foreach (DataRow dr in dt.Rows)
-        {
-            establishmentSales.Add(new EstablishmentSale
+        return (from DataRow dr in dt.Rows
+            select new EstablishmentSale
             {
                 CodEstab = dr["codEstab"].ToString() ?? string.Empty,
                 VentasEstab = dr["ventasEstab"].ToString() ?? string.Empty,
                 IvaComp = dr["ivaComp"].ToString() ?? string.Empty
-            });
-        }
-
-        return establishmentSales;
+            }).ToList();
     }
 
     private IEnumerable<CanceledDocument> MapCanceledDocuments(DataTable? dt)
     {
         if (dt == null || dt.Rows.Count == 0)
         {
-            return Enumerable.Empty<CanceledDocument>();
+            return [];
         }
 
-        var canceledDocs = new List<CanceledDocument>();
-        foreach (DataRow dr in dt.Rows)
-        {
-            canceledDocs.Add(new CanceledDocument
+        return (from DataRow dr in dt.Rows
+            select new CanceledDocument
             {
                 TipoComprobante = dr["tipoComprobante"].ToString() ?? string.Empty,
                 Establecimiento = dr["establecimiento"].ToString() ?? string.Empty,
@@ -209,10 +187,7 @@ public class AtsDataSetMapper
                 SecuencialInicio = dr["secuencialInicio"].ToString() ?? string.Empty,
                 SecuencialFin = dr["secuencialFin"].ToString() ?? string.Empty,
                 Autorizacion = dr["autorizacion"].ToString() ?? string.Empty
-            });
-        }
-
-        return canceledDocs;
+            }).ToList();
     }
 
     // Helper method to safely get a string value from a DataRow column

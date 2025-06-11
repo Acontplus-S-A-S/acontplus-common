@@ -22,7 +22,7 @@ public class AtsXmlService : IAtsXmlService
         await using var tw = new StreamWriter(atsMs, System.Text.Encoding.UTF8, leaveOpen: true);
 
         // XmlTextWriter for generating XML
-        using (var xtr = new XmlTextWriter(tw)) // Use a synchronous using statement
+        await using (var xtr = new XmlTextWriter(tw)) // Use a synchronous using statement
         {
             xtr.Formatting = Formatting.Indented;
             xtr.Indentation = 2;

@@ -83,7 +83,7 @@ public class AdoRepository(
         string spName,
         Dictionary<string, object> parameters,
         bool withTableNames,
-        bool timeout,
+        bool disableTimeout,
         string connectionStringName,
         CancellationToken cancellationToken,
         int tableNamesLength)
@@ -93,7 +93,7 @@ public class AdoRepository(
         return await RetryPolicy.ExecuteAsync(async () =>
         {
             await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
-            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, disableTimeout);
 
             if (withTableNames)
             {
@@ -166,7 +166,7 @@ public class AdoRepository(
     public async Task<T> SpExecuteAsync<T>(
         string spName,
         Dictionary<string, object> parameters,
-        bool timeout,
+        bool disableTimeout,
         string connectionStringName,
         CancellationToken cancellationToken) where T : class, new()
     {
@@ -175,7 +175,7 @@ public class AdoRepository(
         return await RetryPolicy.ExecuteAsync(async () =>
         {
             await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
-            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, disableTimeout);
 
             try
             {
@@ -222,7 +222,7 @@ public class AdoRepository(
         string commandText,
         Dictionary<string, object> parameters,
         bool useStoredProcedure,
-        bool timeout,
+        bool disableTimeout,
         string connectionStringName,
         CancellationToken cancellationToken)
     {
@@ -236,7 +236,7 @@ public class AdoRepository(
                 commandText,
                 parameters,
                 useStoredProcedure ? CommandType.StoredProcedure : CommandType.Text,
-                timeout);
+                disableTimeout);
 
             try
             {

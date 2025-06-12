@@ -56,6 +56,7 @@ public class AdoRepository(
     public async Task<List<T>> DynamicListAsync<T>(
         string spName,
         Dictionary<string, object> parameters,
+        bool disableTimeout,
         string connectionStringName,
         CancellationToken cancellationToken)
     {
@@ -64,7 +65,7 @@ public class AdoRepository(
         return await RetryPolicy.ExecuteAsync(async () =>
         {
             await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
-            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure);
+            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, disableTimeout);
 
             try
             {

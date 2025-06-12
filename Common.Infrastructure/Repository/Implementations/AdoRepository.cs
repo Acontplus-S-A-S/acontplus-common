@@ -122,35 +122,6 @@ public class AdoRepository(
         });
     }
 
-    public async Task<DataTable> GetDataTableAsync(
-        string spName,
-        Dictionary<string, object> parameters,
-        bool timeout,
-        string connectionStringName,
-        CancellationToken cancellationToken)
-    {
-        parameters ??= new Dictionary<string, object>();
-
-        return await RetryPolicy.ExecuteAsync(async () =>
-        {
-            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
-            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
-
-            var dt = new DataTable();
-            try
-            {
-                await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-                dt.Load(reader);
-                return dt;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error executing GetDataSetAsync for {SpName}", spName);
-                throw;
-            }
-        });
-    }
-
     private static SqlCommand CreateCommand(
         SqlConnection connection,
         string commandText,
@@ -216,35 +187,6 @@ public class AdoRepository(
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error executing SpExecuteAsync for {SpName}", spName);
-                throw;
-            }
-        });
-    }
-
-    public async Task<string> SpExecuteDeprecatedAsync(
-        string spName,
-        Dictionary<string, object> parameters,
-        bool timeout,
-        string connectionStringName,
-        CancellationToken cancellationToken)
-    {
-        parameters ??= new Dictionary<string, object>();
-
-        return await RetryPolicy.ExecuteAsync(async () =>
-        {
-            await using var connection = await CreateConnectionAsync(connectionStringName, cancellationToken);
-            await using var cmd = CreateCommand(connection, spName, parameters, CommandType.StoredProcedure, timeout);
-
-            try
-            {
-                await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-                return await reader.ReadAsync(cancellationToken)
-                    ? reader.GetString(0)
-                    : string.Empty;
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error executing SpExecuteDeprecatedAsync for {SpName}", spName);
                 throw;
             }
         });

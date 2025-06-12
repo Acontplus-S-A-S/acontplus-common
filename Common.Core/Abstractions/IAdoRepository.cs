@@ -18,14 +18,4 @@ public interface IAdoRepository
         string connectionStringName = null,
         CancellationToken cancellationToken = default)
         where T : class, new();
-
-    //DEPRECATED
-    public Task<DataTable> GetDataTableAsync(string spname, Dictionary<string, object> parameters = null,
-    bool timeout = true,
-    string connectionStringName = null, CancellationToken cancellationToken = default);
-
-    //DEPRECATED
-    public Task<string> SpExecuteDeprecatedAsync(string spName, Dictionary<string, object> parameters,
-        bool timeout = true, string connectionStringName = null,
-        CancellationToken cancellationToken = default);
 }

@@ -15,8 +15,7 @@ namespace Common.TestApi.Controllers
             { "json", SqlStringParam.Sanitize(json) },
             { "isMobileUserAgent", "false" }
         };
-            var response = await adoRepository.SpExecuteDeprecatedAsync("Config.Print_Get", parameters);
-            if (response == null || string.IsNullOrEmpty(response)) { return BadRequest(); }
+            var response = await adoRepository.SpExecuteAsync<ApiResponse>("Config.Print_Get", parameters);
 
             return Ok(response);
         }

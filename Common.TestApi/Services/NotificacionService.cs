@@ -12,8 +12,9 @@ public sealed class NotificacionService(IAdoRepository repository) : IEmailServi
 {
     public async Task<DataTable> GetAsync(int cantidad)
     {
-        return await repository.GetDataTableAsync("Common.EmailQueue_Serv_Get",
-            new Dictionary<string, object> { { "quantity", cantidad } });
+        var ds = await repository.GetDataSetAsync("Common.EmailQueue_Serv_Get",
+            new Dictionary<string, object> { { "quantity", cantidad } }, withTableNames: false);
+        return ds.Tables[0];
     }
 
     public async Task<int> UpdateAsync(int id, string estado, string msgError)

@@ -1,8 +1,4 @@
-﻿using Common.Core.Validation;
-using Common.FactElect.Helpers;
-using Common.FactElect.Interfaces.Services;
-
-namespace Common.TestApi.Controllers;
+﻿namespace Common.TestApi.Controllers;
 
 public class DocumentoElectronicoController(IXmlSriFileService xmlSriFileService) : BaseApiController
 {

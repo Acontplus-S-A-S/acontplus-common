@@ -1,6 +1,3 @@
-using Common.FactElect.Interfaces.Services;
-using Common.FactElect.Services.Documents.Mapping;
-
 namespace Common.TestApi.Controllers;
 
 public class AtsController(IAtsService atsService, IAtsXmlService atsXmlService) : BaseApiController

@@ -1,6 +1,4 @@
-﻿using Common.Core.Abstractions;
-
-namespace Common.TestApi.Controllers
+﻿namespace Common.TestApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

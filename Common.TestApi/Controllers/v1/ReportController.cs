@@ -1,5 +1,4 @@
-﻿using Common.Notifications.Abstractions;
-using Common.Utilities.Services;
+﻿using Notification = Common.TestApi.Models.Notification;
 
 namespace Common.TestApi.Controllers.v1;
 

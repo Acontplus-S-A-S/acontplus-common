@@ -1,6 +1,4 @@
-﻿using Common.Utilities.Security.Interfaces;
-
-namespace Common.TestApi.Controllers
+﻿namespace Common.TestApi.Controllers
 {
     public class SecurityController : BaseApiController
     {

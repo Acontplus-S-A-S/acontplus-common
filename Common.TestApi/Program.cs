@@ -1,16 +1,10 @@
-﻿using System;
-using Common.ApiDocumentation;
-using Common.FactElect.Interfaces.Services;
+﻿using Common.ApiDocumentation;
 using Common.FactElect.Models.Documents;
 using Common.FactElect.Services.Documents;
 using Common.FactElect.Services.External;
-using Common.Logging;
-using Common.Notifications.Abstractions;
 using Common.Notifications.Services;
 using Common.Services.Middleware;
-using Common.TestApi.Data;
 using Common.TestApi.Extensions;
-using Microsoft.EntityFrameworkCore;
 using Scrutor;
 using Serilog;
 

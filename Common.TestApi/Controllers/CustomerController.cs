@@ -1,8 +1,4 @@
-﻿using Common.Core.Validation;
-using Common.FactElect.Interfaces.Services;
-using Common.FactElect.Models.Validation;
-
-namespace Common.TestApi.Controllers;
+﻿namespace Common.TestApi.Controllers;
 
 public class CustomerController(
     IRucService rucService,

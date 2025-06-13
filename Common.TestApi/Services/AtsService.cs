@@ -1,5 +1,3 @@
-using Common.Core.Abstractions;
-
 namespace Common.TestApi.Services;
 
 public interface IAtsService

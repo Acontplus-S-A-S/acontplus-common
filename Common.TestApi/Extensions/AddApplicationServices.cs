@@ -1,5 +1,4 @@
-﻿using Common.Logging;
-using Serilog.Events;
+﻿using Serilog.Events;
 
 namespace Common.TestApi.Extensions;
 

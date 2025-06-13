@@ -1,17 +1,13 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
 using Common.Infrastructure.Context;
-using Common.Infrastructure.Entity;
-using Common.TestApi.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Common.TestApi.Data;
-
 
 public class TestContext(DbContextOptions<TestContext> options) : BaseContext(options)
 {
     public DbSet<Usuario> Usuarios { get; set; }
+    public DbSet<WhatsAppUsage> WhatsAppUsages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -49,7 +45,5 @@ public class TestContext(DbContextOptions<TestContext> options) : BaseContext(op
         //    { typeof(Producto), typeof(ProductoConfiguration) }
         //};
         //SimpleEntityRegistration.RegisterEntitiesWithCustomConfigurations(modelBuilder, typeof(TestContext), customConfigs, typeof(Producto));
-
-
     }
 }

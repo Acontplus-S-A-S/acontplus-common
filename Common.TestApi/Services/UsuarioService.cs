@@ -1,10 +1,4 @@
-﻿using Common.Core.Abstractions;
-using Common.TestApi.Data;
-using Common.TestApi.DTOs;
-using Common.TestApi.Entities;
-using Common.TestApi.Repositories.Interfaces;
-
-namespace Common.TestApi.Services
+﻿namespace Common.TestApi.Services
 {
     public interface IUsuarioService
     {

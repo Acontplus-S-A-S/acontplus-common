@@ -1,7 +1,4 @@
-﻿using Common.Barcode.Models;
-using Common.Barcode.Utils;
-
-namespace Common.TestApi.Controllers;
+﻿namespace Common.TestApi.Controllers;
 
 public class BarcodeController(IUsuarioService usuarioService) : BaseApiController
 {

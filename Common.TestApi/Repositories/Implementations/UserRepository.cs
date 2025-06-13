@@ -1,8 +1,4 @@
 ﻿using Common.Infrastructure.Repository.Implementations;
-using Common.TestApi.Data;
-using Common.TestApi.Entities;
-using Common.TestApi.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Common.TestApi.Repositories.Implementations;
 

@@ -1,6 +1,4 @@
-﻿using Common.Core.Abstractions;
-
-namespace Common.TestApi.Services;
+﻿namespace Common.TestApi.Services;
 
 public interface ICustomerService
 {

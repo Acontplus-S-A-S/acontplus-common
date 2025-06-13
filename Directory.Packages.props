@@ -6,7 +6,7 @@
   <ItemGroup>
     <PackageVersion Include="Acontplus.Common.Barcode" Version="0.1.6" />
     <PackageVersion Include="Acontplus.Common.Core" Version="1.5.9" />
-    <PackageVersion Include="Acontplus.Common.Data" Version="0.1.0" />
+    <PackageVersion Include="Acontplus.Common.Data" Version="0.1.1" />
     <PackageVersion Include="Acontplus.Common.Infrastructure" Version="1.4.7" />
     <PackageVersion Include="Acontplus.Common.Services" Version="1.0.9" />
     <PackageVersion Include="Acontplus.Common.Utilities" Version="0.3.4" />
@@ -42,6 +42,7 @@
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.6" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.6" />
     <PackageVersion Include="Microsoft.IdentityModel.Tokens" Version="8.12.0" />
+    <PackageVersion Include="Microsoft.OpenApi" Version="1.6.24" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.2" />
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
@@ -62,7 +63,8 @@
     <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageVersion Include="Serilog.Sinks.MSSqlServer" Version="8.2.0" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Linux" Version="3.116.1" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="8.1.4" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.0" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.0" />
     <PackageVersion Include="System.Drawing.Common" Version="9.0.6" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.12.0" />
     <PackageVersion Include="ZXing.Net" Version="0.16.10" />

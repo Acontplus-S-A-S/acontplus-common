@@ -61,14 +61,6 @@ public static class SwaggerAndVersioningExtensions
             app.ApplicationServices.GetRequiredService<IApiVersionDescriptionProvider>();
 
         app.UseSwagger();
-        app.UseSwaggerUI(options =>
-        {
-            foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
-            {
-                options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-                    $"API {description.GroupName.ToUpperInvariant()}");
-            }
-        });
 
         return app;
     }

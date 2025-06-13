@@ -1,5 +1,5 @@
 ﻿namespace Common.Notifications.Entities;
-[Table("WhatsAppUsage", Schema = "Config")]
+
 public class WhatsAppUsage : BaseEntity
 {
     public int CompanyId { get; set; }

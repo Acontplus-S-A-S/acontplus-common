@@ -1,6 +1,4 @@
-﻿using Serilog.Events;
-
-namespace Common.TestApi.Extensions;
+﻿namespace Common.TestApi.Extensions;
 
 public static class ApplicationServicesExtensions
 {

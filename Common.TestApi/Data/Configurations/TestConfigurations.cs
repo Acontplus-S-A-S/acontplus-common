@@ -34,5 +34,7 @@ public class WhatsAppUsageConfiguration : BaseEntityTypeConfiguration<WhatsAppUs
         builder
             .Property(x => x.StartDate)
             .HasDefaultValueSql("SYSUTCDATETIME()");
+
+        builder.ToTable("WhatsAppUsage", "Config");
     }
 }

@@ -1,10 +1,10 @@
 ﻿namespace Common.Notifications.Entities;
-[Table("NotificationGroup", Schema = "Common")]
+
 public class NotificationGroup : BaseEntity
 {
-    public string Name { get; set; } // Example: "Finance Team", "Company-Wide"
+    public string? Name { get; set; } // Example: "Finance Team", "Company-Wide"
     public int? CompanyId { get; set; } // Nullable: Groups can span multiple companies
 
     // Relationships
-    public ICollection<UserGroup> UserGroups { get; set; } // Links users to this group
+    public ICollection<UserGroup>? UserGroups { get; set; } // Links users to this group
 }

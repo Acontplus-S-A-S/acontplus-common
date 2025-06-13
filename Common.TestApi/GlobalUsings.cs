@@ -20,7 +20,6 @@ global using Common.Reports.Interfaces;
 global using Common.TestApi.Data;
 global using Common.TestApi.DTOs;
 global using Common.TestApi.Entities;
-global using Common.TestApi.Models;
 global using Common.TestApi.Repositories.Interfaces;
 global using Common.TestApi.Services;
 global using Common.Utilities.Security.Interfaces;

@@ -221,7 +221,7 @@ try
         }
     });
 
-   await app.RunAsync();
+    await app.RunAsync();
 }
 catch (Exception ex)
 {

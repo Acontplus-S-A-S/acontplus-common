@@ -1,23 +1,20 @@
-﻿using System.Text;
-using Common.Utilities.Format;
+﻿namespace Common.Notifications.Entities;
 
-namespace Common.Notifications.Entities;
-[Table("WhatsAppMessage", Schema = "Common")]
 public class WhatsAppMessage : BaseEntity
 {
     private string _decompressedMessage;
     public int NotificationId { get; set; }
-    public Notification Notification { get; set; }
+    public required Notification Notification { get; set; }
     public int WhatsAppSenderConfigId { get; set; }
-    public WhatsAppSenderConfig WhatsAppSenderConfig { get; set; }
-    [Required] public byte[] CompressedMessage { get; set; }
-    [MaxLength(150)] public string Os { get; set; }
-    [MaxLength(150)] public string Browser { get; set; }
-    [Required, MaxLength(25)] public string RecipientPhoneNumber { get; set; }
+    public required WhatsAppSenderConfig WhatsAppSenderConfig { get; set; }
+    [Required] public required byte[] CompressedMessage { get; set; }
+    [MaxLength(150)] public string? Os { get; set; }
+    [MaxLength(150)] public string? Browser { get; set; }
+    [Required, MaxLength(25)] public required string RecipientPhoneNumber { get; set; }
     public int PriorityId { get; set; }
-    public Priority Priority { get; set; }
+    public required Priority Priority { get; set; }
     public int StatusId { get; set; }
-    public Status Status { get; set; }
+    public required Status Status { get; set; }
     public DateTime? ScheduledAt { get; set; } // When the whatsapp message is scheduled to be sent
     public DateTime? SentAt { get; set; } // When the whatsapp message was actually sent
 
@@ -28,12 +25,12 @@ public class WhatsAppMessage : BaseEntity
         {
             switch (_decompressedMessage)
             {
-                case null when CompressedMessage != null:
-                    {
-                        var decompressedBytes = CompressionUtils.DecompressGZip(CompressedMessage);
-                        _decompressedMessage = Encoding.UTF8.GetString(decompressedBytes);
-                        break;
-                    }
+                case null when true:
+                {
+                    var decompressedBytes = CompressionUtils.DecompressGZip(CompressedMessage);
+                    _decompressedMessage = Encoding.UTF8.GetString(decompressedBytes);
+                    break;
+                }
             }
 
             return _decompressedMessage;

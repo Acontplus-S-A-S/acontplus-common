@@ -1,7 +1,7 @@
 ﻿namespace Common.Notifications.Entities;
-[Table("NotificationType", Schema = "Common")]
+
 public class NotificationType : BaseEntity
 {
-    [Required, MaxLength(5)] public string Code { get; set; }
-    public string Name { get; set; } // e.g., "Email", "Sms", "Push", "WhatsApp"
+    [Required, MaxLength(5)] public required string Code { get; set; }
+    public required string Name { get; set; } // e.g., "Email", "Sms", "Push", "WhatsApp"
 }

@@ -1,21 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Net;
-using System.Net.Mime;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using Amazon.Runtime;
-using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
-using Common.Notifications.Abstractions;
-using Common.Notifications.Models;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using Polly;
-using Polly.Retry;
-using Scriban.Runtime;
 using Template = Scriban.Template;
 
 namespace Common.Notifications.Services;

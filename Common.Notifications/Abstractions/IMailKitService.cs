@@ -1,6 +1,4 @@
-﻿using Common.Notifications.Models;
-
-namespace Common.Notifications.Abstractions;
+﻿namespace Common.Notifications.Abstractions;
 
 public interface IMailKitService
 {

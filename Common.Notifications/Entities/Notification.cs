@@ -1,20 +1,16 @@
-﻿using System.Text;
-using Common.Utilities.Format;
+﻿namespace Common.Notifications.Entities;
 
-namespace Common.Notifications.Entities;
-
-[Table("Notification", Schema = "Common")]
 public class Notification : BaseEntity
 {
-    private string _decompressedParameters;
+    private string? _decompressedParameters;
     public int NotificationTypeId { get; set; }
-    public NotificationType NotificationType { get; set; }
-    [Required] public byte[] CompressedParameters { get; set; } // Any custom parameters
-    [MaxLength(100)] public string Title { get; set; }
-    [MaxLength(300)] public string Subject { get; set; }
-    [MaxLength(300)] public string Message { get; set; }
+    public required NotificationType NotificationType { get; set; }
+    [Required] public required byte[] CompressedParameters { get; set; } // Any custom parameters
+    [MaxLength(100)] public string? Title { get; set; }
+    [MaxLength(300)] public string? Subject { get; set; }
+    [MaxLength(300)] public string? Message { get; set; }
     public bool IsRead { get; set; }
-    public ICollection<Attachment> Attachments { get; set; }
+    public ICollection<Attachment>? Attachments { get; set; }
 
     [NotMapped]
     public string Parameters
@@ -23,12 +19,12 @@ public class Notification : BaseEntity
         {
             switch (_decompressedParameters)
             {
-                case null when CompressedParameters != null:
-                    {
-                        var decompressedBytes = CompressionUtils.DecompressGZip(CompressedParameters);
-                        _decompressedParameters = Encoding.UTF8.GetString(decompressedBytes);
-                        break;
-                    }
+                case null when true:
+                {
+                    var decompressedBytes = CompressionUtils.DecompressGZip(CompressedParameters);
+                    _decompressedParameters = Encoding.UTF8.GetString(decompressedBytes);
+                    break;
+                }
             }
 
             return _decompressedParameters;

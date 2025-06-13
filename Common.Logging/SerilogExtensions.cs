@@ -1,5 +1,4 @@
-﻿using System.Configuration;
-using Serilog.Formatting.Display;
+﻿using Serilog.Formatting.Display;
 
 namespace Common.Logging;
 
@@ -159,7 +158,7 @@ public static class SerilogExtensions
                 sinkOptions: sinkOpts,
                 columnOptions: columnOpts,
                 restrictedToMinimumLevel: LogEventLevel.Debug // Example: only log Information and above to DB
-                //appConfiguration: options.Configuration // Pass configuration to MSSqlServer sink for dynamic connection string resolution if needed
+                                                              //appConfiguration: options.Configuration // Pass configuration to MSSqlServer sink for dynamic connection string resolution if needed
             ));
 
             Serilog.Debugging.SelfLog.WriteLine("Database logging configured successfully.");

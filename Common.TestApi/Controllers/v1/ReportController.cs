@@ -37,11 +37,11 @@ public class ReportController(
         if (await mailKitService.SendAsync(emailData))
         {
         }
+
         return Ok("Success");
 
         //return File(emailData.Files[0].Content, "application/pdf", emailData.Files[0].FileName);
     }
-
 
 
     private async Task HandleReportGeneration(Notification mainParams, FileModel reportFile)

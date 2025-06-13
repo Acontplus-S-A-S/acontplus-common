@@ -1,19 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using System.Dynamic;
-using System.Net.Mime;
 using System.Security.Authentication;
-using Common.Notifications.Abstractions;
-using Common.Notifications.Models;
 using MailKit.Net.Smtp;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using MimeKit;
 using MimeKit.Utils;
-using Newtonsoft.Json;
-using Polly;
-using Polly.Retry;
 using Scriban;
-using Scriban.Runtime;
 
 namespace Common.Notifications.Services;
 

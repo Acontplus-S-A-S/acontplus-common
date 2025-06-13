@@ -1,28 +1,25 @@
-﻿using System.Text;
-using Common.Utilities.Format;
+﻿namespace Common.Notifications.Entities;
 
-namespace Common.Notifications.Entities;
-[Table("EmailQueue", Schema = "Common")]
 public class EmailQueue : BaseEntity
 {
-    private string _decompressedBody;
+    private string? _decompressedBody;
     public int NotificationId { get; set; } // Links to Notification table
-    public Notification Notification { get; set; }
+    public required Notification Notification { get; set; }
     public int EmailSenderConfigId { get; set; } // Sender email sender configuration
-    public EmailSenderConfig EmailSenderConfig { get; set; }
-    [Required, MaxLength(254)] public string RecipientEmail { get; set; } // Email address of the recipient
-    [Required, MaxLength(300)] public string Subject { get; set; }
-    [MaxLength(1000)] public string Cc { get; set; }
+    public required EmailSenderConfig EmailSenderConfig { get; set; }
+    [Required, MaxLength(254)] public required string RecipientEmail { get; set; } // Email address of the recipient
+    [Required, MaxLength(300)] public required string Subject { get; set; }
+    [MaxLength(1000)] public string? Cc { get; set; }
     public bool IsHtml { get; set; }
-    [Required] public byte[] CompressedBody { get; set; }
+    [Required] public required byte[] CompressedBody { get; set; }
     public int PriorityId { get; set; }
-    public Priority Priority { get; set; }
+    public required Priority Priority { get; set; }
     public int StatusId { get; set; }
-    public Status Status { get; set; }
+    public required Status Status { get; set; }
     public int? RetryCount { get; set; } // Number of retry attempts
     public DateTime? ScheduledAt { get; set; } // When the email is scheduled to be sent
     public DateTime? SentAt { get; set; } // When the email was actually sent
-    [MaxLength(150)] public string Template { get; set; }
+    [MaxLength(150)] public string? Template { get; set; }
 
     [NotMapped]
     public string Content
@@ -31,12 +28,12 @@ public class EmailQueue : BaseEntity
         {
             switch (_decompressedBody)
             {
-                case null when CompressedBody != null:
-                    {
-                        var decompressedBytes = CompressionUtils.DecompressGZip(CompressedBody);
-                        _decompressedBody = Encoding.UTF8.GetString(decompressedBytes);
-                        break;
-                    }
+                case null when true:
+                {
+                    var decompressedBytes = CompressionUtils.DecompressGZip(CompressedBody);
+                    _decompressedBody = Encoding.UTF8.GetString(decompressedBytes);
+                    break;
+                }
             }
 
             return _decompressedBody;

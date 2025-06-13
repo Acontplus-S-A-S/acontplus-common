@@ -29,11 +29,11 @@ public class EmailQueue : BaseEntity
             switch (_decompressedBody)
             {
                 case null when true:
-                {
-                    var decompressedBytes = CompressionUtils.DecompressGZip(CompressedBody);
-                    _decompressedBody = Encoding.UTF8.GetString(decompressedBytes);
-                    break;
-                }
+                    {
+                        var decompressedBytes = CompressionUtils.DecompressGZip(CompressedBody);
+                        _decompressedBody = Encoding.UTF8.GetString(decompressedBytes);
+                        break;
+                    }
             }
 
             return _decompressedBody;

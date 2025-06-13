@@ -26,11 +26,11 @@ public class WhatsAppMessage : BaseEntity
             switch (_decompressedMessage)
             {
                 case null when true:
-                {
-                    var decompressedBytes = CompressionUtils.DecompressGZip(CompressedMessage);
-                    _decompressedMessage = Encoding.UTF8.GetString(decompressedBytes);
-                    break;
-                }
+                    {
+                        var decompressedBytes = CompressionUtils.DecompressGZip(CompressedMessage);
+                        _decompressedMessage = Encoding.UTF8.GetString(decompressedBytes);
+                        break;
+                    }
             }
 
             return _decompressedMessage;

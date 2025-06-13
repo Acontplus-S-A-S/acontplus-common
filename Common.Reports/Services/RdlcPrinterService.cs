@@ -1,9 +1,5 @@
 ﻿using System.Drawing.Imaging;
 using System.Drawing.Printing;
-using Common.Data;
-using Common.Reports.Models;
-using Microsoft.Reporting.NETCore;
-using Newtonsoft.Json;
 
 namespace Common.Reports.Services;
 

@@ -1,18 +1,6 @@
 ﻿using System.Collections.Concurrent;
-using System.Data;
-using System.Text;
 using System.Web;
-using Common.Barcode.Models;
-using Common.Barcode.Utils;
-using Common.Core.Extensions;
-using Common.Data;
-using Common.Reports.Enums;
-using Common.Reports.Interfaces;
-using Common.Reports.Models;
-using Common.Utilities.Format;
-using Common.Utilities.IO;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Reporting.NETCore;
 using static System.Enum;
 
 namespace Common.Reports.Services

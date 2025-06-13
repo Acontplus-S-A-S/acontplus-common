@@ -20,11 +20,11 @@ public class Notification : BaseEntity
             switch (_decompressedParameters)
             {
                 case null when true:
-                {
-                    var decompressedBytes = CompressionUtils.DecompressGZip(CompressedParameters);
-                    _decompressedParameters = Encoding.UTF8.GetString(decompressedBytes);
-                    break;
-                }
+                    {
+                        var decompressedBytes = CompressionUtils.DecompressGZip(CompressedParameters);
+                        _decompressedParameters = Encoding.UTF8.GetString(decompressedBytes);
+                        break;
+                    }
             }
 
             return _decompressedParameters;

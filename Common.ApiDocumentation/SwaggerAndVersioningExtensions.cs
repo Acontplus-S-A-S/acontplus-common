@@ -3,64 +3,105 @@ using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace Common.ApiDocumentation;
 
-public static class SwaggerAndVersioningExtensions
+/// <summary>
+/// Extension methods for configuring API versioning and Swagger documentation.
+/// </summary>
+public static class ApiDocumentationExtensions
 {
-    public static IServiceCollection AddVersioningAndSwagger(this IServiceCollection services)
+    /// <summary>
+    /// Adds and configures API versioning and Swagger/OpenAPI documentation services.
+    /// </summary>
+    /// <param name="services">The IServiceCollection to add services to.</param>
+    /// <returns>The configured IServiceCollection.</returns>
+    public static IServiceCollection AddApiVersioningAndDocumentation(this IServiceCollection services)
     {
-        services.AddApiVersioning(opt =>
+        // 1. Configure API Versioning
+        services.AddApiVersioning(options =>
         {
-            opt.DefaultApiVersion = new ApiVersion(1, 0);
-            opt.AssumeDefaultVersionWhenUnspecified = true;
-            opt.ReportApiVersions = true;
-            opt.ApiVersionReader = ApiVersionReader.Combine(new UrlSegmentApiVersionReader(),
-                new QueryStringApiVersionReader("api-version"),
+            options.DefaultApiVersion = new ApiVersion(1, 0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true;
+            // Combine multiple version readers for flexibility
+            options.ApiVersionReader = ApiVersionReader.Combine(
+                new UrlSegmentApiVersionReader(),
                 new HeaderApiVersionReader("X-Api-Version"),
-                new MediaTypeApiVersionReader("X-Api-Version"));
-        }).AddApiExplorer(setup =>
+                new MediaTypeApiVersionReader("x-api-version")
+            );
+        }).AddApiExplorer(options =>
         {
-            setup.GroupNameFormat = "'v'VVV";
-            setup.SubstituteApiVersionInUrl = true;
+            // Format the version as "vX" (e.g., "v1", "v2")
+            options.GroupNameFormat = "'v'V";
+            // Automatically substitute the API version in route templates
+            options.SubstituteApiVersionInUrl = true;
         });
 
+        // 2. Add our custom options configurator for Swagger
         services.ConfigureOptions<ConfigureSwaggerOptions>();
 
-        return services;
-    }
-
-    public static IServiceCollection AddSwaggerDocumentation(this IServiceCollection services)
-    {
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        services.AddEndpointsApiExplorer();
-        services.AddSwaggerGen(c =>
+        // 3. Configure Swagger Generator
+        services.AddSwaggerGen(options =>
         {
+            // Enable JWT Bearer token authentication in the Swagger UI
             var securitySchema = new OpenApiSecurityScheme
             {
-                Description = "JWT Auth Bearer Scheme",
-                Name = "Authorisation",
+                Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
+                Name = "Authorization",
                 In = ParameterLocation.Header,
                 Type = SecuritySchemeType.Http,
-                Scheme = "Bearer",
+                Scheme = "bearer",
                 Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
             };
 
-            c.AddSecurityDefinition("Bearer", securitySchema);
+            options.AddSecurityDefinition("Bearer", securitySchema);
 
-            var securityRequirement = new OpenApiSecurityRequirement { { securitySchema, ["Bearer"] } };
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                { securitySchema, ["Bearer"] }
+            });
 
-            c.AddSecurityRequirement(securityRequirement);
+            // Include XML comments from all assemblies in the base directory
+            var baseDirectory = AppContext.BaseDirectory;
+            var xmlFiles = Directory.EnumerateFiles(baseDirectory, "*.xml", SearchOption.TopDirectoryOnly);
+            foreach (var xmlFile in xmlFiles)
+            {
+                options.IncludeXmlComments(xmlFile);
+            }
         });
+
         return services;
     }
 
-    public static IApplicationBuilder UseSwaggerAndVersioning(this IApplicationBuilder app)
+    /// <summary>
+    /// Configures the application pipeline to use Swagger and the Swagger UI with versioning support.
+    /// </summary>
+    /// <param name="app">The IApplicationBuilder to configure.</param>
+    /// <returns>The configured IApplicationBuilder.</returns>
+    public static IApplicationBuilder UseApiVersioningAndDocumentation(this IApplicationBuilder app)
     {
-        var apiVersionDescriptionProvider =
-            app.ApplicationServices.GetRequiredService<IApiVersionDescriptionProvider>();
-
+        // Enable middleware to serve generated Swagger as a JSON endpoint.
         app.UseSwagger();
+
+        // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+        // specifying the Swagger JSON endpoint for each API version.
+        app.UseSwaggerUI(options =>
+        {
+            var apiVersionDescriptionProvider = app.ApplicationServices.GetRequiredService<IApiVersionDescriptionProvider>();
+
+            // Build a swagger endpoint for each discovered API version, showing the latest versions first.
+            foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions.Reverse())
+            {
+                var url = $"/swagger/{description.GroupName}/swagger.json";
+                var name = description.GroupName.ToUpperInvariant();
+                options.SwaggerEndpoint(url, name);
+            }
+        });
 
         return app;
     }

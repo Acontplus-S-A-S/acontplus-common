@@ -66,8 +66,7 @@ try
         builder.Services.AddTransient<ICustomerService, CustomerService>();
         builder.Services.AddTransient<IMailKitService, AmazonSesService>();
         builder.Services.AddDataProtection();
-        builder.Services.AddSwaggerDocumentation();
-        builder.Services.AddVersioningAndSwagger();
+        builder.Services.AddApiVersioningAndDocumentation();
 
         builder.Services.AddDbContextPool<TestContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -91,7 +90,7 @@ try
     {
         app.MapOpenApi();
 
-        app.UseSwaggerAndVersioning();
+        app.UseApiVersioningAndDocumentation();
     }
 
     app.UseMiddleware<ExceptionMiddleware>();

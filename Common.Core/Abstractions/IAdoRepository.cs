@@ -1,5 +1,4 @@
 ﻿using System.Data.Common;
-using Common.Core.DTOs.Ado;
 
 namespace Common.Core.Abstractions;
 

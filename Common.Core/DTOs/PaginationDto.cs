@@ -1,48 +1,35 @@
 ﻿namespace Common.Core.DTOs;
 
-/// <summary>
-/// DTO for pagination parameters
-/// </summary>
-public class PaginationDto
+public record PaginationDto
 {
     private int _pageIndex = 1;
     private int _pageSize = 10;
 
-    /// <summary>
-    /// Current page number (1-based)
-    /// </summary>
     public int PageIndex
     {
         get => _pageIndex;
-        set => _pageIndex = value < 1 ? 1 : value;
+        init => _pageIndex = value < 1 ? 1 : value;
     }
 
-    /// <summary>
-    /// Number of items per page
-    /// </summary>
     public int PageSize
     {
         get => _pageSize;
-        set => _pageSize = value < 1 ? 10 : value > 100 ? 100 : value;
+        init => _pageSize = value switch
+        {
+            < 1 => 10,
+            > 1000 => 1000, // Increased limit for large systems
+            _ => value
+        };
     }
 
-    /// <summary>
-    /// Property name to sort by
-    /// </summary>
-    public string SortBy { get; set; }
+    public string? SortBy { get; init; }
+    public SortDirection SortDirection { get; init; } = SortDirection.Ascending;
+    public string? SearchTerm { get; init; }
+    public IReadOnlyDictionary<string, object>? Filters { get; init; }
 
-    /// <summary>
-    /// Sort direction ("asc" or "desc")
-    /// </summary>
-    public string SortDirection { get; set; } = "asc";
+    public int Skip => (PageIndex - 1) * PageSize;
+    public int Take => PageSize;
 
-    /// <summary>
-    /// Optional search term
-    /// </summary>
-    public string SearchTerm { get; set; }
-
-    /// <summary>
-    /// Optional filter criteria as a dictionary
-    /// </summary>
-    public Dictionary<string, string> Filters { get; set; }
+    public bool IsEmpty => string.IsNullOrWhiteSpace(SearchTerm) &&
+                          (Filters is null || !Filters.Any());
 }

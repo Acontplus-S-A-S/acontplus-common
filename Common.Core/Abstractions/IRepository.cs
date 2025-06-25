@@ -1,6 +1,4 @@
 ﻿using System.Linq.Expressions;
-using Common.Core.Base;
-using Common.Core.DTOs;
 
 namespace Common.Core.Abstractions;
 
@@ -22,39 +20,61 @@ public interface IRepository<T> where T : BaseEntity
     /// </summary>
     Task<T?> GetFirstOrDefaultAsync(
         Expression<Func<T, bool>> predicate,
-        string[]? includeProperties = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        params Expression<Func<T, object>>[] includeProperties);
 
     /// <summary>
     /// Retrieves all entities, with optional includes.
     /// </summary>
-    Task<IEnumerable<T>> GetAllAsync(
-        string[]? includeProperties = null,
-        CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<T>> GetAllAsync(
+        CancellationToken cancellationToken = default,
+        params Expression<Func<T, object>>[] includeProperties);
 
     /// <summary>
     /// Finds entities matching a predicate, with optional includes.
     /// </summary>
-    Task<IEnumerable<T>> FindAsync(
+    Task<IReadOnlyList<T>> FindAsync(
         Expression<Func<T, bool>> predicate,
-        string[]? includeProperties = null,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<T, object>>[] includeProperties);
+
+    /// <summary>
+    /// Gets entities as an IAsyncEnumerable for memory-efficient streaming.
+    /// </summary>
+    IAsyncEnumerable<T> FindAsyncEnumerable(
+        Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a paged result of all entities.
+    /// Gets a paged result of all entities with optional sorting.
     /// </summary>
     Task<PagedResult<T>> GetPagedAsync(
         PaginationDto pagination,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        Expression<Func<T, object>>? orderBy = null,
+        bool orderByDescending = false);
 
     /// <summary>
-    /// Gets a paged result of filtered entities, with optional includes.
+    /// Gets a paged result of filtered entities, with optional includes and sorting.
     /// </summary>
     Task<PagedResult<T>> GetPagedAsync(
         PaginationDto pagination,
         Expression<Func<T, bool>> predicate,
-        string[]? includeProperties = null,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        Expression<Func<T, object>>? orderBy = null,
+        bool orderByDescending = false,
+        params Expression<Func<T, object>>[] includeProperties);
+
+    /// <summary>
+    /// Gets a projected paged result for efficient data transfer.
+    /// </summary>
+    Task<PagedResult<TProjection>> GetPagedProjectionAsync<TProjection>(
+        PaginationDto pagination,
+        Expression<Func<T, TProjection>> projection,
+        Expression<Func<T, bool>>? predicate = null,
+        CancellationToken cancellationToken = default,
+        Expression<Func<T, object>>? orderBy = null,
+        bool orderByDescending = false);
 
     /// <summary>
     /// Checks if any entity matches the predicate.
@@ -70,6 +90,13 @@ public interface IRepository<T> where T : BaseEntity
         Expression<Func<T, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Counts entities matching the predicate as a long for large datasets.
+    /// </summary>
+    Task<long> LongCountAsync(
+        Expression<Func<T, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
+
     #endregion
 
     #region Persistence Methods
@@ -80,9 +107,9 @@ public interface IRepository<T> where T : BaseEntity
     Task<T> AddAsync(T entity, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds multiple entities. Persisted by UnitOfWork.SaveChangesAsync.
+    /// Adds multiple entities efficiently. Persisted by UnitOfWork.SaveChangesAsync.
     /// </summary>
-    Task<IEnumerable<T>> AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
+    Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Marks an entity for update. Persisted by UnitOfWork.SaveChangesAsync.
@@ -95,6 +122,14 @@ public interface IRepository<T> where T : BaseEntity
     Task<IEnumerable<T>> UpdateRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Updates specific properties of an entity. Persisted by UnitOfWork.SaveChangesAsync.
+    /// </summary>
+    Task<T> UpdatePropertiesAsync(
+        T entity,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<T, object>>[] propertiesToUpdate);
+
+    /// <summary>
     /// Marks an entity for deletion. Persisted by UnitOfWork.SaveChangesAsync.
     /// </summary>
     Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
@@ -102,7 +137,7 @@ public interface IRepository<T> where T : BaseEntity
     /// <summary>
     /// Marks an entity for deletion by ID. Persisted by UnitOfWork.SaveChangesAsync.
     /// </summary>
-    Task DeleteByIdAsync(object id, CancellationToken cancellationToken = default);
+    Task<bool> DeleteByIdAsync(object id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Marks multiple entities for deletion. Persisted by UnitOfWork.SaveChangesAsync.
@@ -112,21 +147,29 @@ public interface IRepository<T> where T : BaseEntity
     /// <summary>
     /// Marks entities matching a predicate for deletion. Persisted by UnitOfWork.SaveChangesAsync.
     /// </summary>
-    Task DeleteAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<int> DeleteAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+
+    #endregion
+
+    #region Bulk Operations
 
     /// <summary>
-    /// Performs a bulk delete directly in the database.
+    /// Performs a bulk delete directly in the database using ExecuteDeleteAsync.
     /// </summary>
     Task<int> BulkDeleteAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Performs a bulk update for a single property directly in the database.
+    /// Performs a bulk update directly in the database using ExecuteUpdateAsync.
     /// </summary>
-    Task<int> BulkUpdateAsync<TProperty>(
+    Task<int> BulkUpdateAsync(
         Expression<Func<T, bool>> predicate,
-        Expression<Func<T, TProperty>> propertyExpression,
-        TProperty newValue,
+        Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Performs a bulk insert operation for better performance with large datasets.
+    /// </summary>
+    Task<int> BulkInsertAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     #endregion
 
@@ -135,7 +178,7 @@ public interface IRepository<T> where T : BaseEntity
     /// <summary>
     /// Finds entities using a specification.
     /// </summary>
-    Task<IEnumerable<T>> FindWithSpecificationAsync(
+    Task<IReadOnlyList<T>> FindWithSpecificationAsync(
         ISpecification<T> specification,
         CancellationToken cancellationToken = default);
 
@@ -154,6 +197,14 @@ public interface IRepository<T> where T : BaseEntity
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets a projected result using a specification for efficient data transfer.
+    /// </summary>
+    Task<IReadOnlyList<TProjection>> FindProjectionWithSpecificationAsync<TProjection>(
+        ISpecification<T> specification,
+        Expression<Func<T, TProjection>> projection,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Counts entities using a specification.
     /// </summary>
     Task<int> CountWithSpecificationAsync(
@@ -161,4 +212,44 @@ public interface IRepository<T> where T : BaseEntity
         CancellationToken cancellationToken = default);
 
     #endregion
+
+    #region Advanced Query Operations
+
+    /// <summary>
+    /// Gets entities with complex ordering options.
+    /// </summary>
+    Task<IReadOnlyList<T>> GetOrderedAsync(
+        Expression<Func<T, bool>>? predicate = null,
+        CancellationToken cancellationToken = default,
+        params (Expression<Func<T, object>> KeySelector, bool Descending)[] orderExpressions);
+
+    /// <summary>
+    /// Performs aggregation operations on entities.
+    /// </summary>
+    Task<TResult> AggregateAsync<TResult>(
+        Expression<Func<IQueryable<T>, TResult>> aggregateExpression,
+        Expression<Func<T, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets distinct values for a specific property.
+    /// </summary>
+    Task<IReadOnlyList<TProperty>> GetDistinctAsync<TProperty>(
+        Expression<Func<T, TProperty>> propertySelector,
+        Expression<Func<T, bool>>? predicate = null,
+        CancellationToken cancellationToken = default);
+
+    #endregion
+}
+
+// Helper interface for bulk update property setting (EF Core 7+)
+public interface SetPropertyCalls<T>
+{
+    SetPropertyCalls<T> SetProperty<TProperty>(
+        Expression<Func<T, TProperty>> propertyExpression,
+        TProperty value);
+
+    SetPropertyCalls<T> SetProperty<TProperty>(
+        Expression<Func<T, TProperty>> propertyExpression,
+        Expression<Func<T, TProperty>> valueExpression);
 }

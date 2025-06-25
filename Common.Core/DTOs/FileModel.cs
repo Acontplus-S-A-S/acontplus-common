@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Models;
+﻿namespace Common.Core.DTOs;
 
 public class FileModel
 {

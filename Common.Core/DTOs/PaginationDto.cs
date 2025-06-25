@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Models;
+﻿namespace Common.Core.DTOs;
 
 /// <summary>
 /// DTO for pagination parameters

@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Common.Core.DTOs;
 
 namespace Common.Core.Abstractions;
 

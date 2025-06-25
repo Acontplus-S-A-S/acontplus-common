@@ -1,4 +1,6 @@
-﻿namespace Common.Core.Validation;
+﻿using Common.Core.DTOs;
+
+namespace Common.Core.Validation;
 
 public class ValidacionesExternas
 

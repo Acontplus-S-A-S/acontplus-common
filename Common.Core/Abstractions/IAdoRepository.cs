@@ -1,28 +1,39 @@
-﻿namespace Common.Core.Abstractions;
+﻿using System.Data.Common;
+using Common.Core.DTOs.Ado;
+
+namespace Common.Core.Abstractions;
 
 public interface IAdoRepository
 {
-    public Task<List<T>> DynamicListAsync<T>(string spName, Dictionary<string, object> parameters = null,
-        bool disableTimeout = false,
-        string connectionStringName = null,
+    Task<List<T>> QueryAsync<T>(
+        string sql,
+        Dictionary<string, object> parameters = null,
+        CommandOptionsDto options = null,
         CancellationToken cancellationToken = default);
 
-    public Task<DataSet> GetDataSetAsync(string spName, Dictionary<string, object> parameters = null,
-        bool withTableNames = true,
-        bool disableTimeout = false,
-        string connectionStringName = null,
-        CancellationToken cancellationToken = default,
-        int tableNamesLength = 500);
-
-    public Task<int> ExecuteNonQueryAsync(string query, Dictionary<string, object> parameters = null,
-        bool useStoredProcedure = true,
-        bool disableTimeout = false,
-        string connectionStringName = null,
+    Task<DataSet> GetDataSetAsync(
+        string sql,
+        Dictionary<string, object> parameters = null,
+        CommandOptionsDto options = null,
         CancellationToken cancellationToken = default);
 
-    public Task<T> SpExecuteAsync<T>(string spName, Dictionary<string, object> parameters = null,
-        bool disableTimeout = false,
-        string connectionStringName = null,
+    Task<int> ExecuteNonQueryAsync(
+        string sql,
+        Dictionary<string, object> parameters = null,
+        CommandOptionsDto options = null,
+        CancellationToken cancellationToken = default);
+
+    // Renamed from QuerySingleOrDefaultAsync to be more descriptive of its action
+    // and adapted to return T where T is a class (for single object mapping).
+    Task<T> QuerySingleOrDefaultAsync<T>( // New name for single object mapping
+        string sql,
+        Dictionary<string, object> parameters = null,
+        CommandOptionsDto options = null,
         CancellationToken cancellationToken = default)
         where T : class, new();
+
+    // Methods for Unit of Work transaction integration
+    void SetTransaction(DbTransaction transaction);
+    void SetConnection(DbConnection connection);
+    void ClearTransaction();
 }

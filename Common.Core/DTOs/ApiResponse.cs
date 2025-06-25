@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Models;
+﻿namespace Common.Core.DTOs;
 
 // Base class with dynamic payload
 public class ApiResponse

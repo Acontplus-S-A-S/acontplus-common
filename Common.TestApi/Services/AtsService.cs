@@ -5,13 +5,18 @@ public interface IAtsService
     Task<ApiResponse> CheckValidationAsync(Dictionary<string, object> parameters);
     Task<DataSet> GetAsync(Dictionary<string, object> parameters);
 }
-public class AtsService(IAdoRepository adoRepository) : IAtsService
+
+public class AtsService(IUnitOfWork uow) : IAtsService
 {
-    private readonly string ModuleName = "FactElect.Ats_";
+    private readonly IAdoRepository _adoRepository = uow.AdoRepository;
+    private const string ModuleName = "FactElect.Ats_";
 
     public async Task<ApiResponse> CheckValidationAsync(Dictionary<string, object> parameters)
     {
-        return await adoRepository.QuerySingleOrDefaultAsync<ApiResponse>($"{ModuleName}CheckValidation", parameters);
+        return await _adoRepository.QuerySingleOrDefaultAsync<ApiResponse>(
+            $"{ModuleName}CheckValidation",
+            parameters
+        );
     }
 
     public async Task<DataSet> GetAsync(Dictionary<string, object> parameters)
@@ -20,7 +25,11 @@ public class AtsService(IAdoRepository adoRepository) : IAtsService
         {
             CommandTimeout = 0
         };
-        return await adoRepository.GetDataSetAsync($"{ModuleName}Get", parameters, options);
+
+        return await _adoRepository.GetDataSetAsync(
+            $"{ModuleName}Get",
+            parameters,
+            options
+        );
     }
 }
-

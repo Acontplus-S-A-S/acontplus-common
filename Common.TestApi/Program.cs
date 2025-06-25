@@ -2,6 +2,9 @@
 using Common.FactElect.Models.Documents;
 using Common.FactElect.Services.Documents;
 using Common.FactElect.Services.External;
+using Common.Infrastructure.Context;
+using Common.Infrastructure.Repository.Implementations;
+using Common.Infrastructure.UnitOfWork.Implementations;
 using Common.Notifications.Services;
 using Common.Services.Middleware;
 using Common.TestApi.Extensions;
@@ -44,12 +47,19 @@ try
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
 
+        builder.Services.AddDbContextPool<TestContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        builder.Services.AddScoped<BaseContext>(sp => sp.GetRequiredService<TestContext>());
+        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+        builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+        //builder.Services.AddScoped<IAdoRepository, AdoRepository>();
+
         string[] nameSpaces =
         [
             "Common.Infrastructure.Repository.Implementations",
             "Common.Reports.Services",
             "Common.TestApi.Services",
-            "Common.TestApi.Repositories.Implementations",
             "Common.Core.Security.Services"
         ];
 
@@ -58,8 +68,9 @@ try
             .AddClasses(classes => classes.InNamespaces(nameSpaces))
             .UsingRegistrationStrategy(RegistrationStrategy.Skip)
             .AsImplementedInterfaces()
-            .WithTransientLifetime()
+            .WithScopedLifetime()
         );
+
 
         builder.Services.AddScoped<IAtsXmlService, AtsXmlService>();
         builder.Services.AddTransient<IWebServiceSri, WebServiceSri>();
@@ -68,8 +79,7 @@ try
         builder.Services.AddDataProtection();
         builder.Services.AddApiVersioningAndDocumentation();
 
-        builder.Services.AddDbContextPool<TestContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
     }
     catch (Exception serviceEx)
     {

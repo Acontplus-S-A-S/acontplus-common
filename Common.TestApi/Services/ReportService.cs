@@ -14,6 +14,11 @@ public class ReportService(IAdoRepository adoRepository) : IReportService
 
     public async Task<DataSet> GetDataAsync(string spname, Dictionary<string, object> parameters, bool withTableNames)
     {
-        return await adoRepository.GetDataSetAsync(spname, parameters, withTableNames);
+        var options = new CommandOptionsDto
+        {
+            CommandType = CommandType.StoredProcedure,
+            WithTableNames = withTableNames// Assuming you want to disable timeout for report queries
+        };
+        return await adoRepository.GetDataSetAsync(spname, parameters, options);
     }
 }

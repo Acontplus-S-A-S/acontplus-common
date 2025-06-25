@@ -19,7 +19,12 @@
         }
         public async Task<int> CreateAsync()
         {
-            return await adoRepository.ExecuteNonQueryAsync("INSERT INTO Test.WorkerTest(Content) VALUES ('Inserting')", useStoredProcedure: false);
+            var options = new CommandOptionsDto
+            {
+                CommandType = System.Data.CommandType.Text,
+                CommandTimeout = 30 // Set a timeout of 30 seconds
+            };
+            return await adoRepository.ExecuteNonQueryAsync("INSERT INTO Test.WorkerTest(Content) VALUES ('Inserting')", options: options);
         }
 
         public async Task<ApiResponse> DeleteAsync(int id)

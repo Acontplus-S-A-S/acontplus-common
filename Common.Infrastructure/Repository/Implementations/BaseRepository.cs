@@ -1,11 +1,15 @@
 ﻿using System.Linq.Expressions;
-using System.Reflection;
-using Common.Infrastructure.Helpers;
-using Microsoft.EntityFrameworkCore.Query;
+using System.Reflection; // For ApplySorting dynamic property access
+using Common.Infrastructure.Helpers; // Assuming DiagnosticConfig is here
+using Microsoft.EntityFrameworkCore.Query; // For SetPropertyCalls and ExecuteUpdateAsync/ExecuteDeleteAsync
 
 namespace Common.Infrastructure.Repository.Implementations;
 
-public class BaseRepository<T> : IRepository<T> where T : class
+/// <summary>
+/// Base generic repository implementation for Entity Framework Core.
+/// </summary>
+/// <typeparam name="T">The entity type, constrained to BaseEntity.</typeparam>
+public class BaseRepository<T> : IRepository<T> where T : BaseEntity
 {
     protected readonly DbContext _context;
     protected readonly DbSet<T> _dbSet;
@@ -107,8 +111,7 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ValidatePagination(pagination);
-
-            var query = BuildQuery(includeProperties, false);
+            var query = BuildQuery(includeProperties, tracking: false);
 
             if (predicate != null)
             {
@@ -183,7 +186,8 @@ public class BaseRepository<T> : IRepository<T> where T : class
         {
             ArgumentNullException.ThrowIfNull(entity);
             var entry = await _dbSet.AddAsync(entity, cancellationToken).ConfigureAwait(false);
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            // _context.SaveChangesAsync() should be handled by Unit of Work
+            // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return entry.Entity;
         }
         catch (Exception ex)
@@ -201,13 +205,12 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(entities);
-
             var entityList = entities.ToList();
-            if (entityList.Count == 0)
-                return [];
+            if (entityList.Count == 0) return [];
 
             await _dbSet.AddRangeAsync(entityList, cancellationToken).ConfigureAwait(false);
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            // _context.SaveChangesAsync() should be handled by Unit of Work
+            // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return entityList;
         }
         catch (Exception ex)
@@ -223,15 +226,15 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(entity);
-
             var entry = _context.Entry(entity);
             if (entry.State == EntityState.Detached)
             {
                 _dbSet.Attach(entity);
             }
-
             entry.State = EntityState.Modified;
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+            // _context.SaveChangesAsync() should be handled by Unit of Work
+            // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return entity;
         }
         catch (Exception ex)
@@ -249,10 +252,8 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(entities);
-
             var entityList = entities.ToList();
-            if (entityList.Count == 0)
-                return [];
+            if (entityList.Count == 0) return [];
 
             foreach (var entity in entityList)
             {
@@ -264,7 +265,8 @@ public class BaseRepository<T> : IRepository<T> where T : class
                 entry.State = EntityState.Modified;
             }
 
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            // _context.SaveChangesAsync() should be handled by Unit of Work
+            // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             return entityList;
         }
         catch (Exception ex)
@@ -280,15 +282,14 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(entity);
-
             var entry = _context.Entry(entity);
             if (entry.State == EntityState.Detached)
             {
                 _dbSet.Attach(entity);
             }
-
             _dbSet.Remove(entity);
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            // _context.SaveChangesAsync() should be handled by Unit of Work
+            // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -303,12 +304,12 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(id);
-
             var entity = await _dbSet.FindAsync([id], cancellationToken).ConfigureAwait(false);
             if (entity != null)
             {
                 _dbSet.Remove(entity);
-                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                // _context.SaveChangesAsync() should be handled by Unit of Work
+                // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -326,13 +327,12 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(entities);
-
             var entityList = entities.ToList();
-            if (entityList.Count == 0)
-                return;
+            if (entityList.Count == 0) return;
 
             _dbSet.RemoveRange(entityList);
-            await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+            // _context.SaveChangesAsync() should be handled by Unit of Work
+            // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -349,12 +349,12 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(predicate);
-
             var entities = await _dbSet.Where(predicate).ToListAsync(cancellationToken).ConfigureAwait(false);
             if (entities.Count > 0)
             {
                 _dbSet.RemoveRange(entities);
-                await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                // _context.SaveChangesAsync() should be handled by Unit of Work
+                // await _context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Exception ex)
@@ -372,7 +372,6 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(predicate);
-
             return await _dbSet
                 .Where(predicate)
                 .ExecuteDeleteAsync(cancellationToken)
@@ -391,53 +390,27 @@ public class BaseRepository<T> : IRepository<T> where T : class
         TProperty newValue,
         CancellationToken cancellationToken = default)
     {
-        // using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(BulkUpdateAsync)}"); // Uncomment if DiagnosticConfig is available
+        using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(BulkUpdateAsync)}");
         try
         {
             ArgumentNullException.ThrowIfNull(predicate);
             ArgumentNullException.ThrowIfNull(propertyExpression);
 
-            // Construct the parameter for the SetPropertyCalls<T> lambda
-            var setPropertyCallsParameter = Expression.Parameter(typeof(SetPropertyCalls<T>), "s");
-
-            // Get the SetProperty method that accepts an Expression<Func<TSource, TProperty>> and TProperty
-            // We need to be specific about the method to avoid ambiguity.
-            // Look for SetProperty<TProperty>(Expression<Func<TSource, TProperty>> propertyExpression, TProperty value)
-            var setPropertyMethod = typeof(SetPropertyCalls<T>)
-                .GetMethods()
-                .Where(m => m.Name == nameof(SetPropertyCalls<T>.SetProperty) && m.IsGenericMethod)
-                .Select(m => m.MakeGenericMethod(typeof(TProperty)))
-                .Where(m =>
-                {
-                    var parameters = m.GetParameters();
-                    return parameters.Length == 2 &&
-                           parameters[0].ParameterType == typeof(Expression<Func<T, TProperty>>) &&
-                           parameters[1].ParameterType == typeof(TProperty);
-                })
-                .FirstOrDefault();
-
-            if (setPropertyMethod == null)
-            {
-                throw new InvalidOperationException($"Could not find the expected SetProperty method on {typeof(SetPropertyCalls<T>).Name}.");
-            }
-
-            // Create the method call expression for SetProperty
-            var setPropertyCall = Expression.Call(
-                setPropertyCallsParameter, // instance on which to call the method (the 's' parameter)
-                setPropertyMethod,        // the SetProperty method info
-                propertyExpression,       // the first argument: Expression<Func<T, TProperty>>
-                Expression.Constant(newValue, typeof(TProperty)) // the second argument: TProperty newValue
-            );
-
-            // Create the lambda expression for ExecuteUpdateAsync: s => s.SetProperty(propertyExpression, newValue)
-            var executeUpdateLambda = Expression.Lambda<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>>(
-                setPropertyCall,
-                setPropertyCallsParameter
+            var setPropertyCalls = Expression.Lambda<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>>(
+                Expression.Call(
+                    typeof(SetPropertyCalls<T>).GetMethods()
+                        .Single(m => m.Name == nameof(SetPropertyCalls<T>.SetProperty) && m.IsGenericMethod && m.GetParameters().Length == 2 && m.GetParameters()[0].ParameterType.GetGenericArguments().Length == 2)
+                        .MakeGenericMethod(typeof(TProperty)),
+                    Expression.Parameter(typeof(SetPropertyCalls<T>), "s"),
+                    propertyExpression,
+                    Expression.Constant(newValue, typeof(TProperty))
+                ),
+                Expression.Parameter(typeof(SetPropertyCalls<T>), "s")
             );
 
             return await _dbSet
                 .Where(predicate)
-                .ExecuteUpdateAsync(executeUpdateLambda, cancellationToken)
+                .ExecuteUpdateAsync(setPropertyCalls, cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -449,55 +422,7 @@ public class BaseRepository<T> : IRepository<T> where T : class
 
     #endregion
 
-    #region ExecuteUpdate/ExecuteDelete Methods (EF Core 7+)
-
-    public virtual async Task<int> ExecuteUpdateAsync(
-        Expression<Func<T, bool>> predicate,
-        Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(ExecuteUpdateAsync)}");
-        try
-        {
-            ArgumentNullException.ThrowIfNull(predicate);
-            ArgumentNullException.ThrowIfNull(setPropertyCalls);
-
-            return await _dbSet
-                .Where(predicate)
-                .ExecuteUpdateAsync(setPropertyCalls, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error in ExecuteUpdateAsync");
-            throw new RepositoryException("Error performing bulk update", ex);
-        }
-    }
-
-    public virtual async Task<int> ExecuteDeleteAsync(
-        Expression<Func<T, bool>> predicate,
-        CancellationToken cancellationToken = default)
-    {
-        using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(ExecuteDeleteAsync)}");
-        try
-        {
-            ArgumentNullException.ThrowIfNull(predicate);
-
-            return await _dbSet
-                .Where(predicate)
-                .ExecuteDeleteAsync(cancellationToken)
-                .ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error in ExecuteDeleteAsync");
-            throw new RepositoryException("Error performing bulk delete", ex);
-        }
-    }
-
-    #endregion
-
-    #region Specification Pattern
+    #region Specification Pattern Methods
 
     public virtual async Task<IEnumerable<T>> FindWithSpecificationAsync(
         ISpecification<T> specification,
@@ -543,8 +468,9 @@ public class BaseRepository<T> : IRepository<T> where T : class
         try
         {
             ArgumentNullException.ThrowIfNull(specification);
-            var query = BuildSpecificationQuery(specification);
+            ValidatePagination(specification.Pagination);
 
+            var query = BuildSpecificationQuery(specification);
             var totalCount = await query.CountAsync(cancellationToken).ConfigureAwait(false);
 
             var items = await query
@@ -566,6 +492,24 @@ public class BaseRepository<T> : IRepository<T> where T : class
         }
     }
 
+    public virtual async Task<int> CountWithSpecificationAsync(
+        ISpecification<T> specification,
+        CancellationToken cancellationToken = default)
+    {
+        using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(CountWithSpecificationAsync)}");
+        try
+        {
+            ArgumentNullException.ThrowIfNull(specification);
+            var query = BuildSpecificationQuery(specification);
+            return await query.CountAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error in CountWithSpecificationAsync");
+            throw new RepositoryException("Error counting entities with specification", ex);
+        }
+    }
+
     #endregion
 
     #region Helper Methods
@@ -583,7 +527,6 @@ public class BaseRepository<T> : IRepository<T> where T : class
                 query = query.Include(includeProperty);
             }
         }
-
         return query;
     }
 
@@ -591,25 +534,20 @@ public class BaseRepository<T> : IRepository<T> where T : class
     {
         var query = specification.IsTracking ? _dbSet.AsQueryable() : _dbSet.AsNoTracking();
 
-        // Apply criteria
         if (specification.Criteria is not null)
         {
             query = query.Where(specification.Criteria);
         }
 
-        // Apply includes
         query = specification.Includes
             .Aggregate(query, (current, include) => current.Include(include));
 
-        // Apply string-based includes
         query = specification.IncludeStrings
             .Aggregate(query, (current, include) => current.Include(include));
 
-        // Apply ordering
         if (specification.OrderByExpressions is { Count: > 0 })
         {
             IOrderedQueryable<T>? orderedQuery = null;
-
             foreach (var orderExpression in specification.OrderByExpressions)
             {
                 orderedQuery = orderExpression.IsDescending
@@ -618,25 +556,21 @@ public class BaseRepository<T> : IRepository<T> where T : class
                     : orderedQuery?.ThenBy(orderExpression.Expression)
                       ?? query.OrderBy(orderExpression.Expression);
             }
-
             if (orderedQuery is not null)
             {
                 query = orderedQuery;
             }
         }
-
         return query;
     }
 
     protected virtual void ValidatePagination(PaginationDto pagination)
     {
         ArgumentNullException.ThrowIfNull(pagination);
-
         if (pagination.PageIndex < 1)
-            throw new ArgumentException("Page index must be greater than 0", nameof(pagination));
-
-        if (pagination.PageSize < 1 || pagination.PageSize > 1000)
-            throw new ArgumentException("Page size must be between 1 and 1000", nameof(pagination));
+            throw new ArgumentException("Page index must be greater than 0", nameof(pagination.PageIndex));
+        if (pagination.PageSize < 1 || pagination.PageSize > 500)
+            throw new ArgumentException("Page size must be between 1 and 500", nameof(pagination.PageSize));
     }
 
     protected virtual IQueryable<T> ApplySorting(
@@ -644,14 +578,16 @@ public class BaseRepository<T> : IRepository<T> where T : class
         string sortBy,
         string? sortDirection = null)
     {
-        if (string.IsNullOrWhiteSpace(sortBy))
-            return query;
+        if (string.IsNullOrWhiteSpace(sortBy)) return query;
 
         var property = typeof(T).GetProperty(sortBy,
             BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
 
         if (property == null)
+        {
+            _logger?.LogWarning("Property '{SortBy}' not found for sorting on type '{EntityType}'. Skipping sort.", sortBy, typeof(T).Name);
             return query;
+        }
 
         var parameter = Expression.Parameter(typeof(T), "x");
         var propertyAccess = Expression.MakeMemberAccess(parameter, property);
@@ -669,27 +605,6 @@ public class BaseRepository<T> : IRepository<T> where T : class
             Expression.Quote(orderByExpression));
 
         return query.Provider.CreateQuery<T>(resultExpression);
-    }
-
-    #endregion
-
-    #region IDisposable
-
-    private bool _disposed;
-
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!_disposed && disposing)
-        {
-            _context.Dispose();
-        }
-        _disposed = true;
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
     }
 
     #endregion

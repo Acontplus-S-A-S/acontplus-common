@@ -2,7 +2,7 @@
 global using System.Data;
 global using Common.Core.Abstractions;
 global using Common.Core.Base;
-global using Common.Core.Models;
+global using Common.Core.DTOs;
 global using Common.Infrastructure.Data.Parameters;
 global using Microsoft.Data.SqlClient;
 global using Microsoft.EntityFrameworkCore;

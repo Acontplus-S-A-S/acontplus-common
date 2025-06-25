@@ -1,147 +1,108 @@
 ﻿using System.Data.Common;
+using Common.Infrastructure.Context;
 using Common.Infrastructure.Exceptions;
 using Common.Infrastructure.Repository.Implementations;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Common.Infrastructure.UnitOfWork.Implementations;
 
-public class UnitOfWork : IUnitOfWork
+public sealed class UnitOfWork : IUnitOfWork
 {
     private readonly DbContext _context;
     private readonly IAdoRepository _adoRepository;
-    private readonly ILogger<UnitOfWork> _logger;
-    private readonly ConcurrentDictionary<Type, object> _repositories;
-    private IDbContextTransaction _efTransaction;
-    private bool _disposed = false;
+    private readonly ILogger<UnitOfWork>? _logger;
+    private readonly ConcurrentDictionary<Type, object> _repositories = new();
+    private readonly SemaphoreSlim _transactionSemaphore = new(1, 1);
 
-    public UnitOfWork(DbContext context, IAdoRepository adoRepository, ILogger<UnitOfWork> logger = null)
+    private IDbContextTransaction? _efTransaction;
+    private bool _disposed;
+
+    public UnitOfWork(
+        BaseContext context,
+        IAdoRepository adoRepository,
+        ILogger<UnitOfWork>? logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _adoRepository = adoRepository ?? throw new ArgumentNullException(nameof(adoRepository));
         _logger = logger;
-        _repositories = new ConcurrentDictionary<Type, object>();
     }
 
-    public DbTransaction CurrentDbTransaction => _efTransaction?.GetDbTransaction();
+    public DbTransaction? CurrentDbTransaction => _efTransaction?.GetDbTransaction();
     public DbConnection CurrentDbConnection => _context.Database.GetDbConnection();
     public IAdoRepository AdoRepository => _adoRepository;
+    public bool HasActiveTransaction => _efTransaction is not null;
 
     public IRepository<TEntity> GetRepository<TEntity>() where TEntity : BaseEntity
     {
-        var type = typeof(TEntity);
-        return (IRepository<TEntity>)_repositories.GetOrAdd(type, _ =>
-            new BaseRepository<TEntity>(_context, _logger as ILogger<BaseRepository<TEntity>>));
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        return (IRepository<TEntity>)_repositories.GetOrAdd(typeof(TEntity), static (type, context) =>
+            new BaseRepository<TEntity>(context._context, context._logger as ILogger<BaseRepository<TEntity>>),
+            this);
     }
 
-    public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
+    public async Task<ITransaction> BeginTransactionAsync(
+        IsolationLevel isolationLevel = IsolationLevel.ReadCommitted,
+        CancellationToken cancellationToken = default)
     {
-        if (_efTransaction != null) return;
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
+        await _transactionSemaphore.WaitAsync(cancellationToken);
         try
         {
-            // Ensure connection is open
+            if (_efTransaction is not null)
+                throw new InvalidOperationException("A transaction is already active.");
+
             var connection = CurrentDbConnection;
             if (connection.State != ConnectionState.Open)
-            {
                 await connection.OpenAsync(cancellationToken);
-            }
 
-            // Begin EF transaction
-            _efTransaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            _efTransaction = await _context.Database.BeginTransactionAsync(isolationLevel, cancellationToken);
 
-            // Share transaction with ADO repository
-            _adoRepository.SetTransaction(CurrentDbTransaction);
+            // Configure ADO repository with transaction context
+            _adoRepository.SetTransaction(CurrentDbTransaction!);
             _adoRepository.SetConnection(connection);
 
-            _logger?.LogInformation("Transaction started and shared with ADO repository");
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error beginning transaction");
-            throw new UnitOfWorkException("Error beginning transaction", ex);
-        }
-    }
+            _logger?.LogInformation("Transaction started with isolation level: {IsolationLevel}", isolationLevel);
 
-    public async Task CommitAsync(CancellationToken cancellationToken = default)
-    {
-        if (_efTransaction == null)
-            throw new UnitOfWorkException("No active transaction to commit");
-
-        try
-        {
-            await _context.SaveChangesAsync(cancellationToken);
-            await _efTransaction.CommitAsync(cancellationToken);
-            _logger?.LogInformation("Transaction committed successfully");
-        }
-        catch
-        {
-            await RollbackAsync(cancellationToken);
-            throw;
+            return new EfTransaction(_efTransaction, _adoRepository, _logger, OnTransactionDisposed);
         }
         finally
         {
-            await CleanupTransactionAsync();
-        }
-    }
-
-    public async Task RollbackAsync(CancellationToken cancellationToken = default)
-    {
-        if (_efTransaction == null)
-        {
-            _logger?.LogWarning("Rollback called with no active transaction");
-            return;
-        }
-
-        try
-        {
-            await _efTransaction.RollbackAsync(cancellationToken);
-            _logger?.LogInformation("Transaction rolled back");
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error rolling back transaction");
-            throw new UnitOfWorkException("Error rolling back transaction", ex);
-        }
-        finally
-        {
-            await CleanupTransactionAsync();
-        }
-    }
-
-    private async Task CleanupTransactionAsync()
-    {
-        if (_efTransaction != null)
-        {
-            _adoRepository.ClearTransaction();
-            await _efTransaction.DisposeAsync();
-            _efTransaction = null;
+            _transactionSemaphore.Release();
         }
     }
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         try
         {
-            return await _context.SaveChangesAsync(cancellationToken);
+            var changes = await _context.SaveChangesAsync(cancellationToken);
+            _logger?.LogDebug("Saved {ChangeCount} changes to database", changes);
+            return changes;
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            _logger?.LogError(ex, "Concurrency conflict occurred while saving changes");
+            throw new UnitOfWorkException("A concurrency conflict occurred while saving changes.", ex);
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger?.LogError(ex, "Database update failed while saving changes");
+            throw new UnitOfWorkException("Database update failed while saving changes.", ex);
         }
         catch (Exception ex)
         {
-            _logger?.LogError(ex, "Error saving changes");
-            throw new UnitOfWorkException("Error saving changes", ex);
+            _logger?.LogError(ex, "Unexpected error occurred while saving changes");
+            throw new UnitOfWorkException("An unexpected error occurred while saving changes.", ex);
         }
     }
 
-    protected virtual void Dispose(bool disposing)
+    private void OnTransactionDisposed()
     {
-        if (!_disposed)
-        {
-            if (disposing)
-            {
-                _efTransaction?.Dispose();
-                _context.Dispose();
-            }
-            _disposed = true;
-        }
+        _efTransaction = null;
     }
 
     public void Dispose()
@@ -152,21 +113,124 @@ public class UnitOfWork : IUnitOfWork
 
     public async ValueTask DisposeAsync()
     {
-        await DisposeAsyncCore().ConfigureAwait(false);
+        await DisposeAsyncCore();
         Dispose(false);
         GC.SuppressFinalize(this);
     }
 
-    protected virtual async ValueTask DisposeAsyncCore()
+    private void Dispose(bool disposing)
+    {
+        if (!_disposed && disposing)
+        {
+            _efTransaction?.Dispose();
+            _transactionSemaphore.Dispose();
+            _context.Dispose();
+            _disposed = true;
+        }
+    }
+
+    private async ValueTask DisposeAsyncCore()
     {
         if (!_disposed)
         {
-            if (_efTransaction != null)
-            {
+            if (_efTransaction is not null)
                 await _efTransaction.DisposeAsync();
-            }
+
+            _transactionSemaphore.Dispose();
             await _context.DisposeAsync();
             _disposed = true;
+        }
+    }
+
+    private sealed class EfTransaction : ITransaction
+    {
+        private readonly IDbContextTransaction _transaction;
+        private readonly IAdoRepository _adoRepository;
+        private readonly ILogger<UnitOfWork>? _logger;
+        private readonly Action _onDisposed;
+        private bool _isCompleted;
+        private bool _disposed;
+
+        public EfTransaction(
+            IDbContextTransaction transaction,
+            IAdoRepository adoRepository,
+            ILogger<UnitOfWork>? logger,
+            Action onDisposed)
+        {
+            _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));
+            _adoRepository = adoRepository ?? throw new ArgumentNullException(nameof(adoRepository));
+            _logger = logger;
+            _onDisposed = onDisposed ?? throw new ArgumentNullException(nameof(onDisposed));
+        }
+
+        public bool IsCompleted => _isCompleted;
+
+        public async Task CommitAsync(CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            if (_isCompleted)
+                throw new InvalidOperationException("Transaction has already been completed.");
+
+            try
+            {
+                await _transaction.CommitAsync(cancellationToken);
+                _isCompleted = true;
+                _logger?.LogInformation("Transaction committed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to commit transaction");
+                await RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+
+        public async Task RollbackAsync(CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            if (_isCompleted)
+                return; // Already completed, nothing to rollback
+
+            try
+            {
+                await _transaction.RollbackAsync(cancellationToken);
+                _isCompleted = true;
+                _logger?.LogWarning("Transaction rolled back");
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to rollback transaction");
+                throw;
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (!_disposed)
+            {
+                try
+                {
+                    // Auto-rollback if not completed
+                    if (!_isCompleted)
+                    {
+                        _logger?.LogWarning("Transaction disposed without explicit commit/rollback - performing automatic rollback");
+                        await RollbackAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error during transaction disposal");
+                }
+                finally
+                {
+                    _adoRepository.ClearTransaction();
+                    await _transaction.DisposeAsync();
+                    _onDisposed();
+                    _disposed = true;
+                }
+            }
         }
     }
 }

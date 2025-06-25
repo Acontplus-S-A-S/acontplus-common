@@ -1,8 +1,9 @@
 ﻿using System.Linq.Expressions;
+using Common.Infrastructure.Exceptions;
 using Common.Infrastructure.Helpers;
 using Microsoft.EntityFrameworkCore.Query; // Assuming DiagnosticConfig is here
 
-namespace Common.Infrastructure.Repository.Implementations;
+namespace Common.Infrastructure.Repository;
 
 /// <summary>
 /// A modern, generic repository implementation for Entity Framework Core, targeting .NET 9+.
@@ -12,9 +13,9 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
 {
     protected readonly DbContext _context;
     protected readonly DbSet<T> _dbSet;
-    protected readonly ILogger<BaseRepository<T>>? _logger;
+    protected readonly ILogger<BaseRepository<T>> _logger;
 
-    public BaseRepository(DbContext context, ILogger<BaseRepository<T>>? logger = null)
+    public BaseRepository(DbContext context, ILogger<BaseRepository<T>> logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _dbSet = context.Set<T>();
@@ -23,7 +24,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
 
     #region Query Methods
 
-    public virtual async Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default)
+    public virtual async Task<T> GetByIdAsync(object id, CancellationToken cancellationToken = default)
     {
         using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(GetByIdAsync)}");
         try
@@ -38,7 +39,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
         }
     }
 
-    public virtual async Task<T?> GetFirstOrDefaultAsync(
+    public virtual async Task<T> GetFirstOrDefaultAsync(
         Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default,
         params Expression<Func<T, object>>[] includeProperties)
@@ -113,7 +114,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
     public virtual Task<PagedResult<T>> GetPagedAsync(
         PaginationDto pagination,
         CancellationToken cancellationToken = default,
-        Expression<Func<T, object>>? orderBy = null,
+        Expression<Func<T, object>> orderBy = null,
         bool orderByDescending = false)
     {
         return GetPagedAsync(pagination, null!, cancellationToken, orderBy, orderByDescending);
@@ -123,7 +124,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
         PaginationDto pagination,
         Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default,
-        Expression<Func<T, object>>? orderBy = null,
+        Expression<Func<T, object>> orderBy = null,
         bool orderByDescending = false,
         params Expression<Func<T, object>>[] includeProperties)
     {
@@ -167,9 +168,9 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
     public virtual async Task<PagedResult<TProjection>> GetPagedProjectionAsync<TProjection>(
         PaginationDto pagination,
         Expression<Func<T, TProjection>> projection,
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default,
-        Expression<Func<T, object>>? orderBy = null,
+        Expression<Func<T, object>> orderBy = null,
         bool orderByDescending = false)
     {
         using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(GetPagedProjectionAsync)}");
@@ -230,7 +231,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
     }
 
     public virtual async Task<int> CountAsync(
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default)
     {
         using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(CountAsync)}");
@@ -248,7 +249,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
     }
 
     public virtual async Task<long> LongCountAsync(
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default)
     {
         using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(LongCountAsync)}");
@@ -551,7 +552,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
         }
     }
 
-    public virtual async Task<T?> GetFirstOrDefaultWithSpecificationAsync(
+    public virtual async Task<T> GetFirstOrDefaultWithSpecificationAsync(
         ISpecification<T> specification,
         CancellationToken cancellationToken = default)
     {
@@ -637,7 +638,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
     #region Advanced Query Operations
 
     public virtual async Task<IReadOnlyList<T>> GetOrderedAsync(
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default,
         params (Expression<Func<T, object>> KeySelector, bool Descending)[] orderExpressions)
     {
@@ -664,7 +665,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
 
     public virtual async Task<TResult> AggregateAsync<TResult>(
         Expression<Func<IQueryable<T>, TResult>> aggregateExpression,
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default)
     {
         using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(AggregateAsync)}");
@@ -693,7 +694,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
 
     public virtual async Task<IReadOnlyList<TProperty>> GetDistinctAsync<TProperty>(
         Expression<Func<T, TProperty>> propertySelector,
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default)
     {
         using var activity = DiagnosticConfig.ActivitySource.StartActivity($"{nameof(GetDistinctAsync)}");
@@ -772,7 +773,7 @@ public class BaseRepository<T> : IRepository<T> where T : BaseEntity
             return query.OrderBy(e => e.Id); // Default order
         }
 
-        IOrderedQueryable<T>? orderedQuery = null;
+        IOrderedQueryable<T> orderedQuery = null;
         foreach (var (keySelector, descending) in orderExpressions)
         {
             if (orderedQuery is null)

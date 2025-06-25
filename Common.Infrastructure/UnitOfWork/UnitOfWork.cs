@@ -1,33 +1,33 @@
 ﻿using System.Data.Common;
-using Common.Infrastructure.Context;
 using Common.Infrastructure.Exceptions;
-using Common.Infrastructure.Repository.Implementations;
+using Common.Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore.Storage;
 
-namespace Common.Infrastructure.UnitOfWork.Implementations;
+namespace Common.Infrastructure.UnitOfWork;
 
-public sealed class UnitOfWork : IUnitOfWork
+public sealed class UnitOfWork<TContext> : IUnitOfWork
+    where TContext : DbContext
 {
-    private readonly DbContext _context;
+    private readonly TContext _context;
     private readonly IAdoRepository _adoRepository;
-    private readonly ILogger<UnitOfWork>? _logger;
+    private readonly ILogger<UnitOfWork<TContext>> _logger;
     private readonly ConcurrentDictionary<Type, object> _repositories = new();
     private readonly SemaphoreSlim _transactionSemaphore = new(1, 1);
 
-    private IDbContextTransaction? _efTransaction;
+    private IDbContextTransaction _efTransaction;
     private bool _disposed;
 
     public UnitOfWork(
-        BaseContext context,
+        TContext context,
         IAdoRepository adoRepository,
-        ILogger<UnitOfWork>? logger = null)
+        ILogger<UnitOfWork<TContext>> logger = null)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
         _adoRepository = adoRepository ?? throw new ArgumentNullException(nameof(adoRepository));
         _logger = logger;
     }
 
-    public DbTransaction? CurrentDbTransaction => _efTransaction?.GetDbTransaction();
+    public DbTransaction CurrentDbTransaction => _efTransaction?.GetDbTransaction();
     public DbConnection CurrentDbConnection => _context.Database.GetDbConnection();
     public IAdoRepository AdoRepository => _adoRepository;
     public bool HasActiveTransaction => _efTransaction is not null;
@@ -146,7 +146,7 @@ public sealed class UnitOfWork : IUnitOfWork
     {
         private readonly IDbContextTransaction _transaction;
         private readonly IAdoRepository _adoRepository;
-        private readonly ILogger<UnitOfWork>? _logger;
+        private readonly ILogger<UnitOfWork<TContext>> _logger;
         private readonly Action _onDisposed;
         private bool _isCompleted;
         private bool _disposed;
@@ -154,7 +154,7 @@ public sealed class UnitOfWork : IUnitOfWork
         public EfTransaction(
             IDbContextTransaction transaction,
             IAdoRepository adoRepository,
-            ILogger<UnitOfWork>? logger,
+            ILogger<UnitOfWork<TContext>> logger,
             Action onDisposed)
         {
             _transaction = transaction ?? throw new ArgumentNullException(nameof(transaction));

@@ -1,8 +1,8 @@
 ﻿using System.Data.Common;
 using Common.Core.DTOs.Ado;
-using Common.Infrastructure.Mapping; // For DbDataReaderMapper, CommandParameterBuilder
+using Common.Infrastructure.Mapping;
 
-namespace Common.Infrastructure.Repository.Implementations;
+namespace Common.Infrastructure.Repository;
 
 /// <summary>
 /// Provides ADO.NET data access operations with retry policy and optional transaction sharing.
@@ -239,12 +239,12 @@ public class AdoRepository : IAdoRepository
                 }
 
                 var ds = new DataSet();
-                using var adapter = new SqlDataAdapter((SqlCommand)cmd); // SqlDataAdapter often needs SqlCommand
+                using var adapter = new SqlDataAdapter(cmd); // SqlDataAdapter often needs SqlCommand
                 await Task.Run(() => adapter.Fill(ds), cancellationToken); // Fill is synchronous, so wrap in Task.Run
 
                 if (options.WithTableNames)
                 {
-                    await ProcessTableNames((SqlCommand)cmd, ds);
+                    await ProcessTableNames(cmd, ds);
                 }
 
                 return ds;
@@ -320,7 +320,7 @@ public class AdoRepository : IAdoRepository
 
                 await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
                 return await reader.ReadAsync(cancellationToken)
-                    ? await MapToObject<T>((SqlDataReader)reader) // Cast to SqlDataReader for specific features
+                    ? await MapToObject<T>(reader) // Cast to SqlDataReader for specific features
                     : new T(); // Return a new instance if no record, or null if you prefer
             }
             catch (Exception ex)
@@ -375,7 +375,7 @@ public class AdoRepository : IAdoRepository
 
         // Pre-cache column ordinals for performance if mapping many rows
         var columnOrdinals = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-        for (int i = 0; i < reader.FieldCount; i++)
+        for (var i = 0; i < reader.FieldCount; i++)
         {
             columnOrdinals[reader.GetName(i)] = i;
         }

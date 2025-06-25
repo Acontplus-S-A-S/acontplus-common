@@ -161,10 +161,11 @@ public interface IRepository<T> where T : BaseEntity
     /// <summary>
     /// Performs a bulk update directly in the database using ExecuteUpdateAsync.
     /// </summary>
-    Task<int> BulkUpdateAsync(
-        Expression<Func<T, bool>> predicate,
-        Expression<Func<SetPropertyCalls<T>, SetPropertyCalls<T>>> setPropertyCalls,
-        CancellationToken cancellationToken = default);
+    Task<int> BulkUpdateAsync<TProperty>(
+            Expression<Func<T, bool>> predicate,
+            Expression<Func<T, TProperty>> propertyExpression,
+            TProperty newValue,
+            CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Performs a bulk insert operation for better performance with large datasets.
@@ -240,16 +241,4 @@ public interface IRepository<T> where T : BaseEntity
         CancellationToken cancellationToken = default);
 
     #endregion
-}
-
-// Helper interface for bulk update property setting (EF Core 7+)
-public interface SetPropertyCalls<T>
-{
-    SetPropertyCalls<T> SetProperty<TProperty>(
-        Expression<Func<T, TProperty>> propertyExpression,
-        TProperty value);
-
-    SetPropertyCalls<T> SetProperty<TProperty>(
-        Expression<Func<T, TProperty>> propertyExpression,
-        Expression<Func<T, TProperty>> valueExpression);
 }

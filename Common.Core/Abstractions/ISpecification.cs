@@ -2,78 +2,76 @@
 
 namespace Common.Core.Abstractions;
 
-/// <summary>
-/// Specification pattern interface for building query specifications
-/// </summary>
-/// <typeparam name="T">Entity type</typeparam>
+// The core ISpecification interface remains unchanged.
+// Its contract is already aligned, as it holds a PaginationDto.
 public interface ISpecification<T>
 {
-    /// <summary>
-    /// Gets the filter criteria
-    /// </summary>
-    Expression<Func<T, bool>> Criteria { get; }
-
-    /// <summary>
-    /// Gets the list of include expressions
-    /// </summary>
-    List<Expression<Func<T, object>>> Includes { get; }
-
-    /// <summary>
-    /// Gets the list of include strings
-    /// </summary>
-    List<string> IncludeStrings { get; }
-
-    /// <summary>
-    /// Gets the ordering expressions
-    /// </summary>
-    List<OrderByExpression<T>> OrderByExpressions { get; }
-
-    /// <summary>
-    /// Gets the paging parameters
-    /// </summary>
+    Expression<Func<T, bool>>? Criteria { get; }
+    IReadOnlyList<Expression<Func<T, object>>> Includes { get; }
+    IReadOnlyList<string> IncludeStrings { get; }
+    IReadOnlyList<OrderByExpression<T>> OrderByExpressions { get; }
     PaginationDto Pagination { get; }
-
-    /// <summary>
-    /// Gets whether the query should be tracked
-    /// </summary>
-    bool IsTracking { get; }
-
-    /// <summary>
-    /// Adds an include expression to the specification
-    /// </summary>
-    /// <param name="includeExpression">Include expression</param>
-    ISpecification<T> Include(Expression<Func<T, object>> includeExpression);
-
-    /// <summary>
-    /// Adds an include string to the specification
-    /// </summary>
-    /// <param name="includeString">Include string</param>
-    ISpecification<T> Include(string includeString);
-
-    /// <summary>
-    /// Adds an ordering expression to the specification
-    /// </summary>
-    /// <param name="orderByExpression">Ordering expression</param>
-    /// <param name="isDescending">Whether to order descending</param>
-    ISpecification<T> OrderBy(Expression<Func<T, object>> orderByExpression, bool isDescending = false);
-
-    /// <summary>
-    /// Applies paging to the specification
-    /// </summary>
-    /// <param name="pagination">Pagination parameters</param>
-    ISpecification<T> Paginate(PaginationDto pagination);
-
-    /// <summary>
-    /// Sets whether the query should be tracked
-    /// </summary>
-    /// <param name="isTracking">Tracking flag</param>
-    ISpecification<T> WithTracking(bool isTracking = true);
+    bool IsPagingEnabled { get; }
+    bool IsTrackingEnabled { get; }
 }
 
 /// <summary>
-/// Represents an ordering expression
+/// An updated base class for creating specifications.
+/// It's designed to be extended by concrete specifications that can interpret a PaginationDto.
 /// </summary>
-/// <typeparam name="T">Entity type</typeparam>
+/// <typeparam name="T">The type of the entity this specification is for.</typeparam>
+public abstract class BaseSpecification<T> : ISpecification<T>
+{
+    // Criteria is now settable by the derived class, allowing it to be built dynamically.
+    public Expression<Func<T, bool>>? Criteria { get; protected set; }
+
+    public IReadOnlyList<Expression<Func<T, object>>> Includes => _includes.AsReadOnly();
+    public IReadOnlyList<string> IncludeStrings => _includeStrings.AsReadOnly();
+    public IReadOnlyList<OrderByExpression<T>> OrderByExpressions => _orderByExpressions.AsReadOnly();
+    public PaginationDto Pagination { get; private set; } = new();
+    public bool IsPagingEnabled { get; private set; } = false;
+    public bool IsTrackingEnabled { get; private set; } = false;
+
+    private readonly List<Expression<Func<T, object>>> _includes = [];
+    private readonly List<string> _includeStrings = [];
+    private readonly List<OrderByExpression<T>> _orderByExpressions = [];
+
+    protected BaseSpecification(Expression<Func<T, bool>>? criteria = null)
+    {
+        Criteria = criteria;
+    }
+
+    protected virtual void AddInclude(Expression<Func<T, object>> includeExpression)
+    {
+        _includes.Add(includeExpression);
+    }
+
+    protected virtual void AddInclude(string includeString)
+    {
+        _includeStrings.Add(includeString);
+    }
+
+    protected virtual void AddOrderBy(Expression<Func<T, object>> orderByExpression, bool isDescending = false)
+    {
+        _orderByExpressions.Add(new OrderByExpression<T>(orderByExpression, isDescending));
+    }
+
+    /// <summary>
+    /// Applies pagination using the entire DTO, which also enables paging.
+    /// </summary>
+    protected virtual void ApplyPaging(PaginationDto pagination)
+    {
+        Pagination = pagination;
+        IsPagingEnabled = true;
+    }
+
+    protected virtual void ApplyTracking(bool isTracking = true)
+    {
+        IsTrackingEnabled = isTracking;
+    }
+}
+
+// OrderByExpression remains the same as it's the target for translation
 public class OrderByExpression<T>
 {
     public Expression<Func<T, object>> Expression { get; }
@@ -81,6 +79,7 @@ public class OrderByExpression<T>
 
     public OrderByExpression(Expression<Func<T, object>> expression, bool isDescending = false)
     {
+        ArgumentNullException.ThrowIfNull(expression);
         Expression = expression;
         IsDescending = isDescending;
     }

@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace Common.Core.Abstractions;
+namespace Common.Core.Abstractions.Persistence;
 
 /// <summary>
 /// Defines generic data access operations for entities.
@@ -13,12 +13,12 @@ public interface IRepository<T> where T : BaseEntity
     /// <summary>
     /// Retrieves an entity by its primary key.
     /// </summary>
-    Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
+    Task<T> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the first entity matching a predicate, with optional includes.
     /// </summary>
-    Task<T?> GetFirstOrDefaultAsync(
+    Task<T> GetFirstOrDefaultAsync(
         Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default,
         params Expression<Func<T, object>>[] includeProperties);
@@ -51,7 +51,7 @@ public interface IRepository<T> where T : BaseEntity
     Task<PagedResult<T>> GetPagedAsync(
         PaginationDto pagination,
         CancellationToken cancellationToken = default,
-        Expression<Func<T, object>>? orderBy = null,
+        Expression<Func<T, object>> orderBy = null,
         bool orderByDescending = false);
 
     /// <summary>
@@ -61,7 +61,7 @@ public interface IRepository<T> where T : BaseEntity
         PaginationDto pagination,
         Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default,
-        Expression<Func<T, object>>? orderBy = null,
+        Expression<Func<T, object>> orderBy = null,
         bool orderByDescending = false,
         params Expression<Func<T, object>>[] includeProperties);
 
@@ -71,9 +71,9 @@ public interface IRepository<T> where T : BaseEntity
     Task<PagedResult<TProjection>> GetPagedProjectionAsync<TProjection>(
         PaginationDto pagination,
         Expression<Func<T, TProjection>> projection,
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default,
-        Expression<Func<T, object>>? orderBy = null,
+        Expression<Func<T, object>> orderBy = null,
         bool orderByDescending = false);
 
     /// <summary>
@@ -87,14 +87,14 @@ public interface IRepository<T> where T : BaseEntity
     /// Counts entities matching the predicate.
     /// </summary>
     Task<int> CountAsync(
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Counts entities matching the predicate as a long for large datasets.
     /// </summary>
     Task<long> LongCountAsync(
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default);
 
     #endregion
@@ -186,7 +186,7 @@ public interface IRepository<T> where T : BaseEntity
     /// <summary>
     /// Gets the first entity using a specification.
     /// </summary>
-    Task<T?> GetFirstOrDefaultWithSpecificationAsync(
+    Task<T> GetFirstOrDefaultWithSpecificationAsync(
         ISpecification<T> specification,
         CancellationToken cancellationToken = default);
 
@@ -220,7 +220,7 @@ public interface IRepository<T> where T : BaseEntity
     /// Gets entities with complex ordering options.
     /// </summary>
     Task<IReadOnlyList<T>> GetOrderedAsync(
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default,
         params (Expression<Func<T, object>> KeySelector, bool Descending)[] orderExpressions);
 
@@ -229,7 +229,7 @@ public interface IRepository<T> where T : BaseEntity
     /// </summary>
     Task<TResult> AggregateAsync<TResult>(
         Expression<Func<IQueryable<T>, TResult>> aggregateExpression,
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -237,7 +237,7 @@ public interface IRepository<T> where T : BaseEntity
     /// </summary>
     Task<IReadOnlyList<TProperty>> GetDistinctAsync<TProperty>(
         Expression<Func<T, TProperty>> propertySelector,
-        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, bool>> predicate = null,
         CancellationToken cancellationToken = default);
 
     #endregion

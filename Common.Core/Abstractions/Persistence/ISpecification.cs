@@ -1,12 +1,12 @@
 ﻿using System.Linq.Expressions;
 
-namespace Common.Core.Abstractions;
+namespace Common.Core.Abstractions.Persistence;
 
 // The core ISpecification interface remains unchanged.
 // Its contract is already aligned, as it holds a PaginationDto.
 public interface ISpecification<T>
 {
-    Expression<Func<T, bool>>? Criteria { get; }
+    Expression<Func<T, bool>> Criteria { get; }
     IReadOnlyList<Expression<Func<T, object>>> Includes { get; }
     IReadOnlyList<string> IncludeStrings { get; }
     IReadOnlyList<OrderByExpression<T>> OrderByExpressions { get; }
@@ -23,7 +23,7 @@ public interface ISpecification<T>
 public abstract class BaseSpecification<T> : ISpecification<T>
 {
     // Criteria is now settable by the derived class, allowing it to be built dynamically.
-    public Expression<Func<T, bool>>? Criteria { get; protected set; }
+    public Expression<Func<T, bool>> Criteria { get; protected set; }
 
     public IReadOnlyList<Expression<Func<T, object>>> Includes => _includes.AsReadOnly();
     public IReadOnlyList<string> IncludeStrings => _includeStrings.AsReadOnly();
@@ -36,7 +36,7 @@ public abstract class BaseSpecification<T> : ISpecification<T>
     private readonly List<string> _includeStrings = [];
     private readonly List<OrderByExpression<T>> _orderByExpressions = [];
 
-    protected BaseSpecification(Expression<Func<T, bool>>? criteria = null)
+    protected BaseSpecification(Expression<Func<T, bool>> criteria = null)
     {
         Criteria = criteria;
     }

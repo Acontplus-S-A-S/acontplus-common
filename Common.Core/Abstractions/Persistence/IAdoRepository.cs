@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 
-namespace Common.Core.Abstractions;
+namespace Common.Core.Abstractions.Persistence;
 
 public interface IAdoRepository
 {

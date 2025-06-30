@@ -1,6 +1,6 @@
 ﻿using System.Data.Common;
 
-namespace Common.Core.Abstractions;
+namespace Common.Core.Abstractions.Persistence;
 
 public interface IUnitOfWork : IDisposable, IAsyncDisposable
 {
@@ -9,7 +9,7 @@ public interface IUnitOfWork : IDisposable, IAsyncDisposable
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<ITransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.ReadCommitted, CancellationToken cancellationToken = default);
 
-    DbTransaction? CurrentDbTransaction { get; }
+    DbTransaction CurrentDbTransaction { get; }
     DbConnection CurrentDbConnection { get; }
     bool HasActiveTransaction { get; }
 }

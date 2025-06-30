@@ -1,4 +1,4 @@
-﻿namespace Common.Core.Abstractions;
+﻿namespace Common.Core.Abstractions.Persistence;
 
 public interface ITransaction : IAsyncDisposable
 {

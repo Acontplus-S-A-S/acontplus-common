@@ -1,4 +1,6 @@
-﻿namespace Common.TestApi.Services
+﻿using System.Linq.Expressions;
+
+namespace Common.TestApi.Services
 {
     public interface IUsuarioService
     {
@@ -8,66 +10,122 @@
         Task<ApiResponse> UpdateAsync(int id, Usuario usuario);
         Task<ApiResponse> DeleteAsync(int id);
     }
-    public class UsuarioService(TestContext context, IUserRepository userRepository, IAdoRepository adoRepository) : IUsuarioService
+
+    public class UsuarioService(
+        IUnitOfWork unitOfWork,
+        ILogger<UsuarioService>? logger = null) : IUsuarioService
     {
+        private readonly IRepository<Usuario> _usuarioRepository = unitOfWork.GetRepository<Usuario>();
+
         public async Task<ApiResponse> AddAsync(Usuario usuario)
         {
-            context.Usuarios.Add(usuario);
-            await context.SaveChangesAsync();
-
-            return ApiResponse.Success();
+            try
+            {
+                await _usuarioRepository.AddAsync(usuario);
+                await unitOfWork.SaveChangesAsync();
+                return ApiResponse.Success();
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error adding usuario");
+                return ApiResponse.Error("0", "Error adding usuario");
+            }
         }
+
         public async Task<int> CreateAsync()
         {
-            return await adoRepository.ExecuteNonQueryAsync("INSERT INTO Test.WorkerTest(Content) VALUES ('Inserting')", useStoredProcedure: false);
+            var options = new CommandOptionsDto
+            {
+                CommandType = System.Data.CommandType.Text,
+                CommandTimeout = 30 // Set a timeout of 30 seconds
+            };
+
+            return await unitOfWork.AdoRepository.ExecuteNonQueryAsync(
+                "INSERT INTO Test.WorkerTest(Content) VALUES ('Inserting')",
+                options: options);
         }
 
         public async Task<ApiResponse> DeleteAsync(int id)
         {
-            var userFound = await context.Usuarios.FindAsync(id);
-            if (userFound == null)
+            try
             {
-                return new ApiResponse { Code = "0", Message = "Error" };
+                var userFound = await _usuarioRepository.GetByIdAsync(id);
+                if (userFound == null)
+                {
+                    return ApiResponse.Error("0", "User not found");
+                }
+
+                userFound.MarkAsDeleted();
+                await _usuarioRepository.UpdateAsync(userFound);
+                await unitOfWork.SaveChangesAsync();
+
+                return ApiResponse.Success(payload: userFound);
             }
-            userFound.MarkAsDeleted(); // Assuming MarkAsDeleted is a method that sets IsDeleted to true and updates DeletedAt
-            context.Update(userFound);
-            await context.SaveChangesAsync();
-            //return new ApiResponse { Code = "1", Message = "Sucess", Payload = usuario };
-            return ApiResponse.Success(payload: userFound);
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error deleting usuario with id {Id}", id);
+                return ApiResponse.Error("0", "Error deleting usuario");
+            }
         }
 
         public async Task<PagedResult<UsuarioDto>> GetPaginatedUsersAsync(PaginationDto paginationDto)
         {
-            // Get paged data from repository
-            var pagedUsers = await userRepository.GetPaginatedUsersAsync(paginationDto);
-
-            // Map to DTOs
-            var userDtos = pagedUsers.Items.Select(user => ObjectMapper.Map<Usuario, UsuarioDto>(user)).ToList();
-
-            // Create new paged result with DTOs
-            return new PagedResult<UsuarioDto>
+            try
             {
-                Items = userDtos,
-                PageIndex = pagedUsers.PageIndex,
-                PageSize = pagedUsers.PageSize,
-                TotalCount = pagedUsers.TotalCount
-            };
+                // Example filtering - adjust as needed
+                Expression<Func<Usuario, bool>> filter = u => !u.IsDeleted;
+
+                // Example sorting - could be parameterized
+                Expression<Func<Usuario, object>> orderBy = u => u.CreatedAt;
+                bool orderByDescending = true;
+
+                // Get paged data from repository
+                var pagedResult = await _usuarioRepository.GetPagedAsync(
+                    pagination: paginationDto,
+                    predicate: filter,
+                    orderBy: orderBy,
+                    orderByDescending: orderByDescending);
+
+                // Map to DTOs
+                var userDtos = pagedResult.Items.Select(user => ObjectMapper.Map<Usuario, UsuarioDto>(user)).ToList();
+
+                return new PagedResult<UsuarioDto>
+                {
+                    Items = userDtos,
+                    PageIndex = pagedResult.PageIndex,
+                    PageSize = pagedResult.PageSize,
+                    TotalCount = pagedResult.TotalCount
+                };
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error getting paginated users");
+                throw;
+            }
         }
-
-
         public async Task<ApiResponse> UpdateAsync(int id, Usuario usuario)
         {
-            var userFound = await context.Usuarios.FindAsync(id);
-            if (userFound == null)
+            try
             {
-                return new ApiResponse { Code = "0", Message = "Error" };
+                var userFound = await _usuarioRepository.GetByIdAsync(id);
+                if (userFound == null)
+                {
+                    return ApiResponse.Error("0", "User not found");
+                }
+
+                // Map updated properties from input usuario to userFound
+                // This depends on your mapping strategy
+
+                await _usuarioRepository.UpdateAsync(userFound);
+                await unitOfWork.SaveChangesAsync();
+
+                return ApiResponse.Success(payload: userFound);
             }
-
-            context.Update(userFound);
-            await context.SaveChangesAsync();
-            //return new ApiResponse { Code = "1", Message = "Sucess", Payload = usuario };
-            return ApiResponse.Success(payload: usuario);
-
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Error updating usuario with id {Id}", id);
+                return ApiResponse.Error("0", "Error updating usuario");
+            }
         }
     }
 }

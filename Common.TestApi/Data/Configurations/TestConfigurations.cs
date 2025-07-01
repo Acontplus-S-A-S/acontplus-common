@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using Common.Infrastructure.Persistence.Configurations;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Common.TestApi.Data.Configurations;
 

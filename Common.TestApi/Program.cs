@@ -5,6 +5,7 @@ using Common.FactElect.Services.External;
 using Common.Notifications.Services;
 using Common.Services.Middleware;
 using Common.TestApi.Extensions;
+using Common.Infrastructure.Extensions;
 using Scrutor;
 using Serilog;
 
@@ -44,12 +45,26 @@ try
         builder.Services.AddControllers();
         builder.Services.AddOpenApi();
 
+        //builder.Services.AddDbContextPool<TestContext>(options =>
+        //    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        //builder.Services.AddScoped<BaseContext>(sp => sp.GetRequiredService<TestContext>());
+        //builder.Services.AddScoped(typeof(IUnitOfWork), typeof(UnitOfWork<TestContext>));
+        //builder.Services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+
+        // Registro para la base de datos principal de la aplicación
+        builder.Services.AddDbContextWithUnitOfWork<TestContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        // Registro para una base de datos de auditoría (con clave)
+        //builder.Services.AddDbContextWithUnitOfWork<AuditDbContext>(options =>
+        //    options.UseSqlServer(builder.Configuration.GetConnectionString("AuditConnection")), "audit");
+
         string[] nameSpaces =
         [
-            "Common.Infrastructure.Repository.Implementations",
+            "Common.Infrastructure.Repository",
             "Common.Reports.Services",
             "Common.TestApi.Services",
-            "Common.TestApi.Repositories.Implementations",
             "Common.Core.Security.Services"
         ];
 
@@ -58,8 +73,9 @@ try
             .AddClasses(classes => classes.InNamespaces(nameSpaces))
             .UsingRegistrationStrategy(RegistrationStrategy.Skip)
             .AsImplementedInterfaces()
-            .WithTransientLifetime()
+            .WithScopedLifetime()
         );
+
 
         builder.Services.AddScoped<IAtsXmlService, AtsXmlService>();
         builder.Services.AddTransient<IWebServiceSri, WebServiceSri>();
@@ -68,8 +84,7 @@ try
         builder.Services.AddDataProtection();
         builder.Services.AddApiVersioningAndDocumentation();
 
-        builder.Services.AddDbContextPool<TestContext>(options =>
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
     }
     catch (Exception serviceEx)
     {

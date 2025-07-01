@@ -1,4 +1,4 @@
-﻿using Common.Infrastructure.Repository.Implementations;
+﻿using Common.Infrastructure.Repository;
 
 namespace Common.TestApi.Repositories.Implementations;
 

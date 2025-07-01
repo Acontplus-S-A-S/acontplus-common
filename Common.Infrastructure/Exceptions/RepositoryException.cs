@@ -1,4 +1,4 @@
-﻿namespace Common.Infrastructure.Repository;
+﻿namespace Common.Infrastructure.Exceptions;
 
 public class RepositoryException : Exception
 {

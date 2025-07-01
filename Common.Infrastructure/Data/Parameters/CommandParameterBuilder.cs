@@ -1,8 +1,10 @@
-﻿namespace Common.Infrastructure.Data.Parameters;
+﻿using System.Data.Common;
+
+namespace Common.Infrastructure.Data.Parameters;
 
 public static class CommandParameterBuilder
 {
-    public static void AddParameter(SqlCommand cmd, string name, object value)
+    public static void AddParameter(DbCommand cmd, string name, object value)
     {
         var param = cmd.CreateParameter();
         param.ParameterName = name.StartsWith("@") ? name : $"@{name}";

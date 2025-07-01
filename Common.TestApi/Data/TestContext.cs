@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Common.Infrastructure.Context;
+using Common.Infrastructure.Persistence.Configurations;
 
 namespace Common.TestApi.Data;
 

@@ -13,8 +13,8 @@ POST {{Common.TestApi_HostAddress}}/api/usuario
 Content-Type: application/json
 
 {
-  "username": "jose",
-  "email": "jose@gmail.com"
+  "username": "jorge",
+  "email": "jorge@gmail.com"
 }
 
 ###
@@ -56,4 +56,8 @@ GET {{Common.TestApi_HostAddress}}/api/usuario
 
 DELETE {{Common.TestApi_HostAddress}}/api/usuario/{{id}}
 
+###
+
+@json="{"startDate": "2025-03-01", "endDate": "2025-03-31"}"
+GET {{Common.TestApi_HostAddress}}/api/ats/download?json={"fromDate":"2025-03-01","toDate":"2025-03-31"}
 ###

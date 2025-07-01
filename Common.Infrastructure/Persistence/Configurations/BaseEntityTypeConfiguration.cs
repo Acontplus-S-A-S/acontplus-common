@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Common.Infrastructure.Entity;
+namespace Common.Infrastructure.Persistence.Configurations;
 
 public class BaseEntityTypeConfiguration<TEntity> : IEntityTypeConfiguration<TEntity>
     where TEntity : BaseEntity

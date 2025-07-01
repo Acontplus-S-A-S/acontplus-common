@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection;
 
-namespace Common.Infrastructure.Entity;
+namespace Common.Infrastructure.Persistence.Configurations;
 
 public static class SimpleEntityRegistration
 {
@@ -22,9 +22,9 @@ public static class SimpleEntityRegistration
     /// <param name="entityTypes">An array of entity types to register.</param>
     public static void RegisterEntities(
         ModelBuilder modelBuilder,
-        Type? dbContextType,
-        Dictionary<Type, (string? schema, string? table)>? nameMap,
-        Dictionary<Type, Type>? customConfigurations,
+        Type dbContextType,
+        Dictionary<Type, (string schema, string table)> nameMap,
+        Dictionary<Type, Type> customConfigurations,
         params Type[] entityTypes)
     {
         foreach (var entityType in entityTypes)
@@ -39,12 +39,12 @@ public static class SimpleEntityRegistration
             // Get the EntityTypeBuilder for the current entity
             var entityBuilder = modelBuilder.Entity(entityType);
 
-            string? determinedTableName = null;
-            string? determinedSchemaName = null;
+            string determinedTableName = null;
+            string determinedSchemaName = null;
 
             // Flags to track if table/schema names were explicitly provided by the user
-            bool isTableNameExplicitlyProvided = false;
-            bool isSchemaNameExplicitlyProvided = false;
+            var isTableNameExplicitlyProvided = false;
+            var isSchemaNameExplicitlyProvided = false;
 
             // 1. Prioritize nameMap for both table and schema
             if (nameMap != null && nameMap.TryGetValue(entityType, out var mapConfig))
@@ -145,7 +145,7 @@ public static class SimpleEntityRegistration
     /// <param name="modelBuilder">The ModelBuilder instance.</param>
     /// <param name="dbContextType">The type of the DbContext. Used to infer DbSet names for entities.</param>
     /// <param name="entityTypes">An array of entity types to register.</param>
-    public static void RegisterEntities(ModelBuilder modelBuilder, Type? dbContextType, params Type[] entityTypes)
+    public static void RegisterEntities(ModelBuilder modelBuilder, Type dbContextType, params Type[] entityTypes)
     {
         RegisterEntities(modelBuilder, dbContextType, null, null, entityTypes);
     }
@@ -158,12 +158,12 @@ public static class SimpleEntityRegistration
     /// <param name="entitySchemas">An array of tuples containing entity type and its desired schema.</param>
     public static void RegisterEntitiesWithSchemas(
         ModelBuilder modelBuilder,
-        Type? dbContextType,
+        Type dbContextType,
         params (Type entityType, string schema)[] entitySchemas)
     {
         var schemaMap = entitySchemas.ToDictionary(
             x => x.entityType,
-            x => (schema: x.schema, table: (string?)null)); // Table is null, EF will try DbSet name or class name
+            x => (x.schema, table: (string)null)); // Table is null, EF will try DbSet name or class name
 
         var entityTypes = entitySchemas.Select(x => x.entityType).ToArray();
         RegisterEntities(modelBuilder, dbContextType, schemaMap, null, entityTypes);
@@ -177,12 +177,12 @@ public static class SimpleEntityRegistration
     /// <param name="nameConfigs">An array of tuples containing entity type, and optional schema and table names.</param>
     public static void RegisterEntitiesWithNames(
         ModelBuilder modelBuilder,
-        Type? dbContextType,
-        params (Type entityType, string? schema, string? table)[] nameConfigs)
+        Type dbContextType,
+        params (Type entityType, string schema, string table)[] nameConfigs)
     {
         var nameMap = nameConfigs.ToDictionary(
             x => x.entityType,
-            x => (schema: x.schema, table: x.table));
+            x => (x.schema, x.table));
 
         var entityTypes = nameConfigs.Select(x => x.entityType).ToArray();
         RegisterEntities(modelBuilder, dbContextType, nameMap, null, entityTypes);
@@ -199,7 +199,7 @@ public static class SimpleEntityRegistration
     /// <param name="entityTypes">An array of entity types to register.</param>
     public static void RegisterEntitiesWithCustomConfigurations(
         ModelBuilder modelBuilder,
-        Type? dbContextType,
+        Type dbContextType,
         Dictionary<Type, Type> customConfigurations,
         params Type[] entityTypes)
     {

@@ -6,7 +6,7 @@ global using System.Text;
 global using Amazon.Runtime;
 global using Amazon.SimpleEmailV2;
 global using Common.Core.Base;
-global using Common.Core.Models;
+global using Common.Core.DTOs;
 global using Common.Notifications.Abstractions;
 global using Common.Notifications.Models;
 global using Common.Utilities.Format;

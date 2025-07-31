@@ -219,9 +219,12 @@ public class AtsXmlService : IAtsXmlService
             xtr.WriteElement("valorRetIva", sale.ValorRetIva);
             xtr.WriteElement("valorRetRenta", sale.ValorRetRenta);
 
-            xtr.WriteStartElement("formasDePago");
-            xtr.WriteElement("formaPago", sale.FormaPago);
-            xtr.WriteEndElement(); // end formasDePago
+            if (!string.IsNullOrEmpty(sale.FormaPago))
+            {
+                xtr.WriteStartElement("formasDePago");
+                xtr.WriteElement("formaPago", sale.FormaPago);
+                xtr.WriteEndElement(); // end formasDePago
+            }
 
             xtr.WriteEndElement(); // end detalleVentas
         }

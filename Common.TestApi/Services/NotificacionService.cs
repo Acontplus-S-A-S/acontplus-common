@@ -1,4 +1,6 @@
-﻿namespace Common.TestApi.Services;
+﻿using Common.Core.Abstractions.Persistence;
+
+namespace Common.TestApi.Services;
 
 public interface IEmailService
 {
